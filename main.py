@@ -85,7 +85,7 @@ def perform_sync(sync_client, local_dir, local_index):
             with open(local_path, 'rb') as fp:
                 sync_client.put_object(key, fp, local_timestamp)
         else:
-            print('No need to update ', key)
+            print('No need to update', key)
 
     sync_client.put_sync_index()
 
