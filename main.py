@@ -20,7 +20,8 @@ class SyncClient(object):
                 Bucket=self.bucket,
                 Key=os.path.join(self.prefix, '.syncindex'),
             )['Body']
-            self.sync_index = json.loads(data.read().decode('utf-8'))
+            json_data = data.read().decode('utf-8')
+            self.sync_index = json.loads(json_data)
         except botocore.exceptions.ClientError:
             self.sync_index = {}
 
