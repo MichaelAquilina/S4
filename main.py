@@ -72,18 +72,18 @@ def get_local_index(local_dir):
 
 def perform_sync(sync_client, local_dir, local_index):
     for key in local_index:
-        s3_object = sync_client.sync_index.get(key)
-        local_object = local_index[key]
+        s3_timestamp = sync_client.sync_index.get(key)
+        local_timestamp = local_index[key]
         local_path = os.path.join(local_dir, key)
 
-        if s3_object is None:
+        if s3_timestamp is None:
             print('Need to upload (CREATE)', key)
             with open(local_path, 'rb') as fp:
-                sync_client.put_object(key, fp, local_object)
-        elif local_object > s3_object:
+                sync_client.put_object(key, fp, local_timestamp)
+        elif local_timestamp > s3_timestamp:
             print('Need to upload (UPDATE)', key)
             with open(local_path, 'rb') as fp:
-                sync_client.put_object(key, fp, local_object)
+                sync_client.put_object(key, fp, local_timestamp)
         else:
             print('No need to update ', key)
 
