@@ -6,6 +6,11 @@ import os
 import botocore
 import boto3
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 class SyncClient(object):
     def __init__(self, client, bucket, prefix):
@@ -15,6 +20,7 @@ class SyncClient(object):
         self.get_sync_index()
 
     def get_sync_index(self):
+        logger.info('Getting sync index from %s', self.bucket)
         try:
             data = self.client.get_object(
                 Bucket=self.bucket,
@@ -48,8 +54,12 @@ def main():
     parser.add_argument('--local')
     parser.add_argument('--bucket')
     parser.add_argument('--prefix')
+    parser.add_argument('--loglevel', default=logging.WARNING)
 
     args = parser.parse_args()
+
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(args.loglevel)
 
     client = boto3.client('s3')
     sync_client = SyncClient(client, args.bucket, args.prefix)
@@ -78,15 +88,15 @@ def perform_sync(sync_client, local_dir, local_index):
         local_path = os.path.join(local_dir, key)
 
         if s3_timestamp is None:
-            print('Need to upload (CREATE)', key)
+            logger.info('Need to upload (CREATE): %s', key)
             with open(local_path, 'rb') as fp:
                 sync_client.put_object(key, fp, local_timestamp)
         elif local_timestamp > s3_timestamp:
-            print('Need to upload (UPDATE)', key)
+            logger.info('Need to upload (UPDATE): %s', key)
             with open(local_path, 'rb') as fp:
                 sync_client.put_object(key, fp, local_timestamp)
         else:
-            print('No need to update', key)
+            logger.info('No need to update: %s', key)
 
     sync_client.put_sync_index()
 
