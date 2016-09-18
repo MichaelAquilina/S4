@@ -71,12 +71,33 @@ def main():
     client = boto3.client('s3')
     sync_client = SyncClient(client, args.bucket, args.prefix)
 
-    sync(sync_client, args.local)
+    local_index = get_local_index(args.local)
+    perform_sync(sync_client, args.local, local_index)
 
 
-def sync(sync_client, local_dir):
-    local_index = get_local_index(local_dir)
-    perform_sync(sync_client, local_dir, local_index)
+def sync():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--loglevel', default=logging.INFO)
+
+    args = parser.parse_args()
+
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(args.loglevel)
+
+    client = boto3.client('s3')
+
+    with open(os.path.expanduser('~/.s3syncrc'), 'r') as fp:
+        configuration = json.load(fp)
+
+    bucket = configuration['bucket']
+    directories = configuration['directories']
+
+    for local_dir, s3_key in directories.items():
+        local_index = get_local_index(local_dir)
+        sync_client = SyncClient(client, bucket, s3_key)
+
+        perform_sync(sync_client, local_dir, local_index)
 
 
 def get_local_index(local_dir):
@@ -118,4 +139,4 @@ def perform_sync(sync_client, local_dir, local_index):
 
 
 if __name__ == '__main__':
-    main()
+    sync()
