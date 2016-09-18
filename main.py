@@ -89,7 +89,8 @@ def get_local_index(local_dir):
 
 
 def perform_sync(sync_client, local_dir, local_index):
-    for key in local_index:
+    all_keys = set(local_index).union(set(sync_client.sync_index))
+    for key in all_keys:
         s3_timestamp = sync_client.sync_index.get(key)
         local_timestamp = local_index[key]
         local_path = os.path.join(local_dir, key)
