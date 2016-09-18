@@ -46,6 +46,13 @@ class SyncClient(object):
             Body=fp,
         )
 
+    def get_file(self, key, fp):
+        body = self.client.get_object(
+            Bucket=self.bucket,
+            Key=os.path.join(self.prefix, key),
+        )['Body']
+        fp.write(body.read())
+
 
 def main():
     import argparse
@@ -91,10 +98,18 @@ def perform_sync(sync_client, local_dir, local_index):
             logger.info('Need to upload (CREATE): %s', key)
             with open(local_path, 'rb') as fp:
                 sync_client.put_file(key, fp, local_timestamp)
+        elif local_timestamp is None:
+            logger.info('Need to download (CREATE): %s', key)
+            with open(local_path, 'wb') as fp:
+                sync_client.get_file(key, fp)
         elif local_timestamp > s3_timestamp:
             logger.info('Need to upload (UPDATE): %s', key)
             with open(local_path, 'rb') as fp:
                 sync_client.put_file(key, fp, local_timestamp)
+        elif local_timestamp < s3_timestamp:
+            logger.info('Need to download (UPDATE): %s', key)
+            with open(local_path, 'wb') as fp:
+                sync_client.put_file(key, fp)
         else:
             logger.info('No need to update: %s', key)
 
