@@ -13,6 +13,48 @@ logger = logging.getLogger(__name__)
 
 
 class SyncClient(object):
+    def keys(self):
+        raise NotImplemented()
+
+    def put_object(self, key, fp, timestamp):
+        raise NotImplemented()
+
+    def get_object(self, key):
+        raise NotImplemented()
+
+
+class LocalSyncClient(object):
+    def __init__(self, local_dir):
+        self.local_dir = local_dir
+        self.get_sync_index()
+
+    def get_sync_index(self):
+        try:
+            sync_index_path = os.path.join(self.local_dir, '.syncindex')
+            with open(sync_index_path, 'r') as fp:
+                self.sync_index = json.load(fp)
+        except FileNotFoundError:
+            self.sync_index = {}
+
+    def put_sync_index(self):
+        sync_index_path = os.path.join(self.local_dir, '.syncindex')
+        with open(sync_index_path, 'w') as fp:
+            json.dump(self.sync_index, fp)
+
+    def keys(self):
+        return set(self.sync_index.keys())
+
+    def put_object(self, key, fp, timestamp):
+        self.sync_index[key] = timestamp
+        key_path = os.path.join(self.local_dir, key)
+        with open(key_path, 'wb') as fp2:
+            fp2.write(fp.read())
+
+    def get_object(self, key):
+        return open(os.path.join(self.local_dir, key))
+
+
+class S3SyncClient(object):
     def __init__(self, client, bucket, prefix):
         self.client = client
         self.bucket = bucket
@@ -29,7 +71,11 @@ class SyncClient(object):
             json_data = data.read().decode('utf-8')
             self.sync_index = json.loads(json_data)
         except botocore.exceptions.ClientError:
+            logging.warning("Sync Index not found. Creating empty index")
             self.sync_index = {}
+
+    def keys(self):
+        return set(self.sync_index.keys())
 
     def put_sync_index(self):
         self.client.put_object(
@@ -38,20 +84,19 @@ class SyncClient(object):
             Body=json.dumps(self.sync_index),
         )
 
-    def put_file(self, key, fp, time_modified):
-        self.sync_index[key] = time_modified
+    def put_object(self, key, fp, timestamp):
+        self.sync_index[key] = timestamp
         self.client.put_object(
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
             Body=fp,
         )
 
-    def get_file(self, key, fp):
-        body = self.client.get_object(
+    def get_object(self, key):
+        return self.client.get_object(
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
         )['Body']
-        fp.write(body.read())
 
 
 def main():
@@ -69,10 +114,10 @@ def main():
     logger.setLevel(args.loglevel)
 
     client = boto3.client('s3')
-    sync_client = SyncClient(client, args.bucket, args.prefix)
+    s3_sync_client = S3SyncClient(client, args.bucket, args.prefix)
+    local_sync_client = LocalSyncClient(args.local)
 
-    local_index = get_local_index(args.local)
-    perform_sync(sync_client, args.local, local_index)
+    perform_sync(s3_sync_client, local_sync_client)
 
 
 def sync():
@@ -94,48 +139,45 @@ def sync():
     directories = configuration['directories']
 
     for local_dir, s3_key in directories.items():
-        local_index = get_local_index(local_dir)
-        sync_client = SyncClient(client, bucket, s3_key)
+        logger.info("Syncing %s with %s", local_dir, s3_key)
 
-        perform_sync(sync_client, local_dir, local_index)
+        local_client = LocalSyncClient(local_dir)
+        s3_client = S3SyncClient(client, bucket, s3_key)
 
-
-def get_local_index(local_dir):
-    result = {}
-    for filename in os.listdir(local_dir):
-        absolute_path = os.path.join(local_dir, filename)
-        filestat = os.stat(absolute_path)
-        result[filename] = filestat.st_mtime
-    return result
+        perform_sync(s3_client, local_client)
 
 
-def perform_sync(sync_client, local_dir, local_index):
-    all_keys = set(local_index).union(set(sync_client.sync_index))
+def perform_sync(s3_client, local_client):
+    all_keys = local_client.keys().union(s3_client.keys())
     for key in all_keys:
-        s3_timestamp = sync_client.sync_index.get(key)
-        local_timestamp = local_index[key]
-        local_path = os.path.join(local_dir, key)
+        s3_timestamp = s3_client.sync_index.get(key)
+        local_timestamp = local_client.sync_index.get(key)
 
         if s3_timestamp is None:
             logger.info('Need to upload (CREATE): %s', key)
-            with open(local_path, 'rb') as fp:
-                sync_client.put_file(key, fp, local_timestamp)
+            fp = local_client.get_object(key)
+            s3_client.put_file(key, fp, local_timestamp)
+            fp.close()
         elif local_timestamp is None:
             logger.info('Need to download (CREATE): %s', key)
-            with open(local_path, 'wb') as fp:
-                sync_client.get_file(key, fp)
+            fp = s3_client.get_object(key)
+            local_client.put_object(key, fp, s3_timestamp)
+            fp.close()
         elif local_timestamp > s3_timestamp:
             logger.info('Need to upload (UPDATE): %s', key)
-            with open(local_path, 'rb') as fp:
-                sync_client.put_file(key, fp, local_timestamp)
+            fp = local_client.get_object(key)
+            s3_client.put_file(key, fp, local_timestamp)
+            fp.close()
         elif local_timestamp < s3_timestamp:
             logger.info('Need to download (UPDATE): %s', key)
-            with open(local_path, 'wb') as fp:
-                sync_client.put_file(key, fp)
+            fp = s3_client.get_object(key)
+            local_client.put_object(key, fp, s3_timestamp)
+            fp.close()
         else:
             logger.info('No need to update: %s', key)
 
-    sync_client.put_sync_index()
+    s3_client.put_sync_index()
+    local_client.put_sync_index()
 
 
 if __name__ == '__main__':
