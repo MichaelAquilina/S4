@@ -38,12 +38,12 @@ class SyncClient(object):
             Body=json.dumps(self.sync_index),
         )
 
-    def put_object(self, key, data, time_modified):
+    def put_file(self, key, fp, time_modified):
         self.sync_index[key] = time_modified
         self.client.put_object(
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
-            Body=data,
+            Body=fp,
         )
 
 
@@ -90,11 +90,11 @@ def perform_sync(sync_client, local_dir, local_index):
         if s3_timestamp is None:
             logger.info('Need to upload (CREATE): %s', key)
             with open(local_path, 'rb') as fp:
-                sync_client.put_object(key, fp, local_timestamp)
+                sync_client.put_file(key, fp, local_timestamp)
         elif local_timestamp > s3_timestamp:
             logger.info('Need to upload (UPDATE): %s', key)
             with open(local_path, 'rb') as fp:
-                sync_client.put_object(key, fp, local_timestamp)
+                sync_client.put_file(key, fp, local_timestamp)
         else:
             logger.info('No need to update: %s', key)
 
