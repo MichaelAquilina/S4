@@ -99,27 +99,6 @@ class S3SyncClient(object):
         )['Body']
 
 
-def main():
-    import argparse
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--local')
-    parser.add_argument('--bucket')
-    parser.add_argument('--prefix')
-    parser.add_argument('--loglevel', default=logging.WARNING)
-
-    args = parser.parse_args()
-
-    logger.addHandler(logging.StreamHandler())
-    logger.setLevel(args.loglevel)
-
-    client = boto3.client('s3')
-    s3_sync_client = S3SyncClient(client, args.bucket, args.prefix)
-    local_sync_client = LocalSyncClient(args.local)
-
-    perform_sync(s3_sync_client, local_sync_client)
-
-
 def sync():
     import argparse
     parser = argparse.ArgumentParser()
