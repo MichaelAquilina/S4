@@ -179,6 +179,8 @@ def perform_sync(s3_client, local_client):
     s3_client.put_sync_index()
     local_client.put_sync_index()
 
+    assert s3_client.sync_index == local_client.sync_index
+
 
 if __name__ == '__main__':
     sync()
