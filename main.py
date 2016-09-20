@@ -54,7 +54,6 @@ class S3SyncClient(object):
         self.bucket = bucket
         self.prefix = prefix
         self._get_sync_index()
-        self._dirty_keys = set()
 
     def _mend_out_of_date_index(self):
         for key, value in self.sync_index.items():
@@ -73,8 +72,8 @@ class S3SyncClient(object):
         except botocore.exceptions.ClientError:
             logger.warning("Sync Index not found. Creating empty index")
             self.sync_index = {}
-        finally:
-            self._sync_index_dirty = False
+        else:
+            self._dirty_keys = set()
 
         # Hack for backwards compatability. TODO: remove
         self._mend_out_of_date_index()
@@ -94,8 +93,7 @@ class S3SyncClient(object):
         return self.sync_index.keys()
 
     def update_sync_index(self):
-        if self._sync_index_dirty:
-
+        if len(self._dirty_keys) > 0:
             data = self.client.list_objects(Bucket=self.bucket, Prefix=self.prefix)
             for s3_object in data['Contents']:
                 key = s3_object['Key'].replace(self.prefix, '', 1).lstrip('/')
