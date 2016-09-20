@@ -66,6 +66,11 @@ class S3SyncClient(object):
         self.prefix = prefix
         self._get_sync_index()
 
+    def _mend_out_of_date_index(self):
+        for key, value in self.sync_index.items():
+            if not isinstance(value, dict):
+                self.sync_index[key] = {'timestamp': value, 'DateModified': None}
+
     def _get_sync_index(self):
         logger.info('Getting sync index from %s', self.bucket)
         try:
@@ -81,11 +86,18 @@ class S3SyncClient(object):
         finally:
             self._sync_index_dirty = False
 
+        # Hack for backwards compatability. TODO: remove
+        self._mend_out_of_date_index()
+
     def get_object_timestamp(self, key):
-        return self.sync_index.get(key)
+        metadata = self.sync_index.get(key)
+        if metadata:
+            return metadata['timestamp']
 
     def set_object_timestamp(self, key, timestamp):
-        self.sync_index[key] = timestamp
+        if key not in self.sync_index:
+            self.sync_index[key] = {'LastModified': None}
+        self.sync_index[key]['timestamp'] = timestamp
         self._sync_index_dirty = True
 
     def keys(self):
@@ -93,7 +105,19 @@ class S3SyncClient(object):
 
     def update_sync_index(self):
         if self._sync_index_dirty:
+
+            # TODO: Should only selectively update the LastModified
+            # Get current LastModified timestamps so that other clients can know when changes
+            # external to this program has been made. (TODO: detect that change on _get_sync_index)
+            data = self.client.list_objects(Bucket=self.bucket, Prefix=self.prefix)
+            for s3_object in data['Contents']:
+                key = s3_object['Key'].replace(self.prefix, '', 1).lstrip('/')
+                timestamp = s3_object['LastModified'].timestamp()
+                if key not in (self.SYNC_INDEX, '.syncindex'):
+                    self.sync_index[key]['LastModified'] = timestamp
+
             sync_data = json.dumps(self.sync_index).encode('utf-8')
+
             self.client.put_object(
                 Bucket=self.bucket,
                 Key=os.path.join(self.prefix, self.SYNC_INDEX),
@@ -176,6 +200,7 @@ def perform_sync(s3_client, local_client):
             logger.info('No need to update: %s', key)
 
     s3_client.update_sync_index()
+    local_client.update_sync_index()
 
 
 if __name__ == '__main__':
