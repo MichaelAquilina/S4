@@ -78,29 +78,36 @@ class S3SyncClient(object):
         except botocore.exceptions.ClientError:
             logger.warning("Sync Index not found. Creating empty index")
             self.sync_index = {}
+        finally:
+            self._sync_index_dirty = False
 
     def get_object_timestamp(self, key):
         return self.sync_index.get(key)
+
+    def set_object_timestamp(self, key, timestamp):
+        self.sync_index[key] = timestamp
+        self._sync_index_dirty = True
 
     def keys(self):
         return self.sync_index.keys()
 
     def update_sync_index(self):
-        # TODO: Shouldnt need to update the syncindex unless it updates
-        sync_data = json.dumps(self.sync_index).encode('utf-8')
-        self.client.put_object(
-            Bucket=self.bucket,
-            Key=os.path.join(self.prefix, self.SYNC_INDEX),
-            Body=gzip.compress(sync_data),
-        )
+        if self._sync_index_dirty:
+            sync_data = json.dumps(self.sync_index).encode('utf-8')
+            self.client.put_object(
+                Bucket=self.bucket,
+                Key=os.path.join(self.prefix, self.SYNC_INDEX),
+                Body=gzip.compress(sync_data),
+            )
+            self._sync_index_dirty = False
 
     def put_object(self, key, fp, timestamp):
-        self.sync_index[key] = timestamp
         self.client.put_object(
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
             Body=fp,
         )
+        self.set_object_timestamp(key, timestamp)
 
     def get_object(self, key):
         return self.client.get_object(
