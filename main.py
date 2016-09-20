@@ -54,6 +54,7 @@ class S3SyncClient(object):
         self.bucket = bucket
         self.prefix = prefix
         self._get_sync_index()
+        self._dirty_keys = set()
 
     def _mend_out_of_date_index(self):
         for key, value in self.sync_index.items():
@@ -87,7 +88,7 @@ class S3SyncClient(object):
         if key not in self.sync_index:
             self.sync_index[key] = {'LastModified': None}
         self.sync_index[key]['timestamp'] = timestamp
-        self._sync_index_dirty = True
+        self._dirty_keys.add(key)
 
     def keys(self):
         return self.sync_index.keys()
@@ -95,14 +96,11 @@ class S3SyncClient(object):
     def update_sync_index(self):
         if self._sync_index_dirty:
 
-            # TODO: Should only selectively update the LastModified
-            # Get current LastModified timestamps so that other clients can know when changes
-            # external to this program has been made. (TODO: detect that change on _get_sync_index)
             data = self.client.list_objects(Bucket=self.bucket, Prefix=self.prefix)
             for s3_object in data['Contents']:
                 key = s3_object['Key'].replace(self.prefix, '', 1).lstrip('/')
-                timestamp = s3_object['LastModified'].timestamp()
-                if key not in (self.SYNC_INDEX, '.syncindex'):
+                if key in self._dirty_keys and key not in (self.SYNC_INDEX, '.syncindex'):
+                    timestamp = s3_object['LastModified'].timestamp()
                     self.sync_index[key]['LastModified'] = timestamp
 
             sync_data = json.dumps(self.sync_index).encode('utf-8')
@@ -112,7 +110,7 @@ class S3SyncClient(object):
                 Key=os.path.join(self.prefix, self.SYNC_INDEX),
                 Body=gzip.compress(sync_data),
             )
-            self._sync_index_dirty = False
+            self._dirty_keys.clear()
 
     def put_object(self, key, fp, timestamp):
         self.client.put_object(
