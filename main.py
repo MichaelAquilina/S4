@@ -13,17 +13,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class SyncClient(object):
-    def keys(self):
-        raise NotImplemented()
-
-    def put_object(self, key, fp, timestamp):
-        raise NotImplemented()
-
-    def get_object(self, key):
-        raise NotImplemented()
-
-
 class LocalSyncClient(object):
     def __init__(self, local_dir):
         self.local_dir = local_dir
