@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import gzip
 import json
 import os
 
@@ -57,6 +58,8 @@ class LocalSyncClient(object):
 
 
 class S3SyncClient(object):
+    SYNC_INDEX = '.syncindex.json.gz'
+
     def __init__(self, client, bucket, prefix):
         self.client = client
         self.bucket = bucket
@@ -68,9 +71,9 @@ class S3SyncClient(object):
         try:
             data = self.client.get_object(
                 Bucket=self.bucket,
-                Key=os.path.join(self.prefix, '.syncindex'),
+                Key=os.path.join(self.prefix, self.SYNC_INDEX),
             )['Body']
-            json_data = data.read().decode('utf-8')
+            json_data = gzip.decompress(data.read()).decode('utf-8')
             self.sync_index = json.loads(json_data)
         except botocore.exceptions.ClientError:
             logger.warning("Sync Index not found. Creating empty index")
@@ -83,10 +86,12 @@ class S3SyncClient(object):
         return self.sync_index.keys()
 
     def update_sync_index(self):
+        # TODO: Shouldnt need to update the syncindex unless it updates
+        sync_data = json.dumps(self.sync_index).encode('utf-8')
         self.client.put_object(
             Bucket=self.bucket,
-            Key=os.path.join(self.prefix, '.syncindex'),
-            Body=json.dumps(self.sync_index),
+            Key=os.path.join(self.prefix, self.SYNC_INDEX),
+            Body=gzip.compress(sync_data),
         )
 
     def put_object(self, key, fp, timestamp):
