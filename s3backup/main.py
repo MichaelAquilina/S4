@@ -25,6 +25,7 @@ def sync():
     logger.setLevel(args.loglevel)
 
     client = boto3.client('s3')
+    import ipdb; ipdb.set_trace()
 
     with open(os.path.expanduser('~/.s3syncrc'), 'r') as fp:
         configuration = json.load(fp)
