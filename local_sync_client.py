@@ -27,10 +27,16 @@ class LocalSyncClient(object):
 
     def put_object(self, key, fp, timestamp):
         object_path = os.path.join(self.local_dir, key)
-        object_stat = os.stat(object_path)
+
+        object_stat = None
+        if os.path.exists(object_path):
+            object_stat = os.stat(object_path)
+
         with open(object_path, 'wb') as fp2:
             fp2.write(fp.read())
-        os.utime(object_path, (object_stat.st_atime, timestamp))
+
+        if object_stat is not None:
+            os.utime(object_path, (object_stat.st_atime, timestamp))
 
     def get_object(self, key):
         return open(os.path.join(self.local_dir, key), 'rb')
