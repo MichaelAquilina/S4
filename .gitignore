@@ -1,5 +1,5 @@
 .venv
-.py[co]
+*.py[co]
 __pycache__
 .cache
 MANIFEST
