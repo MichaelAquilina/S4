@@ -23,7 +23,7 @@ class S3SyncClient(object):
     def _mend_out_of_date_index(self):
         for key, value in self.sync_index.items():
             if not isinstance(value, dict):
-                self.sync_index[key] = {'timestamp': value, 'DateModified': None}
+                self.sync_index[key] = {'timestamp': value, 'LastModified': None}
 
     def _get_sync_index(self):
         logger.info('Getting sync index from %s', self.bucket)

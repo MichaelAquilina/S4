@@ -10,12 +10,14 @@ import moto
 from s3backup.s3_sync_client import S3SyncClient
 
 
-def setup_sync_client(bucket='testbucket', key='Music', sync_index={}):
-    client = boto3.client('s3')
+def setup_sync_client(client=None, bucket='testbucket', key='Music', sync_index={}):
+    if client is None:
+        client = boto3.client('s3')
+
     client.create_bucket(Bucket=bucket)
 
     client.put_object(
-        Bucket='testbucket',
+        Bucket=bucket,
         Key='{}/.syncindex.json.gz'.format(key),
         Body=gzip.compress(json.dumps(sync_index).encode('utf-8'))
     )
@@ -36,8 +38,8 @@ class TestS3SyncClient(object):
     @moto.mock_s3
     def test_existing_sync_index(self):
         sync_index = {
-            'foo': {'timestamp': 123213213, 'DateModified': 423232},
-            'bar': {'timestamp': 231412323, 'DateModified': 324232},
+            'foo': {'timestamp': 123213213, 'LastModified': 423232},
+            'bar': {'timestamp': 231412323, 'LastModified': 324232},
         }
         sync_client = setup_sync_client(sync_index=sync_index)
         assert sync_client.sync_index == sync_index
@@ -51,17 +53,17 @@ class TestS3SyncClient(object):
         }
         sync_client = setup_sync_client(sync_index=sync_index)
         assert sync_client.sync_index == {
-            'foo': {'timestamp': 123213213, 'DateModified': None},
-            'bar': {'timestamp': 231412323, 'DateModified': None},
+            'foo': {'timestamp': 123213213, 'LastModified': None},
+            'bar': {'timestamp': 231412323, 'LastModified': None},
         }
 
     @moto.mock_s3
     def test_keys(self):
         sync_index = {
-            'A': {'timestamp': 111111, 'DateModified': 232414},
-            'B': {'timestamp': 111111, 'DateModified': 232414},
-            'C': {'timestamp': 111111, 'DateModified': 232414},
-            'E': {'timestamp': 111111, 'DateModified': 232414},
+            'A': {'timestamp': 111111, 'LastModified': 232414},
+            'B': {'timestamp': 111111, 'LastModified': 232414},
+            'C': {'timestamp': 111111, 'LastModified': 232414},
+            'E': {'timestamp': 111111, 'LastModified': 232414},
         }
         sync_client = setup_sync_client(sync_index=sync_index)
         assert set(sync_client.keys()) == {'A', 'B', 'C', 'E'}
@@ -82,8 +84,8 @@ class TestS3SyncClient(object):
     @moto.mock_s3
     def test_get_object_timestamp(self):
         sync_index = {
-            'foo': {'timestamp': 123213213, 'DateModified': 423232},
-            'bar': {'timestamp': 231412323, 'DateModified': 324232},
+            'foo': {'timestamp': 123213213, 'LastModified': 423232},
+            'bar': {'timestamp': 231412323, 'LastModified': 324232},
         }
         sync_client = setup_sync_client(sync_index=sync_index)
         assert sync_client.get_object_timestamp('foo') == 123213213
@@ -93,7 +95,7 @@ class TestS3SyncClient(object):
     @moto.mock_s3
     def test_set_object_timestamp(self):
         sync_index = {
-            'blargh': {'timestamp': 99999999, 'DateModified': 9999999},
+            'blargh': {'timestamp': 99999999, 'LastModified': 9999999},
         }
         sync_client = setup_sync_client(sync_index=sync_index)
         sync_client.set_object_timestamp('blargh', 11111111)
