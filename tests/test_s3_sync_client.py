@@ -2,6 +2,7 @@
 
 import gzip
 import json
+from io import BytesIO
 
 import boto3
 import moto
@@ -40,6 +41,30 @@ class TestS3SyncClient(object):
         }
         sync_client = setup_sync_client(sync_index=sync_index)
         assert sync_client.sync_index == sync_index
+
+    @moto.mock_s3
+    def test_keys(self):
+        sync_index = {
+            'A': {'timestamp': 111111, 'DateModified': 232414},
+            'B': {'timestamp': 111111, 'DateModified': 232414},
+            'C': {'timestamp': 111111, 'DateModified': 232414},
+            'E': {'timestamp': 111111, 'DateModified': 232414},
+        }
+        sync_client = setup_sync_client(sync_index=sync_index)
+        assert set(sync_client.keys()) == {'A', 'B', 'C', 'E'}
+
+    @moto.mock_s3
+    def test_put_object(self):
+        key = 'apples/oranges.txt'
+        timestamp = 13371337
+        content = b'hello world'
+
+        target_object = BytesIO(content)
+        sync_client = setup_sync_client()
+        sync_client.put_object(key, target_object, timestamp)
+
+        assert sync_client.get_object_timestamp(key) == timestamp
+        assert sync_client.get_object(key).read() == content
 
     @moto.mock_s3
     def test_get_object_timestamp(self):
