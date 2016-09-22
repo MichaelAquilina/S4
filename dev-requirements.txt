@@ -1,3 +1,4 @@
-ipdb
-pytest
-moto
+ipdb==0.10.1
+pytest==3.0.2
+moto==0.4.27
+flake8==3.0.4
