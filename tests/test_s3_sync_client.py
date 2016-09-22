@@ -103,3 +103,32 @@ class TestS3SyncClient(object):
 
         assert sync_client.get_object_timestamp('blargh') == 11111111
         assert sync_client.get_object_timestamp('idontexist') == 2323232
+
+    @moto.mock_s3
+    def test_update_sync_index(self):
+        bucket = 'fuzzywuzzybucket'
+        prefix = 'Poll'
+
+        client = boto3.client('s3')
+        sync_client = setup_sync_client(
+            client=client,
+            bucket=bucket,
+            key=prefix,
+        )
+        assert sync_client.sync_index == {}
+
+        sync_client.put_object('hello/world', BytesIO(b'hello'), 20000000)
+        assert sync_client.sync_index == {
+            'hello/world': {'timestamp': 20000000, 'LastModified': None}
+        }
+        sync_client.update_sync_index()
+        result = client.get_object(
+            Bucket=bucket,
+            Key='{}/.syncindex.json.gz'.format(prefix),
+        )
+
+        data = gzip.decompress(result['Body'].read())
+        stored_index = json.loads(data.decode('utf-8'))
+        assert set(stored_index.keys()) == {'hello/world'}
+        assert stored_index['hello/world']['timestamp'] == 20000000
+        assert stored_index['hello/world']['LastModified'] is not None
