@@ -24,7 +24,10 @@ class TestS3SyncClient(object):
         client = boto3.client('s3')
         client.create_bucket(Bucket='testbucket')
 
-        sync_index = {'foo': {'timestamp': 123213213, 'DateModified': 423232}}
+        sync_index = {
+            'foo': {'timestamp': 123213213, 'DateModified': 423232},
+            'bar': {'timestamp': 231412323, 'DateModified': 324232},
+        }
 
         client.put_object(
             Bucket='testbucket',
