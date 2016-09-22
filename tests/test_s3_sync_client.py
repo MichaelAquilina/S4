@@ -99,6 +99,7 @@ class TestS3SyncClient(object):
         }
         sync_client = setup_sync_client(sync_index=sync_index)
         sync_client.set_object_timestamp('blargh', 11111111)
+        # TODO: should probably *not* work
         sync_client.set_object_timestamp('idontexist', 2323232)
 
         assert sync_client.get_object_timestamp('blargh') == 11111111
