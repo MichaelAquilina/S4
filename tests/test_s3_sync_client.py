@@ -54,7 +54,7 @@ class TestS3SyncClient(object):
         assert set(sync_client.keys()) == {'A', 'B', 'C', 'E'}
 
     @moto.mock_s3
-    def test_put_object(self):
+    def test_put_get_object(self):
         key = 'apples/oranges.txt'
         timestamp = 13371337
         content = b'hello world'
