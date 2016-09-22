@@ -43,6 +43,19 @@ class TestS3SyncClient(object):
         assert sync_client.sync_index == sync_index
 
     @moto.mock_s3
+    def test_mends_old_indexes(self):
+        # TODO: Can eventually remove this
+        sync_index = {
+            'foo': 123213213,
+            'bar': 231412323,
+        }
+        sync_client = setup_sync_client(sync_index=sync_index)
+        assert sync_client.sync_index == {
+            'foo': {'timestamp': 123213213, 'DateModified': None},
+            'bar': {'timestamp': 231412323, 'DateModified': None},
+        }
+
+    @moto.mock_s3
     def test_keys(self):
         sync_index = {
             'A': {'timestamp': 111111, 'DateModified': 232414},
