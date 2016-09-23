@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import gzip
+import io
 import json
-from io import BytesIO
 
 import boto3
 import moto
@@ -35,6 +35,11 @@ class TestS3SyncClient(object):
         sync_client = S3SyncClient(client, 'testbucket', 'Music/')
         assert sync_client.sync_index == {}
 
+        sync_client.put_object('dead/pool', io.BytesIO(b'testing'), 20000)
+        assert sync_client.sync_index == {
+            'dead/pool': {'timestamp': 20000, 'LastModified': None},
+        }
+
     @moto.mock_s3
     def test_existing_sync_index(self):
         sync_index = {
@@ -61,7 +66,7 @@ class TestS3SyncClient(object):
         timestamp = 13371337
         content = b'hello world'
 
-        target_object = BytesIO(content)
+        target_object = io.BytesIO(content)
         sync_client = setup_sync_client()
         sync_client.put_object(key, target_object, timestamp)
 
@@ -109,7 +114,7 @@ class TestS3SyncClient(object):
         )
         assert sync_client.sync_index == {}
 
-        sync_client.put_object('hello/world', BytesIO(b'hello'), 20000000)
+        sync_client.put_object('hello/world', io.BytesIO(b'hello'), 20000000)
         assert sync_client.sync_index == {
             'hello/world': {'timestamp': 20000000, 'LastModified': None}
         }

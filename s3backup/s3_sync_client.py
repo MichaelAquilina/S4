@@ -35,7 +35,7 @@ class S3SyncClient(object):
                 self.sync_index = {}
             else:
                 raise
-        else:
+        finally:
             self._dirty_keys = set()
 
     def get_object_timestamp(self, key):
