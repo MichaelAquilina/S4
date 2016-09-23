@@ -3,6 +3,22 @@
 import os
 
 
+def create_parent_directories(path):
+    path = '/'.join(path.split('/')[:-1])
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
+def traverse(path):
+    for item in os.listdir(path):
+        full_path = os.path.join(path, item)
+        if os.path.isdir(full_path):
+            for result in traverse(full_path):
+                yield os.path.join(item, result)
+        elif not item.startswith('.'):
+            yield item
+
+
 class LocalSyncClient(object):
     def __init__(self, local_dir):
         self.local_dir = local_dir
@@ -18,31 +34,18 @@ class LocalSyncClient(object):
         pass
 
     def keys(self):
-        for item in os.listdir(self.local_dir):
-            if item.startswith('.'):
-                continue
-
-            if os.path.isfile(os.path.join(self.local_dir, item)):
-                yield item
+        return list(traverse(self.local_dir))
 
     def put_object(self, key, fp, timestamp):
         object_path = os.path.join(self.local_dir, key)
 
-        object_stat = None
-        if os.path.exists(object_path):
-            object_stat = os.stat(object_path)
-        else:
-            # needs some cleanup love
-            dir_path = '{}/{}'.format(self.local_dir, '/'.join(key.split('/')[:-1]))
-            os.makedirs(dir_path)
+        if not os.path.exists(object_path):
+            create_parent_directories(object_path)
 
         with open(object_path, 'wb') as fp2:
             fp2.write(fp.read())
 
-        # If the file was just created
-        if object_stat is None:
-            object_stat = os.stat(object_path)
-
+        object_stat = os.stat(object_path)
         os.utime(object_path, (object_stat.st_atime, timestamp))
 
     def get_object(self, key):
