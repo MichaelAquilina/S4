@@ -31,12 +31,19 @@ class LocalSyncClient(object):
         object_stat = None
         if os.path.exists(object_path):
             object_stat = os.stat(object_path)
+        else:
+            # needs some cleanup love
+            dir_path = '{}/{}'.format(self.local_dir, '/'.join(key.split('/')[:-1]))
+            os.makedirs(dir_path)
 
         with open(object_path, 'wb') as fp2:
             fp2.write(fp.read())
 
-        if object_stat is not None:
-            os.utime(object_path, (object_stat.st_atime, timestamp))
+        # If the file was just created
+        if object_stat is None:
+            object_stat = os.stat(object_path)
+
+        os.utime(object_path, (object_stat.st_atime, timestamp))
 
     def get_object(self, key):
         return open(os.path.join(self.local_dir, key), 'rb')
