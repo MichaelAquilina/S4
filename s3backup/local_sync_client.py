@@ -3,6 +3,9 @@
 import os
 
 
+IGNORED_FILES = {'.syncindex.json.gz', '.syncindex'}
+
+
 def create_parent_directories(path):
     path = '/'.join(path.split('/')[:-1])
     if not os.path.exists(path):
@@ -15,7 +18,7 @@ def traverse(path):
         if os.path.isdir(full_path):
             for result in traverse(full_path):
                 yield os.path.join(item, result)
-        elif not item.startswith('.'):
+        elif item not in IGNORED_FILES:
             yield item
 
 
