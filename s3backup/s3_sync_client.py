@@ -20,11 +20,6 @@ class S3SyncClient(object):
         self.prefix = prefix
         self._get_sync_index()
 
-    def _mend_out_of_date_index(self):
-        for key, value in self.sync_index.items():
-            if not isinstance(value, dict):
-                self.sync_index[key] = {'timestamp': value, 'LastModified': None}
-
     def _get_sync_index(self):
         logger.info('Getting sync index from %s', self.bucket)
         try:
@@ -43,9 +38,6 @@ class S3SyncClient(object):
                 raise
         else:
             self._dirty_keys = set()
-
-        # Hack for backwards compatability. TODO: remove
-        self._mend_out_of_date_index()
 
     def get_object_timestamp(self, key):
         metadata = self.sync_index.get(key)
