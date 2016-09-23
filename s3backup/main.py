@@ -71,7 +71,7 @@ def perform_sync(s3_client, local_client):
             local_client.put_object(key, fp, s3_timestamp)
             fp.close()
         else:
-            logger.info('No need to update: %s', key)
+            logger.debug('No need to update: %s', key)
 
     s3_client.update_sync_index()
     local_client.update_sync_index()
