@@ -24,15 +24,21 @@ class TestLocalSyncClient(object):
         sync_client = setup_sync_client({
             'foo': 1000,
             'bar': 2000,
-            'hello/world.txt': 3000,
             '.hidden': 4000,
+            'hello/world.txt': 3000,
+            '.syncindex.json.gz': 4500,
             'hello/.hidden': 5000,
+            'hello/.syncindex': 5000,
         })
-        assert set(sync_client.keys()) == {'foo', 'bar', 'hello/world.txt'}
+        assert set(sync_client.keys()) == {
+            'foo', 'bar', 'hello/world.txt', '.hidden', 'hello/.hidden'
+        }
 
         assert sync_client.get_object_timestamp('foo') == 1000
         assert sync_client.get_object_timestamp('bar') == 2000
+        assert sync_client.get_object_timestamp('.hidden') == 4000
         assert sync_client.get_object_timestamp('hello/world.txt') == 3000
+        assert sync_client.get_object_timestamp('hello/.hidden') == 5000
 
     def test_put_get_object(self):
         sync_client = setup_sync_client({})
