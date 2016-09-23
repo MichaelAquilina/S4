@@ -68,6 +68,8 @@ class TestS3SyncClient(object):
         assert sync_client.get_object_timestamp(key) == timestamp
         assert sync_client.get_object(key).read() == content
 
+        assert sync_client._dirty_keys == {'apples/oranges.txt'}
+
     @moto.mock_s3
     def test_get_object_timestamp(self):
         sync_index = {
@@ -92,6 +94,8 @@ class TestS3SyncClient(object):
         assert sync_client.get_object_timestamp('blargh') == 11111111
         assert sync_client.get_object_timestamp('idontexist') == 2323232
 
+        assert sync_client._dirty_keys == {'blargh', 'idontexist'}
+
     @moto.mock_s3
     def test_update_sync_index(self):
         bucket = 'fuzzywuzzybucket'
@@ -109,7 +113,12 @@ class TestS3SyncClient(object):
         assert sync_client.sync_index == {
             'hello/world': {'timestamp': 20000000, 'LastModified': None}
         }
+        assert sync_client._dirty_keys == {'hello/world'}
+
         sync_client.update_sync_index()
+
+        assert sync_client._dirty_keys == set()
+
         result = client.get_object(
             Bucket=bucket,
             Key='{}/.syncindex.json.gz'.format(prefix),
