@@ -31,7 +31,6 @@ class S3SyncClient(object):
             self.sync_index = json.loads(json_data)
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'NoSuchKey':
-                # Should only set to default if the file is not found. Should check exception type
                 logger.warning("Sync Index not found. Creating empty index")
                 self.sync_index = {}
             else:
