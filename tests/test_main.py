@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import shutil
 import tempfile
 
 import boto3
@@ -17,9 +18,7 @@ from s3backup.s3_sync_client import S3SyncClient
 fake = Faker()
 
 
-def setup_local_sync_client():
-    target_folder = tempfile.mkdtemp()
-
+def setup_local_sync_client(target_folder):
     for i in range(20):
         object_path = os.path.join(target_folder, fake.file_name(category='text'))
         with open(object_path, 'w') as fp:
@@ -38,9 +37,17 @@ def setup_s3_sync_client():
     return S3SyncClient(client, bucket_name, prefix)
 
 
-@moto.mock_s3
-def test_perform_sync():
-    local_client = setup_local_sync_client()
-    s3_client = setup_s3_sync_client()
+class TestPerformSync(object):
 
-    main.perform_sync(s3_client, local_client)
+    def setup_method(self):
+        self.target_folder = tempfile.mkdtemp()
+
+    def teardown_method(self):
+        shutil.rmtree(self.target_folder)
+
+    @moto.mock_s3
+    def test_perform_sync(self):
+        local_client = setup_local_sync_client(self.target_folder)
+        s3_client = setup_s3_sync_client()
+
+        main.perform_sync(s3_client, local_client)
