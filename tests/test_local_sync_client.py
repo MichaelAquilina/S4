@@ -2,13 +2,13 @@
 
 import io
 import os
+import shutil
 import tempfile
 
 from s3backup import local_sync_client
 
 
-def setup_sync_client(object_list):
-    local_dir = tempfile.mkdtemp()
+def setup_sync_client(object_list, local_dir):
     for key, timestamp in object_list.items():
         path = '{}/{}'.format(local_dir, key)
         local_sync_client.create_parent_directories(path)
@@ -20,6 +20,12 @@ def setup_sync_client(object_list):
 
 class TestLocalSyncClient(object):
 
+    def setup_method(self):
+        self.local_dir = tempfile.mkdtemp()
+
+    def teardown_method(self):
+        shutil.rmtree(self.local_dir)
+
     def test_keys_and_timestamp(self):
         sync_client = setup_sync_client({
             'foo': 1000,
@@ -29,7 +35,7 @@ class TestLocalSyncClient(object):
             '.syncindex.json.gz': 4500,
             'hello/.hidden': 5000,
             'hello/.syncindex': 5000,
-        })
+        }, self.local_dir)
         assert set(sync_client.keys()) == {
             'foo', 'bar', 'hello/world.txt', '.hidden', 'hello/.hidden'
         }
@@ -41,7 +47,7 @@ class TestLocalSyncClient(object):
         assert sync_client.get_object_timestamp('hello/.hidden') == 5000
 
     def test_put_get_object(self):
-        sync_client = setup_sync_client({})
+        sync_client = setup_sync_client({}, self.local_dir)
         sync_client.put_object('foo/hello_world.txt', io.BytesIO(b'howdy'), 10000)
         sync_client.put_object('foobar.md', io.BytesIO(b'baz'), 2023230)
 
