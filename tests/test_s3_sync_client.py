@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import gzip
+import hashlib
 import io
 import json
 
@@ -35,9 +36,9 @@ class TestS3SyncClient(object):
         sync_client = S3SyncClient(client, 'testbucket', 'Music/')
         assert sync_client.sync_index == {}
 
-        sync_client.put_object('dead/pool', io.BytesIO(b'testing'), 20000)
+        sync_client.put_object('dead/pool', io.BytesIO(b'testing'), {'timestamp': 20000})
         assert sync_client.sync_index == {
-            'dead/pool': {'timestamp': 20000, 'LastModified': None},
+            'dead/pool': {'timestamp': 20000},
         }
 
     @moto.mock_s3
@@ -65,39 +66,62 @@ class TestS3SyncClient(object):
         key = 'apples/oranges.txt'
         timestamp = 13371337
         content = b'hello world'
+        md5 = hashlib.md5()
+        md5.update(content)
+        md5_hash = md5.hexdigest()
 
         target_object = io.BytesIO(content)
         sync_client = setup_sync_client()
-        sync_client.put_object(key, target_object, timestamp)
+        sync_client.put_object(key, target_object, {
+            'timestamp': timestamp,
+            'md5': md5_hash,
+        })
 
-        assert sync_client.get_object_timestamp(key) == timestamp
+        metadata = sync_client.get_object_metadata(key)
+        assert metadata['timestamp'] == timestamp
+        assert metadata['md5'] == md5_hash
         assert sync_client.get_object(key).read() == content
 
         assert sync_client._dirty_keys == {'apples/oranges.txt'}
 
     @moto.mock_s3
-    def test_get_object_timestamp(self):
+    def test_get_object_metadata(self):
         sync_index = {
-            'foo': {'timestamp': 123213213, 'LastModified': 423232},
+            'foo': {'timestamp': 123213213, 'LastModified': 423230},
             'bar': {'timestamp': 231412323, 'LastModified': 324232},
+            'car': {'LastModified': 42323},
         }
         sync_client = setup_sync_client(sync_index=sync_index)
-        assert sync_client.get_object_timestamp('foo') == 123213213
-        assert sync_client.get_object_timestamp('bar') == 231412323
-        assert sync_client.get_object_timestamp('idontexist') is None
+        assert sync_client.get_object_metadata('foo') == {
+            'timestamp': 123213213,
+            'LastModified': 423230,
+        }
+        assert sync_client.get_object_metadata('bar') == {
+            'timestamp': 231412323,
+            'LastModified': 324232,
+        }
+        assert sync_client.get_object_metadata('car') == {
+            'LastModified': 42323,
+        }
+        assert sync_client.get_object_metadata('idontexist') is None
 
     @moto.mock_s3
-    def test_set_object_timestamp(self):
+    def test_set_object_metadata(self):
         sync_index = {
             'blargh': {'timestamp': 99999999, 'LastModified': 9999999},
         }
         sync_client = setup_sync_client(sync_index=sync_index)
-        sync_client.set_object_timestamp('blargh', 11111111)
+        sync_client.set_object_metadata('blargh', {'timestamp': 11111111})
         # TODO: should probably *not* work
-        sync_client.set_object_timestamp('idontexist', 2323232)
+        sync_client.set_object_metadata('idontexist', {'timestamp': 2323232})
 
-        assert sync_client.get_object_timestamp('blargh') == 11111111
-        assert sync_client.get_object_timestamp('idontexist') == 2323232
+        assert sync_client.get_object_metadata('blargh') == {
+            'timestamp': 11111111,
+            'LastModified': 9999999,
+        }
+        assert sync_client.get_object_metadata('idontexist') == {
+            'timestamp': 2323232,
+        }
 
         assert sync_client._dirty_keys == {'blargh', 'idontexist'}
 
@@ -114,9 +138,9 @@ class TestS3SyncClient(object):
         )
         assert sync_client.sync_index == {}
 
-        sync_client.put_object('hello/world', io.BytesIO(b'hello'), 20000000)
+        sync_client.put_object('hello/world', io.BytesIO(b'hello'), {'timestamp': 20000000})
         assert sync_client.sync_index == {
-            'hello/world': {'timestamp': 20000000, 'LastModified': None}
+            'hello/world': {'timestamp': 20000000}
         }
         assert sync_client._dirty_keys == {'hello/world'}
 
