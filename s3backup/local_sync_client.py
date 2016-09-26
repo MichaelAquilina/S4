@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import hashlib
 import os
 
 
@@ -32,6 +33,13 @@ class LocalSyncClient(object):
             return os.stat(object_path).st_mtime
         else:
             return None
+
+    def get_object_md5(self, key):
+        object_path = os.path.join(self.local_dir, key)
+        with open(object_path, 'rb') as fp:
+            md5 = hashlib.md5()
+            md5.update(fp.read())
+        return md5.hexdigest()
 
     def update_sync_index(self):
         pass
