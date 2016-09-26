@@ -76,6 +76,12 @@ class S3SyncClient(object):
         )
         self.set_object_metadata(key, metadata)
 
+    def get_object_md5(self, key):
+        return self.client.head_object(
+            Bucket=self.bucket,
+            Key=os.path.join(self.prefix, key),
+        )['ETag'].strip('"')
+
     def get_object(self, key):
         return self.client.get_object(
             Bucket=self.bucket,

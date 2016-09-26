@@ -66,14 +66,18 @@ def perform_sync(s3_client, local_client):
             local_client.put_object(key, fp, s3_timestamp)
             fp.close()
         elif local_timestamp > s3_timestamp:
-            logger.info('Need to upload (UPDATE): %s', key)
-            md5 = local_client.get_object_md5(key)
-            fp = local_client.get_object(key)
-            s3_client.put_object(key, fp, {
-                'timestamp': local_timestamp,
-                'md5': md5,
-            })
-            fp.close()
+            local_md5 = local_client.get_object_md5(key)
+            s3_md5 = s3_client.get_object_md5(key)
+            if local_md5 != s3_md5:
+                logger.info('Need to upload (UPDATE): %s', key)
+                fp = local_client.get_object(key)
+                s3_client.put_object(key, fp, {
+                    'timestamp': local_timestamp,
+                    'md5': local_md5,
+                })
+                fp.close()
+            else:
+                logger.debug('Local timestamp is newer for "%s" but md5 hash is the same', key)
         elif local_timestamp < s3_timestamp:
             logger.info('Need to download (UPDATE): %s', key)
             fp = s3_client.get_object(key)
