@@ -38,15 +38,13 @@ class S3SyncClient(object):
         finally:
             self._dirty_keys = set()
 
-    def get_object_timestamp(self, key):
-        metadata = self.sync_index.get(key)
-        if metadata:
-            return metadata['timestamp']
+    def get_object_metadata(self, key, metadata=None):
+        return self.sync_index.get(key)
 
-    def set_object_timestamp(self, key, timestamp):
+    def set_object_metadata(self, key, metadata):
         if key not in self.sync_index:
-            self.sync_index[key] = {'LastModified': None}
-        self.sync_index[key]['timestamp'] = timestamp
+            self.sync_index[key] = {}
+        self.sync_index[key].update(metadata)
         self._dirty_keys.add(key)
 
     def keys(self):
@@ -70,13 +68,13 @@ class S3SyncClient(object):
             )
             self._dirty_keys.clear()
 
-    def put_object(self, key, fp, timestamp):
+    def put_object(self, key, fp, metadata):
         self.client.put_object(
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
             Body=fp,
         )
-        self.set_object_timestamp(key, timestamp)
+        self.set_object_metadata(key, metadata)
 
     def get_object(self, key):
         return self.client.get_object(

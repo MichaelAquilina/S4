@@ -47,13 +47,13 @@ def perform_sync(s3_client, local_client):
     all_keys = set(keys1).union(set(keys2))
 
     for key in all_keys:
-        s3_timestamp = s3_client.get_object_timestamp(key)
+        s3_timestamp = s3_client.get_object_metadata(key)['timestamp']
         local_timestamp = local_client.get_object_timestamp(key)
 
         if s3_timestamp is None:
             logger.info('Need to upload (CREATE): %s', key)
             fp = local_client.get_object(key)
-            s3_client.put_object(key, fp, local_timestamp)
+            s3_client.put_object(key, fp, {'timestamp': local_timestamp})
             fp.close()
         elif local_timestamp is None:
             logger.info('Need to download (CREATE): %s', key)
@@ -63,7 +63,7 @@ def perform_sync(s3_client, local_client):
         elif local_timestamp > s3_timestamp:
             logger.info('Need to upload (UPDATE): %s', key)
             fp = local_client.get_object(key)
-            s3_client.put_object(key, fp, local_timestamp)
+            s3_client.put_object(key, fp, {'timestamp': local_timestamp})
             fp.close()
         elif local_timestamp < s3_timestamp:
             logger.info('Need to download (UPDATE): %s', key)
