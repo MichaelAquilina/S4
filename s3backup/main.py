@@ -33,7 +33,7 @@ def sync():
     directories = configuration['directories']
 
     for local_dir, s3_key in directories.items():
-        logger.info("Syncing %s with %s", local_dir, s3_key)
+        logger.info('Syncing "%s" with "%s"', local_dir, s3_key)
 
         local_client = LocalSyncClient(local_dir)
         s3_client = S3SyncClient(client, bucket, s3_key)
