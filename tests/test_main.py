@@ -20,14 +20,13 @@ from s3backup.s3_sync_client import S3SyncClient
 fake = Faker()
 
 
-def setup_local_sync_client(target_folder, file_names=None):
-    if file_names is None:
-        file_names = [fake.file_name(category='text') for _ in range(20)]
-
-    for key in file_names:
+def setup_local_sync_client(target_folder, files):
+    for key, timestamp in files.items():
         object_path = os.path.join(target_folder, key)
         with open(object_path, 'w') as fp:
             fp.write(fake.text())
+            fp.flush()
+            os.utime(object_path, (timestamp, timestamp))
 
     return LocalSyncClient(target_folder)
 
@@ -60,7 +59,7 @@ class TestPerformSync(object):
         )
 
         s3_client = S3SyncClient(client, 'testbucket', 'mybackup/')
-        local_client = setup_local_sync_client(self.target_folder, file_names=[])
+        local_client = setup_local_sync_client(self.target_folder, files={})
 
         main.perform_sync(s3_client, local_client)
 
@@ -76,9 +75,16 @@ class TestPerformSync(object):
             'foo/bar', 'skeleton/gloves.txt', 'hello.txt'
         }
 
+        for key, metadata in index.items():
+            local_timestamp = local_client.get_object_timestamp(key)
+            s3_timestamp = s3_client.get_object_timestamp(key)
+            target_timestamp = metadata['timestamp']
+            assert local_timestamp == s3_timestamp == target_timestamp
+
     @moto.mock_s3
     def test_perform_sync_empty_s3(self):
-        local_client = setup_local_sync_client(self.target_folder, file_names=['foo', 'bar'])
+        local_files = {'foo': 42323232, 'bar': 34243343}
+        local_client = setup_local_sync_client(self.target_folder, files=local_files)
 
         client = boto3.client('s3')
         client.create_bucket(Bucket='testbucket')
@@ -95,3 +101,8 @@ class TestPerformSync(object):
         actual_local_keys = set(traverse(self.target_folder))
 
         assert actual_local_keys == actual_s3_keys == {'foo', 'bar'}
+
+        for key, target_timestamp in local_files.items():
+            local_timestamp = local_client.get_object_timestamp(key)
+            s3_timestamp = s3_client.get_object_timestamp(key)
+            assert local_timestamp == s3_timestamp == target_timestamp

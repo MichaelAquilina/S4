@@ -47,6 +47,9 @@ class S3SyncClient(object):
         self.sync_index[key].update(metadata)
         self._dirty_keys.add(key)
 
+    def get_object_timestamp(self, key):
+        return self.get_object_metadata(key)['timestamp']
+
     def keys(self):
         return self.sync_index.keys()
 
