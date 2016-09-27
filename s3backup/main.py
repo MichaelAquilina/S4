@@ -6,7 +6,6 @@ import os
 
 import boto3
 
-
 from local_sync_client import LocalSyncClient
 from s3_sync_client import S3SyncClient
 
@@ -47,8 +46,7 @@ def perform_sync(s3_client, local_client):
     all_keys = set(keys1).union(set(keys2))
 
     for key in sorted(all_keys):
-        s3_metadata = s3_client.get_object_metadata(key)
-        s3_timestamp = s3_metadata.get('timestamp') if s3_metadata else None
+        s3_timestamp = s3_client.get_object_timestamp(key)
         local_timestamp = local_client.get_object_timestamp(key)
 
         if s3_timestamp is None:
