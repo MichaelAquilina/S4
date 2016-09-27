@@ -26,6 +26,11 @@ class TestLocalSyncClient(object):
     def teardown_method(self):
         shutil.rmtree(self.local_dir)
 
+    def test_creates_folder(self):
+        self.local_dir + "/foo/bar"
+        local_sync_client.LocalSyncClient(self.local_dir)
+        assert os.path.exists(self.local_dir)
+
     def test_keys_and_timestamp(self):
         sync_client = setup_sync_client({
             'foo': 1000,
