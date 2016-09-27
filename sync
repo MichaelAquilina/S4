@@ -3,4 +3,4 @@
 from s3backup import main
 
 if __name__ == '__main__':
-  main.sync()
+    main.sync()
