@@ -80,7 +80,9 @@ class TestS3SyncClient(object):
         metadata = sync_client.get_object_metadata(key)
         assert metadata['timestamp'] == timestamp
         assert metadata['md5'] == md5_hash
-        assert sync_client.get_object(key).read() == content
+
+        _, data = sync_client.get_object(key)
+        assert data.read() == content
 
         assert sync_client._dirty_keys == {'apples/oranges.txt'}
 
