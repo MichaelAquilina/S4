@@ -46,7 +46,7 @@ def perform_sync(s3_client, local_client):
     keys2 = s3_client.keys()
     all_keys = set(keys1).union(set(keys2))
 
-    for key in all_keys:
+    for key in sorted(all_keys):
         s3_metadata = s3_client.get_object_metadata(key)
         s3_timestamp = s3_metadata.get('timestamp') if s3_metadata else None
         local_timestamp = local_client.get_object_timestamp(key)
