@@ -74,10 +74,11 @@ class S3SyncClient(object):
             self._dirty_keys.clear()
 
     def put_object(self, key, fp, metadata, callback=None):
-        self.client.put_object(
+        self.client.upload_fileobj(
+            Fileobj=fp,
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
-            Body=fp,
+            Callback=callback,
         )
         self.set_object_metadata(key, metadata)
 
