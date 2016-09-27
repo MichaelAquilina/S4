@@ -88,7 +88,7 @@ def perform_sync(s3_client, local_client):
                     s3_client.put_object(key, fp, {
                         'timestamp': local_timestamp,
                         'md5': local_md5,
-                    }, callback=progressbar)
+                    }, callback=progressbar.update)
                     fp.close()
             else:
                 logger.debug('Local timestamp is newer for "%s" but md5 hash is the same', key)
