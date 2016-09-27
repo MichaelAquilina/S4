@@ -65,12 +65,16 @@ class TestPerformSync(object):
         main.perform_sync(s3_client, local_client)
 
         object_list = client.list_objects(Bucket='testbucket', Prefix='mybackup/')
-        actual_s3_keys = set(obj['Key'].lstrip('mybackup/') for obj in object_list['Contents'])
+        actual_s3_keys = set(
+            obj['Key'].replace('mybackup/', '', 1) for obj in object_list['Contents']
+        )
         actual_s3_keys.remove('.syncindex.json.gz')
 
         actual_local_keys = set(traverse(self.target_folder))
 
-        assert actual_local_keys == actual_s3_keys
+        assert actual_local_keys == actual_s3_keys == {
+            'foo/bar', 'skeleton/gloves.txt', 'hello.txt'
+        }
 
     @moto.mock_s3
     def test_perform_sync_empty_s3(self):
@@ -83,7 +87,11 @@ class TestPerformSync(object):
         main.perform_sync(s3_client, local_client)
 
         object_list = client.list_objects(Bucket='testbucket', Prefix='mybackup/')
+        actual_s3_keys = set(
+            obj['Key'].replace('mybackup/', '', 1) for obj in object_list['Contents']
+        )
+        actual_s3_keys.remove('.syncindex.json.gz')
 
-        actual_keys = set(obj['Key'] for obj in object_list['Contents'])
-        expected_keys = {'mybackup/foo', 'mybackup/bar', 'mybackup/.syncindex.json.gz'}
-        assert actual_keys == expected_keys
+        actual_local_keys = set(traverse(self.target_folder))
+
+        assert actual_local_keys == actual_s3_keys == {'foo', 'bar'}
