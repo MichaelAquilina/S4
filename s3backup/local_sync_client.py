@@ -49,17 +49,28 @@ class LocalSyncClient(object):
     def keys(self):
         return list(traverse(self.local_dir))
 
-    def put_object(self, key, fp, timestamp):
+    def put_object(self, key, fp, timestamp, callback=None):
         object_path = os.path.join(self.local_dir, key)
 
         if not os.path.exists(object_path):
             create_parent_directories(object_path)
 
-        with open(object_path, 'wb') as fp2:
-            fp2.write(fp.read())
-
-        object_stat = os.stat(object_path)
-        os.utime(object_path, (object_stat.st_atime, timestamp))
+        try:
+            with open(object_path, 'wb') as fp2:
+                while True:
+                    data = fp.read(2048)
+                    fp2.write(data)
+                    if callback is not None:
+                        callback(len(data))
+                    if len(data) < 2048:
+                        break
+            object_stat = os.stat(object_path)
+            os.utime(object_path, (object_stat.st_atime, timestamp))
+        except:
+            os.remove(object_path)
+            raise
 
     def get_object(self, key):
-        return open(os.path.join(self.local_dir, key), 'rb')
+        object_path = os.path.join(self.local_dir, key)
+        size = os.stat(object_path).st_size
+        return size, open(object_path, 'rb')

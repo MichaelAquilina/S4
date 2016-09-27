@@ -56,8 +56,10 @@ class TestLocalSyncClient(object):
         sync_client.put_object('foo/hello_world.txt', io.BytesIO(b'howdy'), 10000)
         sync_client.put_object('foobar.md', io.BytesIO(b'baz'), 2023230)
 
-        assert sync_client.get_object('foo/hello_world.txt').read() == b'howdy'
+        _, data = sync_client.get_object('foo/hello_world.txt')
+        assert data.read() == b'howdy'
         assert sync_client.get_object_timestamp('foo/hello_world.txt') == 10000
 
-        assert sync_client.get_object('foobar.md').read() == b'baz'
+        _, data = sync_client.get_object('foobar.md')
+        assert data.read() == b'baz'
         assert sync_client.get_object_timestamp('foobar.md') == 2023230

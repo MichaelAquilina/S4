@@ -73,7 +73,7 @@ class S3SyncClient(object):
             )
             self._dirty_keys.clear()
 
-    def put_object(self, key, fp, metadata):
+    def put_object(self, key, fp, metadata, callback=None):
         self.client.put_object(
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
@@ -88,7 +88,8 @@ class S3SyncClient(object):
         )['ETag'].strip('"')
 
     def get_object(self, key):
-        return self.client.get_object(
+        response = self.client.get_object(
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
-        )['Body']
+        )
+        return response['ContentLength'], response['Body']
