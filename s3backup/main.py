@@ -7,8 +7,8 @@ import os
 import boto3
 import tqdm
 
-from local_sync_client import LocalSyncClient
-from s3_sync_client import S3SyncClient
+from s3backup.local_sync_client import LocalSyncClient
+from s3backup.s3_sync_client import S3SyncClient
 
 
 logger = logging.getLogger(__name__)
