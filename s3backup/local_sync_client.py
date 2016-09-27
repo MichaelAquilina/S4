@@ -26,6 +26,8 @@ def traverse(path):
 class LocalSyncClient(object):
     def __init__(self, local_dir):
         self.local_dir = local_dir
+        if not os.path.exists(self.local_dir):
+            os.makedirs(self.local_dir)
 
     def get_object_timestamp(self, key):
         object_path = os.path.join(self.local_dir, key)
