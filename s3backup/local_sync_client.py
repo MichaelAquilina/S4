@@ -72,5 +72,5 @@ class LocalSyncClient(object):
 
     def get_object(self, key):
         object_path = os.path.join(self.local_dir, key)
-        size = os.stat(object_path).st_size
-        return size, open(object_path, 'rb')
+        stat = os.stat(object_path)
+        return stat.st_size, open(object_path, 'rb'), stat

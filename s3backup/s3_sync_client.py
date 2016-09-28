@@ -78,7 +78,7 @@ class S3SyncClient(object):
             Fileobj=fp,
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
-            ExtraArgs={'Metadata': {k: json.dumps(v) for k, v in metadata.items()}},
+            ExtraArgs={'Metadata': {k: str(v) for k, v in metadata.items()}},
             Callback=callback,
         )
         self.set_object_metadata(key, metadata)
@@ -94,4 +94,4 @@ class S3SyncClient(object):
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
         )
-        return response['ContentLength'], response['Body']
+        return response['ContentLength'], response['Body'], response['Metadata']

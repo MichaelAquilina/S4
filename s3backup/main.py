@@ -64,7 +64,7 @@ def perform_sync(s3_client, local_client):
         if s3_timestamp is None:
             logger.info('Need to upload (CREATE): %s', key)
             md5 = local_client.get_object_md5(key)
-            total, fp = local_client.get_object(key)
+            total, fp, _ = local_client.get_object(key)
             with get_progress_bar(total, 'Uploading') as progressbar:
                 s3_client.put_object(key, fp, {
                     'timestamp': local_timestamp,
@@ -73,7 +73,7 @@ def perform_sync(s3_client, local_client):
                 fp.close()
         elif local_timestamp is None:
             logger.info('Need to download (CREATE): %s', key)
-            total, fp = s3_client.get_object(key)
+            total, fp, _ = s3_client.get_object(key)
             with get_progress_bar(total, 'Downloading') as progressbar:
                 local_client.put_object(key, fp, s3_timestamp, callback=progressbar.update)
                 fp.close()
@@ -83,7 +83,7 @@ def perform_sync(s3_client, local_client):
             s3_md5 = s3_client.get_object_md5(key)
             if local_md5 != s3_md5:
                 logger.info('Need to upload (UPDATE): %s', key)
-                total, fp = local_client.get_object(key)
+                total, fp, _ = local_client.get_object(key)
                 with get_progress_bar(total, 'Uploading') as progressbar:
                     s3_client.put_object(key, fp, {
                         'timestamp': local_timestamp,
@@ -94,7 +94,7 @@ def perform_sync(s3_client, local_client):
                 logger.debug('Local timestamp is newer for "%s" but md5 hash is the same', key)
         elif local_timestamp < s3_timestamp:
             logger.info('Need to download (UPDATE): %s', key)
-            total, fp = s3_client.get_object(key)
+            total, fp, _ = s3_client.get_object(key)
             with get_progress_bar(total, 'Downloading') as progressbar:
                 local_client.put_object(key, fp, s3_timestamp, callback=progressbar.update)
                 fp.close()
