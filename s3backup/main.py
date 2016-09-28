@@ -53,10 +53,10 @@ def get_progress_bar(max_value, desc):
 
 
 def perform_sync(s3_client, local_client):
-    for operation, mode, key, timestamp in get_sync_status(s3_client, local_client):
+    for operation, mode, key, timestamp, md5 in get_sync_status(s3_client, local_client):
+
         if operation == 'UPLOAD':
             logger.info('Need to upload (%s): %s', mode, key)
-            md5 = local_client.get_object_md5(key)
             total, fp, _ = local_client.get_object(key)
 
             with get_progress_bar(total, 'Uploading') as progressbar:
@@ -94,15 +94,25 @@ def get_sync_status(s3_client, local_client):
         local_timestamp = local_client.get_object_timestamp(key)
 
         if s3_timestamp is None:
-            yield ('UPLOAD', 'CREATE', key, local_timestamp)
+            yield ('UPLOAD', 'CREATE', key, local_timestamp, None)
+
         elif local_timestamp is None:
-            yield ('DOWNLOAD', 'CREATE', key, s3_timestamp)
+            yield ('DOWNLOAD', 'CREATE', key, s3_timestamp, None)
+
         elif local_timestamp > s3_timestamp:
-            yield ('UPLOAD', 'UPDATE', key, local_timestamp)
+            local_md5 = local_client.get_object_md5(key)
+            s3_md5 = s3_client.get_object_md5(key)
+            if local_md5 != s3_md5:
+                yield ('UPLOAD', 'UPDATE', key, local_timestamp, local_md5)
+
         elif local_timestamp < s3_timestamp:
-            yield ('DOWNLOAD', 'UPDATE', key, s3_timestamp)
+            local_md5 = local_client.get_object_md5(key)
+            s3_md5 = s3_client.get_object_md5(key)
+            if local_md5 != s3_md5:
+                yield ('DOWNLOAD', 'UPDATE', key, s3_timestamp, s3_md5)
+
         else:
-            yield (None, None, key, None)
+            yield (None, None, key, None, None)
 
 
 if __name__ == '__main__':
