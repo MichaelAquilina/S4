@@ -56,7 +56,7 @@ def perform_sync(s3_client, local_client):
     for operation, mode, key, timestamp, md5 in get_sync_status(s3_client, local_client):
 
         if operation == 'UPLOAD':
-            logger.info('Need to upload (%s): %s', mode, key)
+            logger.info('Need to upload (%s): %s', key, mode)
             total, fp, _ = local_client.get_object(key)
 
             with get_progress_bar(total, 'Uploading') as progressbar:
@@ -67,7 +67,7 @@ def perform_sync(s3_client, local_client):
                 fp.close()
 
         elif operation == 'DOWNLOAD':
-            logger.info('Need to download (%s): %s', key, mode)
+            logger.info('Need to download (%s): %s', mode, key)
             total, fp, _ = s3_client.get_object(key)
 
             with get_progress_bar(total, 'Downloading') as progressbar:
