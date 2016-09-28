@@ -94,4 +94,8 @@ class S3SyncClient(object):
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
         )
-        return response['ContentLength'], response['Body'], response['Metadata']
+        return (
+            response['ContentLength'],
+            response['Body'],
+            response['Metadata'],
+        )
