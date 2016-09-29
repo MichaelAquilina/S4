@@ -17,7 +17,7 @@ Create a `.s3syncrc` file in your home direcoty with the following JSON structur
   "bucket": "s3://mybucketurl",
   "directories": {
     "/home/username/myfolder1": "myfolder1",
-    "/home/username/myfolder2": "myfolder2",
+    "/home/username/myfolder2": "myfolder2"
   }
 }
 ```
