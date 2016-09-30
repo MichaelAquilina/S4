@@ -20,12 +20,16 @@ class S3SyncClient(object):
         self.prefix = prefix
         self._get_sync_index()
 
+    @property
+    def sync_index_path(self):
+        return os.path.join(self.prefix, self.SYNC_INDEX)
+
     def _get_sync_index(self):
         logger.info('Getting sync index from %s', self.bucket)
         try:
             data = self.client.get_object(
                 Bucket=self.bucket,
-                Key=os.path.join(self.prefix, self.SYNC_INDEX),
+                Key=self.sync_index_path,
             )['Body']
             json_data = gzip.decompress(data.read()).decode('utf-8')
             self.sync_index = json.loads(json_data)
@@ -68,7 +72,7 @@ class S3SyncClient(object):
 
             self.client.put_object(
                 Bucket=self.bucket,
-                Key=os.path.join(self.prefix, self.SYNC_INDEX),
+                Key=self.sync_index_path,
                 Body=gzip.compress(sync_data),
             )
             self._dirty_keys.clear()
