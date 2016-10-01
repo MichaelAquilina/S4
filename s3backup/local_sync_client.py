@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import datetime as dt
 import hashlib
+import json
+import logging
 import os
+
+
+logger = logging.getLogger(__name__)
 
 
 IGNORED_FILES = {'.syncindex.json.gz', '.syncindex'}
@@ -23,11 +29,48 @@ def traverse(path):
             yield item
 
 
+def generate_index(target_dir):
+    BUFFER = 4096
+    result = {}
+    for key in traverse(target_dir):
+        object_path = os.path.join(target_dir, key)
+        md5 = hashlib.md5()
+        with open(object_path, 'rb') as fp:
+            while True:
+                data = fp.read(BUFFER)
+                md5.update(data)
+                if len(data) < BUFFER:
+                    break
+
+        stat = os.stat(object_path)
+        result[key] = {
+            'timestamp': None,
+            'LastModified': dt.datetime.utcfromtimestamp(stat.st_atime),
+            'size': stat.st_size,
+            'md5': md5.hexdigest(),
+        }
+    return result
+
+
 class LocalSyncClient(object):
+    SYNC_INDEX = '.syncindex'
+
     def __init__(self, local_dir):
         self.local_dir = local_dir
         if not os.path.exists(self.local_dir):
             os.makedirs(self.local_dir)
+        self._get_sync_index()
+
+    @property
+    def sync_index_path(self):
+        return os.path.join(self.local_dir, self.SYNC_INDEX)
+
+    def _get_sync_index(self):
+        if os.path.exists(self.sync_index_path):
+            with open(self.sync_index_path, 'r') as fp:
+                self.sync_index = json.load(fp)
+        else:
+            self.sync_index = {}
 
     def get_object_timestamp(self, key):
         object_path = os.path.join(self.local_dir, key)
@@ -44,7 +87,8 @@ class LocalSyncClient(object):
         return md5.hexdigest()
 
     def update_sync_index(self):
-        pass
+        with open(self.sync_index_path, 'w') as fp:
+            json.dump(self.sync_index, fp)
 
     def keys(self):
         return list(traverse(self.local_dir))

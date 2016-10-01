@@ -1,11 +1,41 @@
 # -*- coding: utf-8 -*-
 
+import datetime as dt
+import hashlib
 import io
 import os
 import shutil
 import tempfile
 
 from s3backup import local_sync_client
+
+
+class TestGenerateIndex(object):
+    def setup_method(self):
+        self.local_dir = tempfile.mkdtemp()
+
+    def teardown_method(self):
+        shutil.rmtree(self.local_dir)
+
+    def test_empty_directory(self):
+        assert local_sync_client.generate_index(self.local_dir) == {}
+
+    def test_correct_output(self):
+        body = b'hey, whats up?'
+        md5 = hashlib.md5()
+        md5.update(body)
+
+        with open(os.path.join(self.local_dir, 'foobar'), 'wb') as fp:
+            fp.write(body)
+
+        actual_index = local_sync_client.generate_index(self.local_dir)
+
+        assert set(actual_index.keys()) == {'foobar'}
+        assert actual_index['foobar']['timestamp'] is None
+        # cannot assert exact LastModified
+        assert isinstance(actual_index['foobar']['LastModified'], dt.datetime)
+        assert actual_index['foobar']['md5'] == md5.hexdigest()
+        assert actual_index['foobar']['size'] == len(body)
 
 
 def setup_sync_client(object_list, local_dir):
