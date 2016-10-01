@@ -8,10 +8,11 @@ import json
 
 import boto3
 import freezegun
-import pytz
 import moto
+import pytz
 
-from s3backup.s3_sync_client import S3SyncClient, generate_index
+from s3backup.s3_sync_client import generate_index
+from s3backup.s3_sync_client import S3SyncClient
 
 
 class TestGenerateIndex(object):

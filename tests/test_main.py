@@ -7,15 +7,13 @@ import shutil
 import tempfile
 
 import boto3
-
 from faker import Faker
-
 import moto
 
 from s3backup import main
-from s3backup.local_sync_client import LocalSyncClient, traverse
+from s3backup.local_sync_client import LocalSyncClient
+from s3backup.local_sync_client import traverse
 from s3backup.s3_sync_client import S3SyncClient
-
 
 fake = Faker()
 
