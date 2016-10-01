@@ -1,14 +1,58 @@
 # -*- coding: utf-8 -*-
 
+import datetime as dt
 import gzip
 import hashlib
 import io
 import json
 
 import boto3
+import freezegun
+import pytz
 import moto
 
-from s3backup.s3_sync_client import S3SyncClient
+from s3backup.s3_sync_client import S3SyncClient, generate_index
+
+
+class TestGenerateIndex(object):
+    @moto.mock_s3
+    def test_empty_bucket(self):
+        client = boto3.client('s3')
+        client.create_bucket(Bucket='testbucket')
+        assert generate_index(client, 'testbucket', 'foobar') == {}
+
+    @moto.mock_s3
+    def test_correct_output(self):
+        client = boto3.client('s3')
+        client.create_bucket(Bucket='testbucket')
+
+        body = b'ahoy there matey!'
+        md5 = hashlib.md5()
+        md5.update(body)
+
+        with freezegun.freeze_time('2016-09-30 13:30'):
+            client.put_object(
+                Bucket='testbucket',
+                Key='piratestreasure/xmarksthespot.txt',
+                Body=io.BytesIO(b'I should not be part of the output'),
+            )
+            client.put_object(
+                Bucket='testbucket',
+                Key='pirates/hello.txt',
+                Body=io.BytesIO(body),
+            )
+
+        actual_index = generate_index(client, 'testbucket', 'pirates')
+        expected_index = {
+            'hello.txt': {
+                'timestamp': None,
+                'LastModified': dt.datetime(2016, 9, 30, 13, 30, tzinfo=pytz.UTC),
+                'size': len(body),
+                'md5': md5.hexdigest(),
+            }
+        }
+
+        assert actual_index == expected_index
 
 
 def setup_sync_client(client=None, bucket='testbucket', key='Music', sync_index={}):

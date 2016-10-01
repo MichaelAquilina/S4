@@ -1,5 +1,7 @@
 Faker==0.7.3
 flake8==3.0.4
+freezegun==0.3.7
 ipdb==0.10.1
 moto==0.4.27
 pytest==3.0.2
+pytz==2016.6.1

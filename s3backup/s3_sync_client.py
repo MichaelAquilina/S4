@@ -11,6 +11,29 @@ import botocore
 logger = logging.getLogger(__name__)
 
 
+def generate_index(client, bucket, prefix):
+    if not prefix.endswith('/'):
+        prefix += '/'
+
+    results = {}
+    response = client.list_objects(
+        Bucket=bucket,
+        Prefix=prefix,
+    )
+    if 'Contents' not in response:
+        return {}
+
+    for obj in response['Contents']:
+        key = obj['Key'].replace(prefix, '', 1)
+        results[key] = {
+            'timestamp': None,
+            'LastModified': obj['LastModified'],
+            'size': obj['Size'],
+            'md5': json.loads(obj['ETag']),
+        }
+    return results
+
+
 class S3SyncClient(object):
     SYNC_INDEX = '.syncindex.json.gz'
 
@@ -35,7 +58,7 @@ class S3SyncClient(object):
             self.sync_index = json.loads(json_data)
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'NoSuchKey':
-                logger.warning("Sync Index not found. Creating empty index")
+                logger.warning("Sync Index not found. Recreating")
                 self.sync_index = {}
             else:
                 raise
