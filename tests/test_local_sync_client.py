@@ -11,6 +11,7 @@ from s3backup import local_sync_client
 
 
 class TestGenerateIndex(object):
+
     def setup_method(self):
         self.local_dir = tempfile.mkdtemp()
 
