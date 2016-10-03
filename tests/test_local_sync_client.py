@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import datetime as dt
 import hashlib
 import io
+import json
 import os
 import shutil
 import tempfile
@@ -34,7 +34,7 @@ class TestGenerateIndex(object):
         assert set(actual_index.keys()) == {'foobar'}
         assert actual_index['foobar']['timestamp'] is None
         # cannot assert exact LastModified
-        assert isinstance(actual_index['foobar']['LastModified'], dt.datetime)
+        assert isinstance(actual_index['foobar']['LastModified'], float)
         assert actual_index['foobar']['md5'] == md5.hexdigest()
         assert actual_index['foobar']['size'] == len(body)
 
@@ -45,7 +45,11 @@ def setup_sync_client(object_list, local_dir):
         local_sync_client.create_parent_directories(path)
 
         with open(path, 'w'):
-            os.utime(path, (timestamp, timestamp))
+            os.utime(path, None)
+
+    with open(os.path.join(local_dir, '.syncindex'), 'w') as fp:
+        json.dump(object_list, fp)
+
     return local_sync_client.LocalSyncClient(local_dir)
 
 
@@ -62,15 +66,27 @@ class TestLocalSyncClient(object):
         local_sync_client.LocalSyncClient(self.local_dir)
         assert os.path.exists(self.local_dir)
 
+    def test_detect_deletions(self):
+        with open(os.path.join(self.local_dir, 'foo'), 'w') as fp:
+            fp.write('testing')
+
+        with open(os.path.join(self.local_dir, '.syncindex'), 'w') as fp:
+            json.dump({
+                'foo': {'timestamp': 20323, 'LastModified': 20323, 'size': 20, 'md5': None},
+                'bar': {'timestamp': 33333, 'LastModified': 33333, 'size': 40, 'md5': None},
+            }, fp)
+
+        local_sync_client.LocalSyncClient(self.local_dir)
+
     def test_keys_and_timestamp(self):
         sync_client = setup_sync_client({
-            'foo': 1000,
-            'bar': 2000,
-            '.hidden': 4000,
-            'hello/world.txt': 3000,
-            '.syncindex.json.gz': 4500,
-            'hello/.hidden': 5000,
-            'hello/.syncindex': 5000,
+            'foo': {'timestamp': 1000},
+            'bar': {'timestamp': 2000},
+            '.hidden': {'timestamp': 4000},
+            'hello/world.txt': {'timestamp': 3000},
+            '.syncindex.json.gz': {'timestamp': 4500},
+            'hello/.hidden': {'timestamp': 5000},
+            'hello/.syncindex': {'timestamp': 5000},
         }, self.local_dir)
         assert set(sync_client.keys()) == {
             'foo', 'bar', 'hello/world.txt', '.hidden', 'hello/.hidden'

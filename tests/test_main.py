@@ -19,12 +19,14 @@ fake = Faker()
 
 
 def setup_local_sync_client(target_folder, objects):
-    for key, timestamp in objects.items():
+    for key in objects.keys():
         object_path = os.path.join(target_folder, key)
         with open(object_path, 'w') as fp:
             fp.write(fake.text())
             fp.flush()
-            os.utime(object_path, (timestamp, timestamp))
+
+    with open(os.path.join(target_folder, '.syncindex'), 'w') as fp:
+        json.dump(objects, fp)
 
     return LocalSyncClient(target_folder)
 
@@ -35,11 +37,10 @@ def setup_s3_sync_client(client, bucket, prefix, objects, create_index=True):
         client.put_object(Bucket='testbucket', Key='mybackup/{}'.format(key), Body=fake.text())
 
     if create_index:
-        index = {key: {'timestamp': timestamp} for key, timestamp in objects.items()}
         client.put_object(
             Bucket='testbucket',
             Key='mybackup/.syncindex.json.gz',
-            Body=gzip.compress(json.dumps(index).encode('utf-8')),
+            Body=gzip.compress(json.dumps(objects).encode('utf-8')),
         )
     return S3SyncClient(client, bucket, prefix)
 
@@ -56,9 +57,9 @@ class TestPerformSync(object):
     def test_perform_sync_empty_local(self):
         client = boto3.client('s3')
         objects = {
-            'foo/bar': 2020,
-            'skeleton/gloves.txt': 5430,
-            'hello.txt': 4000,
+            'foo/bar': {'timestamp': 2020},
+            'skeleton/gloves.txt': {'timestamp': 5430},
+            'hello.txt': {'timestamp': 4000},
         }
 
         s3_client = setup_s3_sync_client(client, 'testbucket', 'mybackup/', objects)
@@ -78,17 +79,17 @@ class TestPerformSync(object):
             'foo/bar', 'skeleton/gloves.txt', 'hello.txt'
         }
 
-        for key, target_timestamp in objects.items():
+        for key, target_metadata in objects.items():
             local_timestamp = local_client.get_object_timestamp(key)
             s3_timestamp = s3_client.get_object_timestamp(key)
-            assert local_timestamp == s3_timestamp == target_timestamp
+            assert local_timestamp == s3_timestamp == target_metadata['timestamp']
 
     @moto.mock_s3
     def test_perform_sync_empty_s3(self):
         client = boto3.client('s3')
         objects = {
-            'foo': 42323232,
-            'bar': 34243343,
+            'foo': {'timestamp': 42323232},
+            'bar': {'timestamp': 34243343},
         }
 
         local_client = setup_local_sync_client(self.target_folder, objects=objects)
@@ -106,22 +107,22 @@ class TestPerformSync(object):
 
         assert actual_local_keys == actual_s3_keys == {'foo', 'bar'}
 
-        for key, target_timestamp in objects.items():
+        for key, target_metadata in objects.items():
             local_timestamp = local_client.get_object_timestamp(key)
             s3_timestamp = s3_client.get_object_timestamp(key)
-            assert local_timestamp == s3_timestamp == target_timestamp
+            assert local_timestamp == s3_timestamp == target_metadata['timestamp']
 
     @moto.mock_s3
     def test_perform_sync_updates_local(self):
         client = boto3.client('s3')
         local_objects = {
-            'foo': 40000000,
-            'bar': 25000000,
+            'foo': {'timestamp': 40000000},
+            'bar': {'timestamp': 25000000},
         }
         s3_objects = {
-            'foo': 40000000,
-            'bar': 30000000,  # newer than local
-            'baz': 90000000,  # does not exist on local
+            'foo': {'timestamp': 40000000},
+            'bar': {'timestamp': 30000000},  # newer than local
+            'baz': {'timestamp': 90000000},  # does not exist on local
         }
 
         local_client = setup_local_sync_client(
