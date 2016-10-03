@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import datetime as dt
 import hashlib
 import json
 import logging
@@ -10,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 IGNORED_FILES = {'.syncindex.json.gz', '.syncindex'}
+BUFFER = 4096
 
 
 def create_parent_directories(path):
@@ -29,7 +29,6 @@ def traverse(path):
 
 
 def generate_index(target_dir):
-    BUFFER = 4096
     result = {}
     for key in traverse(target_dir):
         object_path = os.path.join(target_dir, key)
@@ -44,7 +43,7 @@ def generate_index(target_dir):
         stat = os.stat(object_path)
         result[key] = {
             'timestamp': None,
-            'LastModified': dt.datetime.utcfromtimestamp(stat.st_atime),
+            'LastModified': stat.st_mtime,
             'size': stat.st_size,
             'md5': md5.hexdigest(),
         }
@@ -58,25 +57,31 @@ class LocalSyncClient(object):
         self.local_dir = local_dir
         if not os.path.exists(self.local_dir):
             os.makedirs(self.local_dir)
-        self._get_sync_index()
+
+        # TODO: optional things like md5 should be only required if necessary
+        self.prev_index = self._get_prev_index()
+        self.curr_index = generate_index(self.local_dir)
+
+        for key, metadata in self.prev_index.items():
+            if key not in self.curr_index:
+                # It has been deleted
+                pass
+            else:
+                self.curr_index[key]['timestamp'] = metadata['timestamp']
+
+    def _get_prev_index(self):
+        if os.path.exists(self.sync_index_path):
+            with open(self.sync_index_path, 'r') as fp:
+                return json.load(fp)
+        else:
+            return {}
 
     @property
     def sync_index_path(self):
         return os.path.join(self.local_dir, self.SYNC_INDEX)
 
-    def _get_sync_index(self):
-        if os.path.exists(self.sync_index_path):
-            with open(self.sync_index_path, 'r') as fp:
-                self.sync_index = json.load(fp)
-        else:
-            self.sync_index = {}
-
     def get_object_timestamp(self, key):
-        object_path = os.path.join(self.local_dir, key)
-        if os.path.exists(object_path):
-            return os.stat(object_path).st_mtime
-        else:
-            return None
+        return self.curr_index.get(key, {}).get('timestamp')
 
     def get_object_md5(self, key):
         object_path = os.path.join(self.local_dir, key)
@@ -87,10 +92,10 @@ class LocalSyncClient(object):
 
     def update_sync_index(self):
         with open(self.sync_index_path, 'w') as fp:
-            json.dump(self.sync_index, fp)
+            json.dump(self.curr_index, fp)
 
     def keys(self):
-        return list(traverse(self.local_dir))
+        return self.curr_index.keys()
 
     def put_object(self, key, fp, timestamp, callback=None):
         object_path = os.path.join(self.local_dir, key)
@@ -99,21 +104,32 @@ class LocalSyncClient(object):
             create_parent_directories(object_path)
 
         try:
+            md5 = hashlib.md5()
             with open(object_path, 'wb') as fp2:
                 while True:
-                    data = fp.read(2048)
+                    data = fp.read(BUFFER)
+                    md5.update(data)
                     fp2.write(data)
                     if callback is not None:
                         callback(len(data))
-                    if len(data) < 2048:
+                    if len(data) < BUFFER:
                         break
+
             object_stat = os.stat(object_path)
-            os.utime(object_path, (object_stat.st_atime, timestamp))
+            self.curr_index[key] = {
+                'timestamp': timestamp,
+                'md5': md5.hexdigest(),
+                'LastModified': object_stat.st_mtime,
+                'size': object_stat.st_size,
+            }
         except:
+            # If something goes wrong, treat it as a transaction and delete
+            # the file so that the index is not curropted where possible
             os.remove(object_path)
             raise
 
     def get_object(self, key):
+        # TODO: Update this to use the current index
         object_path = os.path.join(self.local_dir, key)
         stat = os.stat(object_path)
         return (
