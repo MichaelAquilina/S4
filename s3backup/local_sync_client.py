@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 IGNORED_FILES = {'.syncindex.json.gz', '.syncindex'}
+BUFFER = 4096
 
 
 def create_parent_directories(path):
@@ -29,7 +30,6 @@ def traverse(path):
 
 
 def generate_index(target_dir):
-    BUFFER = 4096
     result = {}
     for key in traverse(target_dir):
         object_path = os.path.join(target_dir, key)
@@ -101,11 +101,11 @@ class LocalSyncClient(object):
         try:
             with open(object_path, 'wb') as fp2:
                 while True:
-                    data = fp.read(2048)
+                    data = fp.read(BUFFER)
                     fp2.write(data)
                     if callback is not None:
                         callback(len(data))
-                    if len(data) < 2048:
+                    if len(data) < BUFFER:
                         break
             object_stat = os.stat(object_path)
             os.utime(object_path, (object_stat.st_atime, timestamp))
