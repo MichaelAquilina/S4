@@ -8,9 +8,9 @@ class TestFileEntry(object):
         assert repr(entry) == 'FileEntry(foo/bar/baz.txt, 231230.4)'
 
 
-class TestCompare(object):
+class TestCompareStates(object):
     def test_both_empty(self):
-        assert list(sync.compare({}, {})) == []
+        assert list(sync.compare_states({}, {})) == []
 
     def test_empty_current(self):
         current = {}
@@ -19,7 +19,7 @@ class TestCompare(object):
             'apple': sync.FileEntry('apple', 88888),
         }
 
-        actual_output = list(sync.compare(current, previous))
+        actual_output = list(sync.compare_states(current, previous))
         expected_output = [
             (sync.SyncAction.DELETE, 'apple'),
             (sync.SyncAction.DELETE, 'orange'),
@@ -33,7 +33,7 @@ class TestCompare(object):
         }
         previous = {}
 
-        actual_output = list(sync.compare(current, previous))
+        actual_output = list(sync.compare_states(current, previous))
         expected_output = [
             (sync.SyncAction.CREATE, 'foo'),
             (sync.SyncAction.CREATE, 'bar'),
@@ -48,7 +48,7 @@ class TestCompare(object):
             'red': sync.FileEntry('red', 1000000),
         }
 
-        actual_output = list(sync.compare(current, previous))
+        actual_output = list(sync.compare_states(current, previous))
         expected_output = [
             (sync.SyncAction.UPDATE, 'red'),
         ]
@@ -62,7 +62,7 @@ class TestCompare(object):
             'monkey': sync.FileEntry('monkey', 1000000),
         }
 
-        actual_output = list(sync.compare(current, previous))
+        actual_output = list(sync.compare_states(current, previous))
         expected_output = [
             (sync.SyncAction.CONFLICT, 'monkey'),
         ]
@@ -80,7 +80,7 @@ class TestCompare(object):
             'dog': sync.FileEntry('dog', 2333)
         }
 
-        actual_output = list(sync.compare(current, previous))
+        actual_output = list(sync.compare_states(current, previous))
         expected_output = [
             (sync.SyncAction.CREATE, 'elephant'),
             (sync.SyncAction.CONFLICT, 'monkey'),

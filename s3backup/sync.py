@@ -29,7 +29,7 @@ class FileEntry(object):
         return 'FileEntry({}, {})'.format(self.path, self.timestamp)
 
 
-def compare(current, previous):
+def compare_states(current, previous):
     all_keys = set(previous.keys()) | set(current.keys())
     for key in all_keys:
         in_previous = key in previous
