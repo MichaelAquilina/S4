@@ -49,7 +49,7 @@ class LocalSyncClient(object):
     def index_path(self):
         return os.path.join(self.path, '.index')
 
-    def index(self):
+    def get_index_state(self):
         if not os.path.exists(self.index_path()):
             return {}
 
@@ -62,7 +62,7 @@ class LocalSyncClient(object):
 
         return results
 
-    def current(self):
+    def get_current_state(self):
         results = {}
         for relative_path in traverse(self.path):
             full_path = os.path.join(self.path, relative_path)
@@ -71,9 +71,9 @@ class LocalSyncClient(object):
             results[relative_path] = FileEntry(relative_path, timestamp=stat.st_mtime)
         return results
 
-    def save_index(self):
+    def update_index(self):
         data = {}
-        for key, entry in self.current().items():
+        for key, entry in self.get_current_state().items():
             data[key] = {'timestamp': entry.timestamp}
 
         with open(self.index_path(), 'w') as fp:

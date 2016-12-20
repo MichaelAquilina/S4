@@ -60,7 +60,7 @@ class TestLocalSyncClient(object):
         client = LocalSyncClient(self.target_folder)
         assert client.index_path() == os.path.join(self.target_folder, '.index')
 
-    def test_index(self):
+    def test_get_index_state(self):
         client = LocalSyncClient(self.target_folder)
         with open(client.index_path(), 'w') as fp:
             json.dump({
@@ -68,32 +68,32 @@ class TestLocalSyncClient(object):
                 'bar/baz.txt': {'timestamp': 5000},
             }, fp)
 
-        actual_output = client.index()
+        actual_output = client.get_index_state()
         expected_output = {
             'foo': FileEntry('foo', 4000),
             'bar/baz.txt': FileEntry('bar/baz.txt', 5000),
         }
         assert actual_output == expected_output
 
-    def test_current(self):
+    def test_get_current_state(self):
         client = LocalSyncClient(self.target_folder)
         touch(os.path.join(self.target_folder, 'foo'), 13371337)
         touch(os.path.join(self.target_folder, 'bar'), 50032003)
 
-        actual_output = client.current()
+        actual_output = client.get_current_state()
         expected_output = {
             'foo': FileEntry('foo', 13371337),
             'bar': FileEntry('bar', 50032003),
         }
         assert sorted(expected_output) == sorted(actual_output)
 
-    def test_save_index(self):
+    def test_update_index(self):
         client = LocalSyncClient(self.target_folder)
         touch(os.path.join(self.target_folder, 'foo'), 13371337)
         touch(os.path.join(self.target_folder, 'bar'), 50032003)
 
-        client.save_index()
-        assert client.index() == client.current()
+        client.update_index()
+        assert client.get_index_state() == client.get_current_state()
 
 
 class TestCompare(object):
