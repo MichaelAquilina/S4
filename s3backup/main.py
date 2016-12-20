@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 
+import os
+
 from s3backup.clients import compare, LocalSyncClient
 
 
 def sync():
-    local_client = LocalSyncClient('/home/michael/Notebooks')
+    target_folder = os.path.expanduser('~/Notebooks')
+
+    local_client = LocalSyncClient(target_folder)
     current = local_client.get_current_state()
     index = local_client.get_index_state()
     print(list(compare(current, index)))
