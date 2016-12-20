@@ -2,7 +2,8 @@
 
 import os
 
-from s3backup.clients import compare, LocalSyncClient
+from s3backup.clients.local import LocalSyncClient
+from s3backup.sync import compare
 
 
 def sync():
