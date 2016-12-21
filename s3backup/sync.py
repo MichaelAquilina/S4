@@ -40,12 +40,12 @@ def compare_states(current, previous):
             if previous_timestamp == current_timestamp:
                 continue
             elif previous_timestamp < current_timestamp:
-                yield SyncAction.UPDATE, key
+                yield key, SyncAction.UPDATE
             elif previous_timestamp > current_timestamp:
-                yield SyncAction.CONFLICT, key
+                yield key, SyncAction.CONFLICT
         elif in_current and not in_previous:
-            yield SyncAction.CREATE, key
+            yield key, SyncAction.CREATE
         elif in_previous and not in_current:
-            yield SyncAction.DELETE, key
+            yield key, SyncAction.DELETE
         else:
             raise ValueError('Reached Unknown state')

@@ -21,8 +21,8 @@ class TestCompareStates(object):
 
         actual_output = list(sync.compare_states(current, previous))
         expected_output = [
-            (sync.SyncAction.DELETE, 'apple'),
-            (sync.SyncAction.DELETE, 'orange'),
+            ('apple', sync.SyncAction.DELETE),
+            ('orange', sync.SyncAction.DELETE),
         ]
         assert sorted(actual_output) == sorted(expected_output)
 
@@ -35,8 +35,8 @@ class TestCompareStates(object):
 
         actual_output = list(sync.compare_states(current, previous))
         expected_output = [
-            (sync.SyncAction.CREATE, 'foo'),
-            (sync.SyncAction.CREATE, 'bar'),
+            ('foo', sync.SyncAction.CREATE),
+            ('bar', sync.SyncAction.CREATE),
         ]
         assert sorted(actual_output) == sorted(expected_output)
 
@@ -50,7 +50,7 @@ class TestCompareStates(object):
 
         actual_output = list(sync.compare_states(current, previous))
         expected_output = [
-            (sync.SyncAction.UPDATE, 'red'),
+            ('red', sync.SyncAction.UPDATE),
         ]
         assert sorted(actual_output) == sorted(expected_output)
 
@@ -64,7 +64,7 @@ class TestCompareStates(object):
 
         actual_output = list(sync.compare_states(current, previous))
         expected_output = [
-            (sync.SyncAction.CONFLICT, 'monkey'),
+            ('monkey', sync.SyncAction.CONFLICT),
         ]
         assert sorted(actual_output) == sorted(expected_output)
 
@@ -82,9 +82,9 @@ class TestCompareStates(object):
 
         actual_output = list(sync.compare_states(current, previous))
         expected_output = [
-            (sync.SyncAction.CREATE, 'elephant'),
-            (sync.SyncAction.CONFLICT, 'monkey'),
-            (sync.SyncAction.DELETE, 'snake'),
-            (sync.SyncAction.UPDATE, 'dog'),
+            ('elephant', sync.SyncAction.CREATE),
+            ('monkey', sync.SyncAction.CONFLICT),
+            ('snake', sync.SyncAction.DELETE),
+            ('dog', sync.SyncAction.UPDATE),
         ]
         assert sorted(actual_output) == sorted(expected_output)

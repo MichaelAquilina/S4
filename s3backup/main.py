@@ -22,9 +22,7 @@ def sync():
     current = s3_client.get_current_state()
     index = s3_client.get_index_state()
     print(list(compare_states(current, index)))
-    s3_client.update_index()
 
     current = local_client.get_current_state()
     index = local_client.get_index_state()
     print(list(compare_states(current, index)))
-    local_client.update_index()
