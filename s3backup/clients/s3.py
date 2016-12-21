@@ -48,6 +48,9 @@ class S3SyncClient(object):
             Bucket=self.bucket,
             Prefix=self.prefix,
         )
+        if 'Contents' not in resp:
+            return results
+
         for obj in resp['Contents']:
             key = os.path.relpath(obj['Key'], self.prefix)
             if key == '.index':

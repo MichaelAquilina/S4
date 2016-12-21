@@ -15,6 +15,13 @@ class IndexAction(enum.Enum):
         return self.value < other.value
 
 
+class SyncAction(enum.Enum):
+    DOWNLOAD = 'DOWNLOAD'
+    DELETE = 'DELETE'
+    UPLOAD = 'UPLOAD'
+    CONFLICT = 'CONFLICT'
+
+
 class FileEntry(object):
     def __init__(self, path, timestamp):
         self.path = path
@@ -49,3 +56,31 @@ def compare_states(current, previous):
             yield key, IndexAction.DELETE
         else:
             raise ValueError('Reached Unknown state')
+
+
+def compare_actions(actions_1, actions_2):
+    all_keys = set(actions_1.keys() | actions_2.keys())
+    for key in all_keys:
+        a1 = actions_1.get(key)
+        a2 = actions_2.get(key)
+
+        if a1 is None and a2 == IndexAction.CREATE:
+            yield key, SyncAction.DOWNLOAD
+
+        elif a1 == IndexAction.CREATE and a2 is None:
+            yield key, SyncAction.UPLOAD
+
+        elif a1 is None and a2 == IndexAction.UPDATE:
+            yield key, SyncAction.DOWNLOAD
+
+        elif a1 == IndexAction.UPDATE and a2 is None:
+            yield key, SyncAction.UPLOAD
+
+        elif a1 is None and a2 == IndexAction.DELETE:
+            yield key, SyncAction.DELETE
+
+        elif a1 == IndexAction.DELETE and a2 is None:
+            yield key, SyncAction.DELETE
+
+        else:
+            yield key, SyncAction.CONFLICT
