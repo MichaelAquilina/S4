@@ -5,7 +5,7 @@ import functools
 
 
 @functools.total_ordering
-class SyncAction(enum.Enum):
+class IndexAction(enum.Enum):
     CREATE = 'CREATE'
     DELETE = 'DELETE'
     UPDATE = 'UPDATE'
@@ -40,12 +40,12 @@ def compare_states(current, previous):
             if previous_timestamp == current_timestamp:
                 continue
             elif previous_timestamp < current_timestamp:
-                yield key, SyncAction.UPDATE
+                yield key, IndexAction.UPDATE
             elif previous_timestamp > current_timestamp:
-                yield key, SyncAction.CONFLICT
+                yield key, IndexAction.CONFLICT
         elif in_current and not in_previous:
-            yield key, SyncAction.CREATE
+            yield key, IndexAction.CREATE
         elif in_previous and not in_current:
-            yield key, SyncAction.DELETE
+            yield key, IndexAction.DELETE
         else:
             raise ValueError('Reached Unknown state')
