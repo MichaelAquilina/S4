@@ -21,14 +21,10 @@ def sync():
 
     current = s3_client.get_current_state()
     index = s3_client.get_index_state()
-
     s3_actions = dict(compare_states(current, index))
-    print(s3_actions)
 
     current = local_client.get_current_state()
     index = local_client.get_index_state()
-
     local_actions = dict(compare_states(current, index))
-    print(local_actions)
 
-    print(list(compare_actions(local_actions, s3_actions)))
+    print(dict(compare_actions(local_actions, s3_actions)))
