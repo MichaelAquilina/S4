@@ -26,6 +26,26 @@ class S3SyncClient(object):
     def get_absolute_path(self, path):
         return os.path.join(self.prefix, path)
 
+    def put(self, key, fp):
+        self.client.put_object(
+            Bucket=self.bucket,
+            Key=os.path.join(self.prefix, key),
+            Body=fp,
+        )
+
+    def get(self, key):
+        resp = self.client.get_object(
+            Bucket=self.bucket,
+            Key=os.path.join(self.prefix, key),
+        )
+        return resp['Body']
+
+    def delete(self, key):
+        self.client.delete_object(
+            Bucket=self.bucket,
+            Key=os.path.join(self.prefix, key),
+        )
+
     def get_index_state(self):
         try:
             resp = self.client.get_object(
