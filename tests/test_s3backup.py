@@ -13,12 +13,12 @@ class TestCompareStates(object):
             'apple': dict(timestamp=88888),
         }
 
-        actual_output = list(compare_states(current, previous))
-        expected_output = [
-            ('apple', IndexAction.DELETE),
-            ('orange', IndexAction.DELETE),
-        ]
-        assert sorted(actual_output) == sorted(expected_output)
+        actual_output = dict(compare_states(current, previous))
+        expected_output = {
+            'apple': IndexAction.DELETE,
+            'orange': IndexAction.DELETE,
+        }
+        assert actual_output == expected_output
 
     def test_empty_previous(self):
         current = {
@@ -27,12 +27,12 @@ class TestCompareStates(object):
         }
         previous = {}
 
-        actual_output = list(compare_states(current, previous))
-        expected_output = [
-            ('foo', IndexAction.CREATE),
-            ('bar', IndexAction.CREATE),
-        ]
-        assert sorted(actual_output) == sorted(expected_output)
+        actual_output = dict(compare_states(current, previous))
+        expected_output = {
+            'foo': IndexAction.CREATE,
+            'bar': IndexAction.CREATE,
+        }
+        assert actual_output == expected_output
 
     def test_new_current(self):
         current = {
@@ -42,11 +42,11 @@ class TestCompareStates(object):
             'red': dict(timestamp=1000000),
         }
 
-        actual_output = list(compare_states(current, previous))
-        expected_output = [
-            ('red', IndexAction.UPDATE),
-        ]
-        assert sorted(actual_output) == sorted(expected_output)
+        actual_output = dict(compare_states(current, previous))
+        expected_output = {
+            'red': IndexAction.UPDATE,
+        }
+        assert actual_output == expected_output
 
     def test_new_previous(self):
         current = {
@@ -56,11 +56,11 @@ class TestCompareStates(object):
             'monkey': dict(timestamp=1000000),
         }
 
-        actual_output = list(compare_states(current, previous))
-        expected_output = [
-            ('monkey', IndexAction.CONFLICT),
-        ]
-        assert sorted(actual_output) == sorted(expected_output)
+        actual_output = dict(compare_states(current, previous))
+        expected_output = {
+            'monkey': IndexAction.CONFLICT,
+        }
+        assert actual_output == expected_output
 
     def test_mixed(self):
         current = {
@@ -74,14 +74,14 @@ class TestCompareStates(object):
             'dog': dict(timestamp=2333)
         }
 
-        actual_output = list(compare_states(current, previous))
-        expected_output = [
-            ('elephant', IndexAction.CREATE),
-            ('monkey', IndexAction.CONFLICT),
-            ('snake', IndexAction.DELETE),
-            ('dog', IndexAction.UPDATE),
-        ]
-        assert sorted(actual_output) == sorted(expected_output)
+        actual_output = dict(compare_states(current, previous))
+        expected_output = {
+            'elephant': IndexAction.CREATE,
+            'monkey': IndexAction.CONFLICT,
+            'snake': IndexAction.DELETE,
+            'dog': IndexAction.UPDATE,
+        }
+        assert actual_output == expected_output
 
 
 class TestCompareActions(object):
