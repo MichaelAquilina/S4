@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from s3backup import IndexAction, compare_states
+from s3backup import IndexAction, SyncAction, compare_actions, compare_states
 
 
 class TestCompareStates(object):
@@ -82,3 +82,104 @@ class TestCompareStates(object):
             ('dog', IndexAction.UPDATE),
         ]
         assert sorted(actual_output) == sorted(expected_output)
+
+
+class TestCompareActions(object):
+    def test_both_actions_empty(self):
+        assert list(compare_actions({}, {})) == []
+
+    def test_actions_1_empty(self):
+        actions_2 = {
+            'foo': IndexAction.UPDATE,
+            'bar': IndexAction.CREATE,
+            'cow/moo/what.txt': IndexAction.DELETE,
+            'what/am/I.obj': IndexAction.CONFLICT
+        }
+        actual_output = dict(compare_actions({}, actions_2))
+        expected_output = {
+            'foo': SyncAction.DOWNLOAD,
+            'bar': SyncAction.DOWNLOAD,
+            'cow/moo/what.txt': SyncAction.DELETE_LOCAL,
+            'what/am/I.obj': SyncAction.CONFLICT,
+        }
+        assert actual_output == expected_output
+
+    def test_actions_2_empty(self):
+        actions_1 = {
+            'foo': IndexAction.UPDATE,
+            'bar': IndexAction.CREATE,
+            'cow/moo/what.txt': IndexAction.DELETE,
+            'what/am/I.obj': IndexAction.CONFLICT
+        }
+        actual_output = dict(compare_actions(actions_1, {}))
+        expected_output = {
+            'foo': SyncAction.UPLOAD,
+            'bar': SyncAction.UPLOAD,
+            'cow/moo/what.txt': SyncAction.DELETE_REMOTE,
+            'what/am/I.obj': SyncAction.CONFLICT,
+        }
+        assert actual_output == expected_output
+
+    def test_anything_with_conflict(self):
+        actions_1 = {
+            'yhorm': IndexAction.UPDATE,
+            'ariandel': IndexAction.CONFLICT,
+            'artorias': IndexAction.CONFLICT,
+            'seath': IndexAction.CONFLICT
+        }
+        actions_2 = {
+            'yhorm': IndexAction.CONFLICT,
+            'ariandel': IndexAction.CREATE,
+            'artorias': IndexAction.DELETE,
+            'seath': IndexAction.CONFLICT
+        }
+        actual_output = dict(compare_actions(actions_1, actions_2))
+        expected_output = {
+            'yhorm': SyncAction.CONFLICT,
+            'ariandel': SyncAction.CONFLICT,
+            'artorias': SyncAction.CONFLICT,
+            'seath': SyncAction.CONFLICT,
+        }
+        assert actual_output == expected_output
+
+    def test_other_conficts(self):
+        actions_1 = {
+            'one/two/three': IndexAction.UPDATE,
+            'four/five': IndexAction.DELETE,
+            'six/seven': IndexAction.CREATE,
+        }
+        actions_2 = {
+            'one/two/three': IndexAction.CREATE,
+            'four/five': IndexAction.UPDATE,
+            'six/seven': IndexAction.DELETE,
+        }
+
+        actual_output = dict(compare_actions(actions_1, actions_2))
+        expected_output = {
+            'one/two/three': SyncAction.CONFLICT,
+            'four/five': SyncAction.CONFLICT,
+            'six/seven': SyncAction.CONFLICT,
+        }
+        assert actual_output == expected_output
+
+    def test_anything_with_none(self):
+        actions_1 = {
+            'foo': IndexAction.UPDATE,
+            'bar': IndexAction.CREATE,
+            'cow/moo/what.txt': IndexAction.DELETE,
+            'what/am/I.obj': IndexAction.CONFLICT
+        }
+        actions_2 = {
+            'foo': None,
+            'bar': None,
+            'cow/moo/what.txt': None,
+            'what/am/I.obj': None,
+        }
+        actual_output = dict(compare_actions(actions_1, actions_2))
+        expected_output = {
+            'foo': SyncAction.UPLOAD,
+            'bar': SyncAction.UPLOAD,
+            'cow/moo/what.txt': SyncAction.DELETE_REMOTE,
+            'what/am/I.obj': SyncAction.CONFLICT,
+        }
+        assert actual_output == expected_output
