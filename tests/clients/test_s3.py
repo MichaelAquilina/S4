@@ -9,7 +9,7 @@ import freezegun
 from moto import mock_s3
 
 from s3backup.clients import s3
-from s3backup.sync import FileEntry
+from s3backup.clients.entries import FileEntry
 
 
 def touch(client, bucket, key, timestamp):

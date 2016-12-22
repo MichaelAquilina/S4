@@ -5,7 +5,7 @@ import os
 
 from botocore.exceptions import ClientError
 
-from s3backup.sync import FileEntry
+from s3backup.clients.entries import FileEntry
 
 
 def to_timestamp(dt):

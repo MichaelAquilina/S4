@@ -1,6 +1,17 @@
 #! /usr/bin/env python
 
-from s3backup import main
+import os
+
+import s3backup
+
+
+def main():
+    target_folder = os.path.expanduser('~/Notebooks')
+    bucket = 'michaelaquilina.data2'
+    prefix = 'ZimNoteBooks2'
+
+    s3backup.sync(target_folder, bucket, prefix)
+
 
 if __name__ == '__main__':
-    main.sync()
+    main()

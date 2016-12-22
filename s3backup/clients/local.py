@@ -3,7 +3,7 @@
 import json
 import os
 
-from s3backup.sync import FileEntry
+from s3backup.clients.entries import FileEntry
 
 
 def traverse(path):
