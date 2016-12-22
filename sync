@@ -1,17 +1,24 @@
 #! /usr/bin/env python
 
 import os
+import json
 
 import s3backup
 
 
 def main():
-    target_folder = os.path.expanduser('~/Notebooks')
-    bucket = 'michaelaquilina.data2'
-    prefix = 'ZimNoteBooks2'
+    config_path = os.path.expanduser('~/.config/s3backup/sync.conf')
+    if not os.path.exists(config_path):
+        raise ValueError('Expected Config file:', config_path)
 
-    s3backup.sync(target_folder, bucket, prefix)
+    with open(config_path, 'r') as fp:
+        config = json.load(fp)
 
+    bucket = config['bucket']
+
+    for target_folder, prefix in config['directories'].items():
+        print('Syncing', target_folder, 'with', os.path.join(bucket, prefix))
+        s3backup.sync(target_folder, bucket, prefix)
 
 if __name__ == '__main__':
     main()
