@@ -9,7 +9,6 @@ import freezegun
 from moto import mock_s3
 
 from s3backup.clients import s3
-from s3backup.clients.entries import FileEntry
 
 
 def touch(client, bucket, key, timestamp):
@@ -52,9 +51,9 @@ class TestS3SyncClient(object):
         )
         actual_output = client.get_index_state()
         expected_output = {
-            'red': FileEntry('red', 23132),
-            'green': FileEntry('green', 4000),
-            'blue': FileEntry('blue', 9000),
+            'red': dict(timestamp=23132),
+            'green': dict(timestamp=4000),
+            'blue': dict(timestamp=9000),
         }
         assert actual_output == expected_output
 
@@ -71,8 +70,8 @@ class TestS3SyncClient(object):
         )
         actual_output = client.get_current_state()
         expected_output = {
-            'Bar': FileEntry('Bar', 40000),
-            'Baz/Car.txt': FileEntry('Baz/Car.txt', 123456),
+            'Bar': dict(timestamp=40000),
+            'Baz/Car.txt': dict(timestamp=123456),
         }
         assert actual_output == expected_output
 

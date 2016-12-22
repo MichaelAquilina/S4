@@ -3,8 +3,6 @@
 import json
 import os
 
-from s3backup.clients.entries import FileEntry
-
 
 def traverse(path):
     IGNORED_FILES = {'.index'}
@@ -43,7 +41,7 @@ class LocalSyncClient(object):
 
         results = {}
         for path, metadata in data.items():
-            results[path] = FileEntry(path, timestamp=metadata['timestamp'])
+            results[path] = dict(timestamp=metadata['timestamp'])
 
         return results
 
@@ -53,13 +51,10 @@ class LocalSyncClient(object):
             full_path = os.path.join(self.path, relative_path)
             stat = os.stat(full_path)
 
-            results[relative_path] = FileEntry(relative_path, timestamp=stat.st_mtime)
+            results[relative_path] = dict(timestamp=stat.st_mtime)
         return results
 
     def update_index(self):
-        data = {}
-        for key, entry in self.get_current_state().items():
-            data[key] = {'timestamp': entry.timestamp}
-
+        data = self.get_current_state()
         with open(self.index_path(), 'w') as fp:
             json.dump(data, fp)

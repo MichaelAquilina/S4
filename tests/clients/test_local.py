@@ -5,7 +5,6 @@ import json
 import shutil
 import tempfile
 
-from s3backup.clients.entries import FileEntry
 from s3backup.clients import local
 
 
@@ -65,8 +64,8 @@ class TestLocalSyncClient(object):
 
         actual_output = client.get_index_state()
         expected_output = {
-            'foo': FileEntry('foo', 4000),
-            'bar/baz.txt': FileEntry('bar/baz.txt', 5000),
+            'foo': dict(timestamp=4000),
+            'bar/baz.txt': dict(timestamp=5000),
         }
         assert actual_output == expected_output
 
@@ -77,8 +76,8 @@ class TestLocalSyncClient(object):
 
         actual_output = client.get_current_state()
         expected_output = {
-            'foo': FileEntry('foo', 13371337),
-            'bar': FileEntry('bar', 50032003),
+            'foo': dict(timestamp=13371337),
+            'bar': dict(timestamp=50032003),
         }
         assert sorted(expected_output) == sorted(actual_output)
 

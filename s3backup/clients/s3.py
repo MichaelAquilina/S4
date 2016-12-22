@@ -5,8 +5,6 @@ import os
 
 from botocore.exceptions import ClientError
 
-from s3backup.clients.entries import FileEntry
-
 
 def to_timestamp(dt):
     epoch = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
@@ -58,7 +56,7 @@ class S3SyncClient(object):
             data = json.loads(resp['Body'].read().decode('utf-8'))
             results = {}
             for path, metadata in data.items():
-                results[path] = FileEntry(path, timestamp=metadata['timestamp'])
+                results[path] = dict(timestamp=metadata['timestamp'])
 
             return results
 
@@ -76,17 +74,13 @@ class S3SyncClient(object):
             if key == '.index':
                 continue
 
-            results[key] = FileEntry(
-                path=key,
+            results[key] = dict(
                 timestamp=to_timestamp(obj['LastModified']),
             )
         return results
 
     def update_index(self):
-        data = {}
-        for key, entry in self.get_current_state().items():
-            data[key] = {'timestamp': entry.timestamp}
-
+        data = self.get_current_state()
         self.client.put_object(
             Bucket=self.bucket,
             Key=self.index_path(),
