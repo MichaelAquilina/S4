@@ -1,22 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import enum
-import functools
 
 import boto3
 
 from s3backup.clients import s3, local
 
 
-@functools.total_ordering
 class IndexAction(enum.Enum):
     CREATE = 'CREATE'
     DELETE = 'DELETE'
     UPDATE = 'UPDATE'
     CONFLICT = 'CONFLICT'
-
-    def __lt__(self, other):
-        return self.value < other.value
 
 
 class SyncAction(enum.Enum):
