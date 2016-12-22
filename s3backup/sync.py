@@ -17,7 +17,8 @@ class IndexAction(enum.Enum):
 
 class SyncAction(enum.Enum):
     DOWNLOAD = 'DOWNLOAD'
-    DELETE = 'DELETE'
+    DELETE_LOCAL = 'DELETE_LOCAL'
+    DELETE_REMOTE = 'DELETE_REMOTE'
     UPLOAD = 'UPLOAD'
     CONFLICT = 'CONFLICT'
 
@@ -45,7 +46,7 @@ def compare_states(current, previous):
             previous_timestamp = previous[key].timestamp
             current_timestamp = current[key].timestamp
             if previous_timestamp == current_timestamp:
-                continue
+                yield key, None
             elif previous_timestamp < current_timestamp:
                 yield key, IndexAction.UPDATE
             elif previous_timestamp > current_timestamp:
@@ -64,6 +65,9 @@ def compare_actions(actions_1, actions_2):
         a1 = actions_1.get(key)
         a2 = actions_2.get(key)
 
+        if a1 is None and a2 is None:
+            continue
+
         if a1 is None and a2 == IndexAction.CREATE:
             yield key, SyncAction.DOWNLOAD
 
@@ -77,10 +81,10 @@ def compare_actions(actions_1, actions_2):
             yield key, SyncAction.UPLOAD
 
         elif a1 is None and a2 == IndexAction.DELETE:
-            yield key, SyncAction.DELETE
+            yield key, SyncAction.DELETE_LOCAL
 
         elif a1 == IndexAction.DELETE and a2 is None:
-            yield key, SyncAction.DELETE
+            yield key, SyncAction.DELETE_REMOTE
 
         else:
             yield key, SyncAction.CONFLICT

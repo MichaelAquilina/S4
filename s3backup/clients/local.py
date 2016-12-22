@@ -24,6 +24,16 @@ class LocalSyncClient(object):
     def index_path(self):
         return os.path.join(self.path, '.index')
 
+    def put(self, key, fp0):
+        with open(os.path.join(self.path, key), 'wb') as fp1:
+            fp1.write(fp0.read())
+
+    def get(self, key):
+        return open(os.path.join(self.path, key), 'rb')
+
+    def delete(self, key):
+        os.remove(os.path.join(self.path, key))
+
     def get_index_state(self):
         if not os.path.exists(self.index_path()):
             return {}
