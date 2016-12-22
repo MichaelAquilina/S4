@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 from s3backup import IndexAction, compare_states
-from s3backup.clients.entries import FileEntry
-
-
-class TestFileEntry(object):
-    def test_repr(self):
-        entry = FileEntry('foo/bar/baz.txt', 231230.4)
-        assert repr(entry) == 'FileEntry(foo/bar/baz.txt, 231230.4)'
 
 
 class TestCompareStates(object):
@@ -16,8 +9,8 @@ class TestCompareStates(object):
     def test_empty_current(self):
         current = {}
         previous = {
-            'orange': FileEntry('orange', 99999),
-            'apple': FileEntry('apple', 88888),
+            'orange': dict(timestamp=99999),
+            'apple': dict(timestamp=88888),
         }
 
         actual_output = list(compare_states(current, previous))
@@ -29,8 +22,8 @@ class TestCompareStates(object):
 
     def test_empty_previous(self):
         current = {
-            'foo': FileEntry('foo', 400123),
-            'bar': FileEntry('bar', 23231),
+            'foo': dict(timestamp=400123),
+            'bar': dict(timestamp=23231),
         }
         previous = {}
 
@@ -43,10 +36,10 @@ class TestCompareStates(object):
 
     def test_new_current(self):
         current = {
-            'red': FileEntry('red', 1234567),
+            'red': dict(timestamp=1234567),
         }
         previous = {
-            'red': FileEntry('red', 1000000),
+            'red': dict(timestamp=1000000),
         }
 
         actual_output = list(compare_states(current, previous))
@@ -57,10 +50,10 @@ class TestCompareStates(object):
 
     def test_new_previous(self):
         current = {
-            'monkey': FileEntry('monkey', 8000),
+            'monkey': dict(timestamp=8000),
         }
         previous = {
-            'monkey': FileEntry('monkey', 1000000),
+            'monkey': dict(timestamp=1000000),
         }
 
         actual_output = list(compare_states(current, previous))
@@ -71,14 +64,14 @@ class TestCompareStates(object):
 
     def test_mixed(self):
         current = {
-            'monkey': FileEntry('monkey', 8000),
-            'elephant': FileEntry('elephant', 3232323),
-            'dog': FileEntry('dog', 23233232323),
+            'monkey': dict(timestamp=8000),
+            'elephant': dict(timestamp=3232323),
+            'dog': dict(timestamp=23233232323),
         }
         previous = {
-            'monkey': FileEntry('monkey', 1000000),
-            'snake': FileEntry('snake', 232323),
-            'dog': FileEntry('dog', 2333)
+            'monkey': dict(timestamp=1000000),
+            'snake': dict(timestamp=232323),
+            'dog': dict(timestamp=2333)
         }
 
         actual_output = list(compare_states(current, previous))
