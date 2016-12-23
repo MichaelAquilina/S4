@@ -2,12 +2,8 @@
 
 import enum
 
-import boto3
 
-from s3backup.clients import s3, local
-
-
-class IndexAction(enum.Enum):
+class StateAction(enum.Enum):
     CREATE = 'CREATE'
     DELETE = 'DELETE'
     UPDATE = 'UPDATE'
@@ -33,13 +29,13 @@ def compare_states(current, previous):
             if previous_timestamp == current_timestamp:
                 yield key, None
             elif previous_timestamp < current_timestamp:
-                yield key, IndexAction.UPDATE
+                yield key, StateAction.UPDATE
             elif previous_timestamp > current_timestamp:
-                yield key, IndexAction.CONFLICT
+                yield key, StateAction.CONFLICT
         elif in_current and not in_previous:
-            yield key, IndexAction.CREATE
+            yield key, StateAction.CREATE
         elif in_previous and not in_current:
-            yield key, IndexAction.DELETE
+            yield key, StateAction.DELETE
         else:
             raise ValueError('Reached Unknown state')
 
@@ -53,60 +49,55 @@ def compare_actions(actions_1, actions_2):
         if a1 is None and a2 is None:
             continue
 
-        if a1 is None and a2 == IndexAction.CREATE:
+        if a1 is None and a2 == StateAction.CREATE:
             yield key, SyncAction.DOWNLOAD
 
-        elif a1 == IndexAction.CREATE and a2 is None:
+        elif a1 == StateAction.CREATE and a2 is None:
             yield key, SyncAction.UPLOAD
 
-        elif a1 is None and a2 == IndexAction.UPDATE:
+        elif a1 is None and a2 == StateAction.UPDATE:
             yield key, SyncAction.DOWNLOAD
 
-        elif a1 == IndexAction.UPDATE and a2 is None:
+        elif a1 == StateAction.UPDATE and a2 is None:
             yield key, SyncAction.UPLOAD
 
-        elif a1 is None and a2 == IndexAction.DELETE:
+        elif a1 is None and a2 == StateAction.DELETE:
             yield key, SyncAction.DELETE_LOCAL
 
-        elif a1 == IndexAction.DELETE and a2 is None:
+        elif a1 == StateAction.DELETE and a2 is None:
             yield key, SyncAction.DELETE_REMOTE
 
         else:
             yield key, SyncAction.CONFLICT
 
 
-def sync(target_folder, bucket, prefix):
-    client = boto3.client('s3')
+def sync(client_1, client_2):
+    current = client_2.get_current_state()
+    index = client_2.get_index_state()
+    actions_2 = dict(compare_states(current, index))
 
-    local_client = local.LocalSyncClient(target_folder)
-    s3_client = s3.S3SyncClient(client, bucket, prefix)
+    current = client_1.get_current_state()
+    index = client_1.get_index_state()
+    actions_2 = dict(compare_states(current, index))
 
-    current = s3_client.get_current_state()
-    index = s3_client.get_index_state()
-    s3_actions = dict(compare_states(current, index))
-
-    current = local_client.get_current_state()
-    index = local_client.get_index_state()
-    local_actions = dict(compare_states(current, index))
-
-    for key, action in compare_actions(local_actions, s3_actions):
+    for key, action in compare_actions(actions_2, actions_2):
         if action == SyncAction.DOWNLOAD:
             print('Downloading', key)
-            local_client.put(key, s3_client.get(key))
+            client_1.put(key, client_2.get(key))
         elif action == SyncAction.UPLOAD:
             print('Uploading', key)
-            s3_client.put(key, local_client.get(key))
+            client_2.put(key, client_1.get(key))
         elif action == SyncAction.DELETE_LOCAL:
             print('Delete local', key)
-            local_client.delete(key)
+            client_1.delete(key)
         elif action == SyncAction.DELETE_REMOTE:
             print('Delete remote', key)
-            s3_client.delete(key)
+            client_2.delete(key)
         elif action == SyncAction.CONFLICT:
             print('Need to resolve Conflict for', key)
         else:
             raise ValueError('You should never reach here')
 
     print('Updating Indexes')
-    s3_client.update_index()
-    local_client.update_index()
+    client_2.update_index()
+    client_1.update_index()
