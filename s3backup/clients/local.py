@@ -39,11 +39,7 @@ class LocalSyncClient(object):
         with open(self.index_path(), 'r') as fp:
             data = json.load(fp)
 
-        results = {}
-        for path, metadata in data.items():
-            results[path] = dict(timestamp=metadata['timestamp'])
-
-        return results
+        return data
 
     def get_current_state(self):
         results = {}

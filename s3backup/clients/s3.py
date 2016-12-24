@@ -54,11 +54,7 @@ class S3SyncClient(object):
             return {}
         else:
             data = json.loads(resp['Body'].read().decode('utf-8'))
-            results = {}
-            for path, metadata in data.items():
-                results[path] = dict(timestamp=metadata['timestamp'])
-
-            return results
+            return data
 
     def get_current_state(self):
         results = {}
