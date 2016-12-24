@@ -78,9 +78,9 @@ def sync(client_1, client_2):
 
     current = client_1.get_current_state()
     index = client_1.get_index_state()
-    actions_2 = dict(compare_states(current, index))
+    actions_1 = dict(compare_states(current, index))
 
-    for key, action in compare_actions(actions_2, actions_2):
+    for key, action in compare_actions(actions_1, actions_2):
         if action == SyncAction.DOWNLOAD:
             print('Downloading', key)
             client_1.put(key, client_2.get(key))
