@@ -4,14 +4,16 @@ import json
 import os
 
 
-def traverse(path):
-    IGNORED_FILES = {'.index'}
+def traverse(path, ignore_files=None):
+    if ignore_files is None:
+        ignore_files = set()
+
     for item in os.listdir(path):
         full_path = os.path.join(path, item)
         if os.path.isdir(full_path):
-            for result in traverse(full_path):
+            for result in traverse(full_path, ignore_files):
                 yield os.path.join(item, result)
-        elif item not in IGNORED_FILES:
+        elif item not in ignore_files:
             yield item
 
 
@@ -49,7 +51,7 @@ class LocalSyncClient(object):
 
     def get_current_state(self):
         results = {}
-        for relative_path in traverse(self.path):
+        for relative_path in traverse(self.path, ignore_files={'.index'}):
             full_path = os.path.join(self.path, relative_path)
             stat = os.stat(full_path)
 
