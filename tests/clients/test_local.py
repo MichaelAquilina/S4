@@ -34,6 +34,7 @@ class TestTraverse(object):
         assert list(local.traverse(self.target_folder)) == []
 
     def test_correct_output(self):
+        touch(os.path.join(self.target_folder, 'baz', 'zoo'))
         touch(os.path.join(self.target_folder, 'foo'))
         touch(os.path.join(self.target_folder, 'bar.md'))
         touch(os.path.join(self.target_folder, 'baz', 'bar'))
@@ -45,9 +46,8 @@ class TestTraverse(object):
             ignore_files={'.index', '.idontexist'}
         ))
 
-        # TODO: This should be auto sorted based on the search mechanism used
-        expected_output = ['foo', 'bar.md', 'baz/bar']
-        assert sorted(actual_output) == sorted(expected_output)
+        expected_output = ['bar.md', 'baz/bar', 'baz/zoo', 'foo']
+        assert actual_output == expected_output
 
 
 class TestLocalSyncClient(object):

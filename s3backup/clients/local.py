@@ -8,7 +8,7 @@ def traverse(path, ignore_files=None):
     if ignore_files is None:
         ignore_files = set()
 
-    for item in os.listdir(path):
+    for item in sorted(os.listdir(path)):
         full_path = os.path.join(path, item)
         if os.path.isdir(full_path):
             for result in traverse(full_path, ignore_files):
