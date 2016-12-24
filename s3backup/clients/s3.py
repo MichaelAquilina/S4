@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import collections
 import datetime
 import json
 import os
@@ -32,6 +31,8 @@ class S3SyncClient(object):
             Key=os.path.join(self.prefix, key),
             Body=fp,
         )
+        if key not in self.index:
+            self.index[key] = {}
         self.index[key]['remote_timestamp'] = remote_timestamp
 
     def get(self, key):
@@ -48,17 +49,15 @@ class S3SyncClient(object):
         )
 
     def get_index_state(self):
-        result = collections.defaultdict(dict)
         try:
             resp = self.client.get_object(
                 Bucket=self.bucket,
                 Key=self.index_path(),
             )
             data = json.loads(resp['Body'].read().decode('utf-8'))
-            result.update(data)
+            return data
         except (ClientError, ValueError):
-            pass
-        return result
+            return {}
 
     def get_current_state(self):
         results = {}
