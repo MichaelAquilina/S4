@@ -35,10 +35,15 @@ class LocalSyncClient(object):
         self.index[key]['remote_timestamp'] = remote_timestamp
 
     def get(self, key):
-        return open(os.path.join(self.path, key), 'rb')
+        path = os.path.join(self.path, key)
+        if os.path.exists(path):
+            return open(path, 'rb')
 
     def delete(self, key):
-        os.remove(os.path.join(self.path, key))
+        # TODO: Figure out a way to distinguish between success and not found
+        path = os.path.join(self.path, key)
+        if os.path.exists(path):
+            os.remove(path)
 
     def get_index_state(self):
         if not os.path.exists(self.index_path()):
@@ -66,3 +71,4 @@ class LocalSyncClient(object):
 
         with open(self.index_path(), 'w') as fp:
             json.dump(results, fp)
+        self.index = results
