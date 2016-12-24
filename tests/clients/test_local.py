@@ -58,23 +58,50 @@ class TestLocalSyncClient(object):
     def teardown_method(self):
         shutil.rmtree(self.target_folder)
 
-    def test_put(self):
+    def set_index(self, data):
+        with open(self.index_path, 'w') as fp:
+            json.dump(data, fp)
+
+    def get_file_data(self, key):
+        with open(os.path.join(self.target_folder, key), 'rb') as fp:
+            return fp.read()
+
+    def set_file_data(self, key, data):
+        with open(os.path.join(self.target_folder, key), 'wb') as fp:
+            fp.write(data)
+
+    def test_put_new(self):
         client = local.LocalSyncClient(self.target_folder)
         client.put('hello_world.txt', io.BytesIO(b'hi'), 20000)
 
         assert client.index['hello_world.txt']['remote_timestamp'] == 20000
-        with open(os.path.join(self.target_folder, 'hello_world.txt'), 'rb') as fp:
-            data = fp.read()
-        assert data == b'hi'
+        assert self.get_file_data('hello_world.txt') == b'hi'
 
-    def test_get(self):
+    def test_put_existing(self):
+        self.set_index({
+            'doge.txt': {'local_timestamp': 1111111}
+        })
+
+        data = b'canis lupus familiaris'
         client = local.LocalSyncClient(self.target_folder)
-        with open(os.path.join(self.target_folder, 'whatup.md'), 'wb') as fp:
-            fp.write(b'blue green yellow')
+        client.put('doge.txt', io.BytesIO(data), 20000)
+
+        assert client.index['doge.txt']['remote_timestamp'] == 20000
+        assert client.index['doge.txt']['local_timestamp'] == 1111111
+
+        assert self.get_file_data('doge.txt') == data
+
+    def test_get_existing(self):
+        client = local.LocalSyncClient(self.target_folder)
+        self.set_file_data('whatup.md', b'blue green yellow')
         fp = client.get('whatup.md')
         assert fp.read() == b'blue green yellow'
 
-    def test_delete(self):
+    def test_get_non_existant(self):
+        client = local.LocalSyncClient(self.target_folder)
+        assert client.get('idontexist.md') is None
+
+    def test_delete_existing(self):
         target_file = os.path.join(self.target_folder, 'foo')
         touch(os.path.join(self.target_folder, 'foo'), 222222)
         client = local.LocalSyncClient(self.target_folder)
@@ -82,6 +109,10 @@ class TestLocalSyncClient(object):
         assert os.path.exists(target_file) is True
         client.delete('foo')
         assert os.path.exists(target_file) is False
+
+    def test_delete_non_existant(self):
+        client = local.LocalSyncClient(self.target_folder)
+        client.delete('idontexist.txt')
 
     def test_index_path(self):
         client = local.LocalSyncClient(self.target_folder)
@@ -98,8 +129,7 @@ class TestLocalSyncClient(object):
                 'remote_timestamp': 5000,
             },
         }
-        with open(self.index_path, 'w') as fp:
-            json.dump(data, fp)
+        self.set_index(data)
 
         client = local.LocalSyncClient(self.target_folder)
         actual_output = client.get_index_state()
@@ -134,26 +164,26 @@ class TestLocalSyncClient(object):
             },
         }
         assert actual_output == expected_output
+        assert client.index == expected_output
 
     def test_update_index_non_empty(self):
         touch(os.path.join(self.target_folder, 'foo'), 13371337)
         touch(os.path.join(self.target_folder, 'bar'), 50032003)
 
-        with open(self.index_path, 'w') as fp:
-            json.dump({
-                'foo': {
-                    'local_timestamp': 4000,
-                    'remote_timestamp': 4000,
-                },
-                'bar': {
-                    'local_timestamp': 5000,
-                    'remote_timestamp': 5000,
-                },
-                'baz': {
-                    'local_timestamp': 5000,
-                    'remote_timestamp': 5000,
-                }
-            }, fp)
+        self.set_index({
+            'foo': {
+                'local_timestamp': 4000,
+                'remote_timestamp': 4000,
+            },
+            'bar': {
+                'local_timestamp': 5000,
+                'remote_timestamp': 5000,
+            },
+            'baz': {
+                'local_timestamp': 5000,
+                'remote_timestamp': 5000,
+            }
+        })
 
         client = local.LocalSyncClient(self.target_folder)
         client.update_index()
@@ -169,3 +199,4 @@ class TestLocalSyncClient(object):
             },
         }
         assert actual_output == expected_output
+        assert client.index == expected_output
