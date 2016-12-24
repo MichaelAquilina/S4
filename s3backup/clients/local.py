@@ -18,13 +18,19 @@ def traverse(path):
 class LocalSyncClient(object):
     def __init__(self, path):
         self.path = path
+        self.index = self.get_index_state()
 
     def index_path(self):
         return os.path.join(self.path, '.index')
 
-    def put(self, key, fp0):
-        with open(os.path.join(self.path, key), 'wb') as fp1:
-            fp1.write(fp0.read())
+    def put(self, key, fp, remote_timestamp):
+        path = os.path.join(self.path, key)
+        with open(path, 'wb') as fp1:
+            fp1.write(fp.read())
+
+        if key not in self.index:
+            self.index[key] = {}
+        self.index[key]['remote_timestamp'] = remote_timestamp
 
     def get(self, key):
         return open(os.path.join(self.path, key), 'rb')
@@ -47,10 +53,14 @@ class LocalSyncClient(object):
             full_path = os.path.join(self.path, relative_path)
             stat = os.stat(full_path)
 
-            results[relative_path] = dict(timestamp=stat.st_mtime)
+            results[relative_path] = {'local_timestamp': stat.st_mtime}
         return results
 
     def update_index(self):
-        data = self.get_current_state()
+        results = self.get_current_state()
+        for key in results:
+            if key in self.index:
+                results[key]['remote_timestamp'] = self.index[key]['remote_timestamp']
+
         with open(self.index_path(), 'w') as fp:
-            json.dump(data, fp)
+            json.dump(results, fp)
