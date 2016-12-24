@@ -39,7 +39,10 @@ class TestTraverse(object):
         touch(os.path.join(self.target_folder, 'baz', 'bar'))
         touch(os.path.join(self.target_folder, '.index'))
 
-        actual_output = list(local.traverse(self.target_folder))
+        actual_output = list(local.traverse(
+            self.target_folder,
+            ignore_files={'.index', '.idontexist'}
+        ))
 
         # TODO: This should be auto sorted based on the search mechanism used
         expected_output = ['foo', 'bar.md', 'baz/bar']
