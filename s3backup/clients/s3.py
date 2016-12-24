@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import collections
 import datetime
 import json
 import os
@@ -17,6 +18,7 @@ class S3SyncClient(object):
         self.client = client
         self.bucket = bucket
         self.prefix = prefix
+        self.index = self.get_index_state()
 
     def index_path(self):
         return os.path.join(self.prefix, '.index')
@@ -24,12 +26,13 @@ class S3SyncClient(object):
     def get_absolute_path(self, path):
         return os.path.join(self.prefix, path)
 
-    def put(self, key, fp):
+    def put(self, key, fp, remote_timestamp):
         self.client.put_object(
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
             Body=fp,
         )
+        self.index[key]['remote_timestamp'] = remote_timestamp
 
     def get(self, key):
         resp = self.client.get_object(
@@ -45,16 +48,17 @@ class S3SyncClient(object):
         )
 
     def get_index_state(self):
+        result = collections.defaultdict(dict)
         try:
             resp = self.client.get_object(
                 Bucket=self.bucket,
                 Key=self.index_path(),
             )
-        except ClientError:
-            return {}
-        else:
             data = json.loads(resp['Body'].read().decode('utf-8'))
-            return data
+            result.update(data)
+        except (ClientError, ValueError):
+            pass
+        return result
 
     def get_current_state(self):
         results = {}
@@ -70,15 +74,19 @@ class S3SyncClient(object):
             if key == '.index':
                 continue
 
-            results[key] = dict(
-                timestamp=to_timestamp(obj['LastModified']),
-            )
+            results[key] = {
+                'local_timestamp': to_timestamp(obj['LastModified']),
+            }
         return results
 
     def update_index(self):
-        data = self.get_current_state()
+        results = self.get_current_state()
+        for key in results:
+            if key in self.index:
+                results[key]['remote_timestamp'] = self.index[key]['remote_timestamp']
+
         self.client.put_object(
             Bucket=self.bucket,
             Key=self.index_path(),
-            Body=json.dumps(data),
+            Body=json.dumps(results),
         )
