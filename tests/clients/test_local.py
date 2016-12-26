@@ -58,6 +58,10 @@ class TestLocalSyncClient(object):
     def teardown_method(self):
         shutil.rmtree(self.target_folder)
 
+    def test_repr(self):
+        client = local.LocalSyncClient('/home/rick/timemachine/')
+        assert repr(client) == 'LocalSyncClient</home/rick/timemachine/>'
+
     def set_index(self, data):
         with open(self.index_path, 'w') as fp:
             json.dump(data, fp)

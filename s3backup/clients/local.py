@@ -22,6 +22,9 @@ class SyncObject(object):
         self.fp = fp
         self.timestamp = timestamp
 
+    def __repr__(self):
+        return 'SyncObject<{}, {}>'.format(self.fp, self.timestamp)
+
 
 class LocalSyncClient(object):
     def __init__(self, path):
