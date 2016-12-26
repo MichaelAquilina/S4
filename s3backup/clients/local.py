@@ -17,6 +17,12 @@ def traverse(path, ignore_files=None):
             yield item
 
 
+class SyncObject(object):
+    def __init__(self, fp, timestamp):
+        self.fp = fp
+        self.timestamp = timestamp
+
+
 class LocalSyncClient(object):
     def __init__(self, path):
         self.path = path
@@ -28,19 +34,23 @@ class LocalSyncClient(object):
     def index_path(self):
         return os.path.join(self.path, '.index')
 
-    def put(self, key, fp, remote_timestamp):
+    def put(self, key, sync_object):
         path = os.path.join(self.path, key)
         with open(path, 'wb') as fp1:
-            fp1.write(fp.read())
+            fp1.write(sync_object.fp.read())
 
         if key not in self.index:
             self.index[key] = {}
-        self.index[key]['remote_timestamp'] = remote_timestamp
+        self.index[key]['remote_timestamp'] = sync_object.timestamp
 
     def get(self, key):
         path = os.path.join(self.path, key)
         if os.path.exists(path):
-            return open(path, 'rb')
+            fp = open(path, 'rb')
+            timestamp = os.path.getmtime(path)
+            return SyncObject(fp, timestamp)
+        else:
+            return None
 
     def delete(self, key):
         # TODO: Figure out a way to distinguish between success and not found

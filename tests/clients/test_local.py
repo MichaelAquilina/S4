@@ -72,7 +72,10 @@ class TestLocalSyncClient(object):
 
     def test_put_new(self):
         client = local.LocalSyncClient(self.target_folder)
-        client.put('hello_world.txt', io.BytesIO(b'hi'), 20000)
+        client.put(
+            key='hello_world.txt',
+            sync_object=local.SyncObject(io.BytesIO(b'hi'), 20000)
+        )
 
         assert client.index['hello_world.txt']['remote_timestamp'] == 20000
         assert self.get_file_data('hello_world.txt') == b'hi'
@@ -84,7 +87,10 @@ class TestLocalSyncClient(object):
 
         data = b'canis lupus familiaris'
         client = local.LocalSyncClient(self.target_folder)
-        client.put('doge.txt', io.BytesIO(data), 20000)
+        client.put(
+            key='doge.txt',
+            sync_object=local.SyncObject(io.BytesIO(data), 20000)
+        )
 
         assert client.index['doge.txt']['remote_timestamp'] == 20000
         assert client.index['doge.txt']['local_timestamp'] == 1111111
@@ -94,8 +100,8 @@ class TestLocalSyncClient(object):
     def test_get_existing(self):
         client = local.LocalSyncClient(self.target_folder)
         self.set_file_data('whatup.md', b'blue green yellow')
-        fp = client.get('whatup.md')
-        assert fp.read() == b'blue green yellow'
+        sync_object = client.get('whatup.md')
+        assert sync_object.fp.read() == b'blue green yellow'
 
     def test_get_non_existant(self):
         client = local.LocalSyncClient(self.target_folder)
