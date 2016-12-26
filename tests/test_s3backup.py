@@ -15,8 +15,8 @@ class TestCompareStates(object):
 
         actual_output = dict(compare_states(current, previous))
         expected_output = {
-            'apple': StateAction.DELETE,
-            'orange': StateAction.DELETE,
+            'apple': StateAction(StateAction.DELETE, None),
+            'orange': StateAction(StateAction.DELETE, None),
         }
         assert actual_output == expected_output
 
@@ -29,8 +29,8 @@ class TestCompareStates(object):
 
         actual_output = dict(compare_states(current, previous))
         expected_output = {
-            'foo': StateAction.CREATE,
-            'bar': StateAction.CREATE,
+            'foo': StateAction(StateAction.UPDATE, 400123),
+            'bar': StateAction(StateAction.UPDATE, 23231),
         }
         assert actual_output == expected_output
 
@@ -44,7 +44,7 @@ class TestCompareStates(object):
 
         actual_output = dict(compare_states(current, previous))
         expected_output = {
-            'red': StateAction.UPDATE,
+            'red': StateAction(StateAction.UPDATE, 1234567),
         }
         assert actual_output == expected_output
 
@@ -58,7 +58,7 @@ class TestCompareStates(object):
 
         actual_output = dict(compare_states(current, previous))
         expected_output = {
-            'monkey': StateAction.CONFLICT,
+            'monkey': StateAction(StateAction.CONFLICT, 1000000)
         }
         assert actual_output == expected_output
 
@@ -76,10 +76,10 @@ class TestCompareStates(object):
 
         actual_output = dict(compare_states(current, previous))
         expected_output = {
-            'elephant': StateAction.CREATE,
-            'monkey': StateAction.CONFLICT,
-            'snake': StateAction.DELETE,
-            'dog': StateAction.UPDATE,
+            'elephant': StateAction(StateAction.UPDATE, 3232323),
+            'monkey': StateAction(StateAction.CONFLICT, 1000000),
+            'snake': StateAction(StateAction.DELETE, None),
+            'dog': StateAction(StateAction.UPDATE, 23233232323),
         }
         assert actual_output == expected_output
 
@@ -91,14 +91,12 @@ class TestCompareActions(object):
     def test_actions_1_empty(self):
         actions_2 = {
             'foo': StateAction.UPDATE,
-            'bar': StateAction.CREATE,
             'cow/moo/what.txt': StateAction.DELETE,
             'what/am/I.obj': StateAction.CONFLICT
         }
         actual_output = dict(compare_actions({}, actions_2))
         expected_output = {
             'foo': SyncAction.DOWNLOAD,
-            'bar': SyncAction.DOWNLOAD,
             'cow/moo/what.txt': SyncAction.DELETE_LOCAL,
             'what/am/I.obj': SyncAction.CONFLICT,
         }
@@ -107,14 +105,12 @@ class TestCompareActions(object):
     def test_actions_2_empty(self):
         actions_1 = {
             'foo': StateAction.UPDATE,
-            'bar': StateAction.CREATE,
             'cow/moo/what.txt': StateAction.DELETE,
             'what/am/I.obj': StateAction.CONFLICT
         }
         actual_output = dict(compare_actions(actions_1, {}))
         expected_output = {
             'foo': SyncAction.UPLOAD,
-            'bar': SyncAction.UPLOAD,
             'cow/moo/what.txt': SyncAction.DELETE_REMOTE,
             'what/am/I.obj': SyncAction.CONFLICT,
         }
@@ -129,7 +125,6 @@ class TestCompareActions(object):
         }
         actions_2 = {
             'yhorm': StateAction.CONFLICT,
-            'ariandel': StateAction.CREATE,
             'artorias': StateAction.DELETE,
             'seath': StateAction.CONFLICT
         }
@@ -142,21 +137,18 @@ class TestCompareActions(object):
         }
         assert actual_output == expected_output
 
-    def test_other_conficts(self):
+    def test_other_conflicts(self):
         actions_1 = {
-            'one/two/three': StateAction.UPDATE,
             'four/five': StateAction.DELETE,
-            'six/seven': StateAction.CREATE,
+            'six/seven': StateAction.UPDATE,
         }
         actions_2 = {
-            'one/two/three': StateAction.CREATE,
             'four/five': StateAction.UPDATE,
             'six/seven': StateAction.DELETE,
         }
 
         actual_output = dict(compare_actions(actions_1, actions_2))
         expected_output = {
-            'one/two/three': SyncAction.CONFLICT,
             'four/five': SyncAction.CONFLICT,
             'six/seven': SyncAction.CONFLICT,
         }
@@ -165,20 +157,17 @@ class TestCompareActions(object):
     def test_anything_with_none(self):
         actions_1 = {
             'foo': StateAction.UPDATE,
-            'bar': StateAction.CREATE,
             'cow/moo/what.txt': StateAction.DELETE,
             'what/am/I.obj': StateAction.CONFLICT
         }
         actions_2 = {
             'foo': None,
-            'bar': None,
             'cow/moo/what.txt': None,
             'what/am/I.obj': None,
         }
         actual_output = dict(compare_actions(actions_1, actions_2))
         expected_output = {
             'foo': SyncAction.UPLOAD,
-            'bar': SyncAction.UPLOAD,
             'cow/moo/what.txt': SyncAction.DELETE_REMOTE,
             'what/am/I.obj': SyncAction.CONFLICT,
         }
