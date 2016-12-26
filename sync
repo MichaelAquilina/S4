@@ -3,10 +3,8 @@
 import os
 import json
 
-import boto3
-
 import s3backup
-from s3backup.clients import local, s3
+from s3backup.clients import local
 
 
 def main():
@@ -18,15 +16,12 @@ def main():
     with open(config_path, 'r') as fp:
         config = json.load(fp)
 
-    client = boto3.client('s3')
-    bucket = config['bucket']
+    for target_1, target_2 in config['directories'].items():
+        client_1 = local.LocalSyncClient(target_1)
+        client_2 = local.LocalSyncClient(target_2)
 
-    for target_folder, prefix in config['directories'].items():
-        local_client = local.LocalSyncClient(target_folder)
-        s3_client = s3.S3SyncClient(client, bucket, prefix)
-
-        print('Syncing', target_folder, 'with', os.path.join(bucket, prefix))
-        s3backup.sync(local_client, s3_client)
+        print('Syncing', target_1, 'with', target_2)
+        s3backup.sync(client_1, client_2)
 
 if __name__ == '__main__':
     main()

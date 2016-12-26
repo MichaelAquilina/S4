@@ -22,6 +22,9 @@ class LocalSyncClient(object):
         self.path = path
         self.index = self.get_index_state()
 
+    def __repr__(self):
+        return 'LocalSyncClient<{}>'.format(self.path)
+
     def index_path(self):
         return os.path.join(self.path, '.index')
 
@@ -67,7 +70,7 @@ class LocalSyncClient(object):
         results = self.get_current_state()
         for key in results:
             if key in self.index:
-                results[key]['remote_timestamp'] = self.index[key]['remote_timestamp']
+                results[key]['remote_timestamp'] = self.index[key].get('remote_timestamp')
 
         with open(self.index_path(), 'w') as fp:
             json.dump(results, fp)

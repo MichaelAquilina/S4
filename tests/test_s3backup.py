@@ -9,8 +9,8 @@ class TestCompareStates(object):
     def test_empty_current(self):
         current = {}
         previous = {
-            'orange': dict(timestamp=99999),
-            'apple': dict(timestamp=88888),
+            'orange': {'local_timestamp': 99999},
+            'apple': {'local_timestamp': 88888},
         }
 
         actual_output = dict(compare_states(current, previous))
@@ -22,8 +22,8 @@ class TestCompareStates(object):
 
     def test_empty_previous(self):
         current = {
-            'foo': dict(timestamp=400123),
-            'bar': dict(timestamp=23231),
+            'foo': {'local_timestamp': 400123},
+            'bar': {'local_timestamp': 23231},
         }
         previous = {}
 
@@ -36,10 +36,10 @@ class TestCompareStates(object):
 
     def test_new_current(self):
         current = {
-            'red': dict(timestamp=1234567),
+            'red': {'local_timestamp': 1234567},
         }
         previous = {
-            'red': dict(timestamp=1000000),
+            'red': {'local_timestamp': 1000000},
         }
 
         actual_output = dict(compare_states(current, previous))
@@ -50,10 +50,10 @@ class TestCompareStates(object):
 
     def test_new_previous(self):
         current = {
-            'monkey': dict(timestamp=8000),
+            'monkey': {'local_timestamp': 8000},
         }
         previous = {
-            'monkey': dict(timestamp=1000000),
+            'monkey': {'local_timestamp': 1000000},
         }
 
         actual_output = dict(compare_states(current, previous))
@@ -64,14 +64,14 @@ class TestCompareStates(object):
 
     def test_mixed(self):
         current = {
-            'monkey': dict(timestamp=8000),
-            'elephant': dict(timestamp=3232323),
-            'dog': dict(timestamp=23233232323),
+            'monkey': {'local_timestamp': 8000},
+            'elephant': {'local_timestamp': 3232323},
+            'dog': {'local_timestamp': 23233232323},
         }
         previous = {
-            'monkey': dict(timestamp=1000000),
-            'snake': dict(timestamp=232323),
-            'dog': dict(timestamp=2333)
+            'monkey': {'local_timestamp': 1000000},
+            'snake': {'local_timestamp': 232323},
+            'dog': {'local_timestamp': 2333}
         }
 
         actual_output = dict(compare_states(current, previous))
