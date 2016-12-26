@@ -50,8 +50,8 @@ class LocalSyncClient(object):
         path = os.path.join(self.path, key)
         if os.path.exists(path):
             fp = open(path, 'rb')
-            timestamp = os.path.getmtime(path)
-            return SyncObject(fp, timestamp)
+            stat = os.stat(path)
+            return SyncObject(fp, stat.st_mtime)
         else:
             return None
 
