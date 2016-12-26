@@ -56,10 +56,11 @@ class LocalSyncClient(object):
             return None
 
     def delete(self, key):
-        # TODO: Figure out a way to distinguish between success and not found
         path = os.path.join(self.path, key)
         if os.path.exists(path):
             os.remove(path)
+        else:
+            raise IndexError('The specified key does not exist: {}'.format(key))
 
     def get_index_state(self):
         if not os.path.exists(self.index_path()):

@@ -6,6 +6,8 @@ import os
 import shutil
 import tempfile
 
+import pytest
+
 from s3backup.clients import local
 
 
@@ -129,7 +131,9 @@ class TestLocalSyncClient(object):
 
     def test_delete_non_existant(self):
         client = local.LocalSyncClient(self.target_folder)
-        client.delete('idontexist.txt')
+        with pytest.raises(IndexError) as exc:
+            client.delete('idontexist.txt')
+        assert exc.value.args[0] == 'The specified key does not exist: idontexist.txt'
 
     def test_index_path(self):
         client = local.LocalSyncClient(self.target_folder)
