@@ -86,23 +86,36 @@ def sync(client_1, client_2):
     index = client_1.get_index_state()
     actions_1 = dict(compare_states(current, index))
 
-    for key, action in compare_actions(actions_1, actions_2):
-        if action == SyncAction.DOWNLOAD:
-            print('Downloading', key)
+    all_keys = set(actions_1.keys() | actions_2.keys())
+    for key in all_keys:
+        a1 = actions_1.get(key)
+        a2 = actions_2.get(key)
+        a1_action = a1.action if a1 else None
+        a2_action = a2.action if a2 else None
+
+        print(a1_action, a2_action)
+
+        if a1_action is None and a2_action is None:
+            continue
+
+        elif a1_action is None and a2_action == StateAction.UPDATE:
+            print('Updating', client_1, 'for', key)
             client_1.put(key, client_2.get(key))
-        elif action == SyncAction.UPLOAD:
-            print('Uploading', key)
+
+        elif a1_action == StateAction.UPDATE and a2_action is None:
+            print('Updating', client_2, 'for', key)
             client_2.put(key, client_1.get(key))
-        elif action == SyncAction.DELETE_LOCAL:
-            print('Delete local', key)
+
+        elif a1_action is None and a2_action == StateAction.DELETE:
+            print('Deleting', key, 'in', client_1)
             client_1.delete(key)
-        elif action == SyncAction.DELETE_REMOTE:
-            print('Delete remote', key)
+
+        elif a1_action == StateAction.DELETE and a2_action is None:
+            print('Deleting', key, 'in', client_2)
             client_2.delete(key)
-        elif action == SyncAction.CONFLICT:
-            print('Need to resolve Conflict for', key)
+
         else:
-            raise ValueError('You should never reach here')
+            print('There is a conflict:', key, a1, a2)
 
     print('Updating Indexes')
     client_2.update_index()

@@ -39,6 +39,11 @@ class LocalSyncClient(object):
 
     def put(self, key, sync_object):
         path = os.path.join(self.path, key)
+
+        parent = os.path.dirname(path)
+        if not os.path.exists(parent):
+            os.makedirs(parent)
+
         with open(path, 'wb') as fp1:
             fp1.write(sync_object.fp.read())
 
