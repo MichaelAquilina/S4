@@ -24,8 +24,8 @@ def compare_states(current, previous):
         in_previous = key in previous
         in_current = key in current
         if in_previous and in_current:
-            previous_timestamp = previous[key]['timestamp']
-            current_timestamp = current[key]['timestamp']
+            previous_timestamp = previous[key]['local_timestamp']
+            current_timestamp = current[key]['local_timestamp']
             if previous_timestamp == current_timestamp:
                 yield key, None
             elif previous_timestamp < current_timestamp:
