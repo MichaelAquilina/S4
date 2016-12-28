@@ -17,22 +17,23 @@ def traverse(path, ignore_files=None):
             yield item
 
 
-class SyncActions(object):
+class SyncAction(object):
     UPDATE = 'UPDATE'
     DELETE = 'DELETE'
     CONFLICT = 'CONFLICT'
+    NONE = 'NONE'
 
     def __init__(self, action, timestamp):
         self.action = action
         self.timestamp = timestamp
 
     def __eq__(self, other):
-        if not isinstance(other, SyncActions):
+        if not isinstance(other, SyncAction):
             return False
         return self.action == other.action and self.timestamp == other.timestamp
 
     def __repr__(self):
-        return 'SyncActions<{}, {}>'.format(self.action, self.timestamp)
+        return 'SyncAction<{}, {}>'.format(self.action, self.timestamp)
 
 
 class SyncObject(object):
@@ -143,12 +144,14 @@ class LocalSyncClient(object):
         local_timestamp = self.get_local_timestamp(key)
 
         if index_timestamp is None and local_timestamp:
-            return 'UPDATE', local_timestamp
-        if local_timestamp is None and index_timestamp:
-            return 'DELETE', None
+            return SyncAction(SyncAction.UPDATE, local_timestamp)
+        elif local_timestamp is None and index_timestamp:
+            return SyncAction(SyncAction.DELETE, None)
+        elif local_timestamp is None and index_timestamp is None:
+            return None
         elif index_timestamp < local_timestamp:
-            return 'UPDATE', local_timestamp
+            return SyncAction(SyncAction.UPDATE, local_timestamp)
         elif index_timestamp > local_timestamp:
-            return 'CONFLICT', index_timestamp   # corruption?
+            return SyncAction(SyncAction.CONFLICT, index_timestamp)   # corruption?
         else:
-            return None, local_timestamp
+            return SyncAction(SyncAction.NONE, local_timestamp)
