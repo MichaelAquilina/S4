@@ -17,6 +17,24 @@ def traverse(path, ignore_files=None):
             yield item
 
 
+class SyncActions(object):
+    UPDATE = 'UPDATE'
+    DELETE = 'DELETE'
+    CONFLICT = 'CONFLICT'
+
+    def __init__(self, action, timestamp):
+        self.action = action
+        self.timestamp = timestamp
+
+    def __eq__(self, other):
+        if not isinstance(other, SyncActions):
+            return False
+        return self.action == other.action and self.timestamp == other.timestamp
+
+    def __repr__(self):
+        return 'SyncActions<{}, {}>'.format(self.action, self.timestamp)
+
+
 class SyncObject(object):
     def __init__(self, fp, timestamp):
         self.fp = fp
@@ -29,7 +47,7 @@ class SyncObject(object):
 class LocalSyncClient(object):
     def __init__(self, path):
         self.path = path
-        self.index = self.get_index_state()
+        self.index = self.load_index()
 
     def __repr__(self):
         return 'LocalSyncClient<{}>'.format(self.path)
@@ -67,30 +85,70 @@ class LocalSyncClient(object):
         else:
             raise IndexError('The specified key does not exist: {}'.format(key))
 
-    def get_index_state(self):
+    def load_index(self):
         if not os.path.exists(self.index_path()):
             return {}
 
-        with open(self.index_path(), 'r') as fp:
-            data = json.load(fp)
-
-        return data
-
-    def get_current_state(self):
-        results = {}
-        for relative_path in traverse(self.path, ignore_files={'.index'}):
-            full_path = os.path.join(self.path, relative_path)
-            stat = os.stat(full_path)
-
-            results[relative_path] = {'local_timestamp': stat.st_mtime}
-        return results
+        try:
+            with open(self.index_path(), 'r') as fp:
+                data = json.load(fp)
+            return data
+        except json.decoder.JSONDecodeError:
+            return {}
 
     def update_index(self):
-        results = self.get_current_state()
-        for key in results:
-            if key in self.index:
-                results[key]['remote_timestamp'] = self.index[key].get('remote_timestamp')
+        keys = self.get_local_keys()
+        index = {}
+
+        for key in keys:
+            index[key] = {
+                'remote_timestamp': self.get_remote_timestamp(key),
+                'local_timestamp': self.get_local_timestamp(key),
+            }
 
         with open(self.index_path(), 'w') as fp:
-            json.dump(results, fp)
-        self.index = results
+            json.dump(index, fp)
+        self.index = index
+
+    def get_local_keys(self):
+        return list(traverse(self.path, ignore_files={'.index'}))
+
+    def get_local_timestamp(self, key):
+        full_path = os.path.join(self.path, key)
+        if os.path.exists(full_path):
+            return os.path.getmtime(full_path)
+        else:
+            return None
+
+    def get_index_keys(self):
+        return self.index.keys()
+
+    def get_index_timestamp(self, key):
+        return self.index.get(key, {}).get('local_timestamp')
+
+    def get_remote_timestamp(self, key):
+        return self.index.get(key, {}).get('remote_timestamp')
+
+    def get_all_keys(self):
+        local_keys = self.get_local_keys()
+        index_keys = self.get_index_keys()
+        return list(set(local_keys) | set(index_keys))
+
+    def get_action(self, key):
+        """
+        returns the action to perform on this key based on its
+        state before the last sync.
+        """
+        index_timestamp = self.get_index_timestamp(key)
+        local_timestamp = self.get_local_timestamp(key)
+
+        if index_timestamp is None and local_timestamp:
+            return 'UPDATE', local_timestamp
+        if local_timestamp is None and index_timestamp:
+            return 'DELETE', None
+        elif index_timestamp < local_timestamp:
+            return 'UPDATE', local_timestamp
+        elif index_timestamp > local_timestamp:
+            return 'CONFLICT', index_timestamp   # corruption?
+        else:
+            return None, local_timestamp
