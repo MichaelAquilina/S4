@@ -141,7 +141,7 @@ class TestLocalSyncClient(object):
         client = local.LocalSyncClient(self.target_folder)
         assert client.index_path() == self.index_path
 
-    def test_get_index_state(self):
+    def test_load_index(self):
         data = {
             'foo': {
                 'local_timestamp': 4000,
@@ -155,20 +155,54 @@ class TestLocalSyncClient(object):
         self.set_index(data)
 
         client = local.LocalSyncClient(self.target_folder)
-        actual_output = client.get_index_state()
-        assert actual_output == data
+        assert client.index == data
 
-    def test_get_current_state(self):
-        touch(os.path.join(self.target_folder, 'foo'), 13371337)
-        touch(os.path.join(self.target_folder, 'bar'), 50032003)
+    def test_get_local_keys(self):
+        touch(os.path.join(self.target_folder, '.index'))
+        touch(os.path.join(self.target_folder, 'foo'))
+        touch(os.path.join(self.target_folder, 'bar'))
 
         client = local.LocalSyncClient(self.target_folder)
-        actual_output = client.get_current_state()
-        expected_output = {
-            'foo': {'local_timestamp': 13371337},
-            'bar': {'local_timestamp': 50032003},
+        actual_output = client.get_local_keys()
+        expected_output = ['foo', 'bar']
+        assert sorted(expected_output) == sorted(actual_output)
+
+    def test_get_index_keys(self):
+        data = {
+            'foo': {
+                'local_timestamp': 4000,
+                'remote_timestamp': 4000,
+            },
+            'bar/baz.txt': {
+                'local_timestamp': 5000,
+                'remote_timestamp': 5000,
+            },
         }
-        assert expected_output == actual_output
+        self.set_index(data)
+        client = local.LocalSyncClient(self.target_folder)
+        actual_output = client.get_index_keys()
+        expected_output = ['foo', 'bar/baz.txt']
+        assert sorted(list(actual_output)) == sorted(expected_output)
+
+    def test_all_keys(self):
+        touch(os.path.join(self.target_folder, '.index'))
+        touch(os.path.join(self.target_folder, 'foo'))
+        touch(os.path.join(self.target_folder, 'bar/boo.md'))
+        data = {
+            'foo': {
+                'local_timestamp': 4000,
+                'remote_timestamp': 4000,
+            },
+            'bar/baz.txt': {
+                'local_timestamp': 5000,
+                'remote_timestamp': 5000,
+            },
+        }
+        self.set_index(data)
+        client = local.LocalSyncClient(self.target_folder)
+        actual_output = client.get_all_keys()
+        expected_output = ['foo', 'bar/boo.md', 'bar/baz.txt']
+        assert sorted(actual_output) == sorted(expected_output)
 
     def test_update_index_empty(self):
         touch(os.path.join(self.target_folder, 'foo'), 13371337)
@@ -176,17 +210,17 @@ class TestLocalSyncClient(object):
 
         client = local.LocalSyncClient(self.target_folder)
         client.update_index()
-        actual_output = client.get_index_state()
         # remote timestamp should not be included since it does not exist
         expected_output = {
             'foo': {
                 'local_timestamp': 13371337,
+                'remote_timestamp': None,
             },
             'bar': {
                 'local_timestamp': 50032003,
+                'remote_timestamp': None,
             },
         }
-        assert actual_output == expected_output
         assert client.index == expected_output
 
     def test_update_index_non_empty(self):
@@ -210,7 +244,6 @@ class TestLocalSyncClient(object):
 
         client = local.LocalSyncClient(self.target_folder)
         client.update_index()
-        actual_output = client.get_index_state()
         expected_output = {
             'foo': {
                 'local_timestamp': 13371337,
@@ -221,5 +254,4 @@ class TestLocalSyncClient(object):
                 'remote_timestamp': 5000,
             },
         }
-        assert actual_output == expected_output
         assert client.index == expected_output
