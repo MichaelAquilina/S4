@@ -66,9 +66,7 @@ class LocalSyncClient(object):
         with open(path, 'wb') as fp1:
             fp1.write(sync_object.fp.read())
 
-        if key not in self.index:
-            self.index[key] = {}
-        self.index[key]['remote_timestamp'] = sync_object.timestamp
+        self.set_remote_timestamp(key, sync_object.timestamp)
 
     def get(self, key):
         path = os.path.join(self.path, key)
@@ -90,12 +88,9 @@ class LocalSyncClient(object):
         if not os.path.exists(self.index_path()):
             return {}
 
-        try:
-            with open(self.index_path(), 'r') as fp:
-                data = json.load(fp)
-            return data
-        except json.decoder.JSONDecodeError:
-            return {}
+        with open(self.index_path(), 'r') as fp:
+            data = json.load(fp)
+        return data
 
     def update_index(self):
         keys = self.get_local_keys()
@@ -127,8 +122,18 @@ class LocalSyncClient(object):
     def get_index_timestamp(self, key):
         return self.index.get(key, {}).get('local_timestamp')
 
+    def set_index_timestamp(self, key, timestamp):
+        if key not in self.index:
+            self.index[key] = {}
+        self.index[key]['local_timestamp'] = timestamp
+
     def get_remote_timestamp(self, key):
         return self.index.get(key, {}).get('remote_timestamp')
+
+    def set_remote_timestamp(self, key, timestamp):
+        if key not in self.index:
+            self.index[key] = {}
+        self.index[key]['remote_timestamp'] = timestamp
 
     def get_all_keys(self):
         local_keys = self.get_local_keys()
