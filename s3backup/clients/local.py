@@ -165,4 +165,5 @@ class LocalSyncClient(object):
         elif index_timestamp > local_timestamp:
             return SyncAction(SyncAction.CONFLICT, index_timestamp)   # corruption?
         else:
-            return SyncAction(SyncAction.NONE, None)
+            remote_timestamp = self.get_remote_timestamp(key)
+            return SyncAction(SyncAction.NONE, remote_timestamp)
