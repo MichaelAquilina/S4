@@ -16,6 +16,9 @@ class TestSync(object):
         self.folder_2 = tempfile.mkdtemp()
         self.client_2 = LocalSyncClient(self.folder_2)
 
+        self.folder_3 = tempfile.mkdtemp()
+        self.client_3 = LocalSyncClient(self.folder_3)
+
     def teardown_method(self):
         shutil.rmtree(self.folder_1)
         shutil.rmtree(self.folder_2)
@@ -77,3 +80,40 @@ class TestSync(object):
         self.assert_remote_timestamp([self.client_1, self.client_2], 'hello', 6000)
         self.assert_remote_timestamp([self.client_1, self.client_2], 'baz', 8000)
         self.assert_contents([self.folder_1, self.folder_2], 'baz', 'just syncing some stuff')
+
+    def test_three_way_sync(self):
+        self.set_contents(self.folder_1, 'foo', timestamp=1000)
+        self.set_contents(self.folder_2, 'bar', timestamp=2000, data='red')
+        self.set_contents(self.folder_3, 'baz', timestamp=3000)
+
+        s3backup.sync(self.client_1, self.client_2)
+        s3backup.sync(self.client_2, self.client_3)
+        s3backup.sync(self.client_1, self.client_3)
+
+        expected_keys = sorted(['foo', 'bar', 'baz'])
+
+        assert sorted(self.client_1.get_local_keys()) == expected_keys
+        assert sorted(self.client_2.get_local_keys()) == expected_keys
+        assert sorted(self.client_3.get_local_keys()) == expected_keys
+        self.assert_contents([self.folder_1, self.folder_2, self.folder_3], 'bar', 'red')
+
+        self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'foo', 1000)
+        self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'bar', 2000)
+        self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'baz', 3000)
+
+        self.set_contents(self.folder_2, 'bar', timestamp=8000, data='green')
+
+        s3backup.sync(self.client_1, self.client_2)
+        s3backup.sync(self.client_2, self.client_3)
+        s3backup.sync(self.client_1, self.client_3)
+
+        expected_keys = sorted(['foo', 'bar', 'baz'])
+
+        assert sorted(self.client_1.get_local_keys()) == expected_keys
+        assert sorted(self.client_2.get_local_keys()) == expected_keys
+        assert sorted(self.client_3.get_local_keys()) == expected_keys
+        self.assert_contents([self.folder_1, self.folder_2, self.folder_3], 'bar', 'green')
+
+        self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'foo', 1000)
+        self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'bar', 8000)
+        self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'baz', 3000)
