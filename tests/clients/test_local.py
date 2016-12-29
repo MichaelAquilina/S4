@@ -164,13 +164,14 @@ class TestLocalSyncClient(object):
         assert client.index == data
 
     def test_get_local_keys(self):
-        touch(os.path.join(self.target_folder, '.index'))
+        self.set_index({})  # .index file should not come up in results
+        touch(os.path.join(self.target_folder, '.bashrc'))
         touch(os.path.join(self.target_folder, 'foo'))
         touch(os.path.join(self.target_folder, 'bar'))
 
         client = local.LocalSyncClient(self.target_folder)
         actual_output = client.get_local_keys()
-        expected_output = ['foo', 'bar']
+        expected_output = ['foo', 'bar', '.bashrc']
         assert sorted(expected_output) == sorted(actual_output)
 
     def test_get_index_keys(self):
