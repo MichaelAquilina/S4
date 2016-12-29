@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import io
 import json
 import os
@@ -54,8 +55,10 @@ class TestTraverse(object):
 
 class TestSyncAction(object):
     def test_repr(self):
-        action = local.SyncAction(local.SyncAction.DELETE, 1000)
-        assert repr(action) == 'SyncAction<DELETE, 1000>'
+        action = local.SyncAction(local.SyncAction.UPDATE, 1000)
+        assert repr(action) == 'SyncAction<UPDATE, {}>'.format(
+            datetime.datetime.utcfromtimestamp(1000)
+        )
 
 
 class TestSyncObject(object):
@@ -311,6 +314,6 @@ class TestLocalSyncClient(object):
         client = local.LocalSyncClient(self.target_folder)
         assert client.get_action('foo') == local.SyncAction(local.SyncAction.UPDATE, 5000)
         assert client.get_action('bar') == local.SyncAction(local.SyncAction.DELETE, None)
-        assert client.get_action('baz') == local.SyncAction(local.SyncAction.NONE, 1111)
+        assert client.get_action('baz') == local.SyncAction(local.SyncAction.NONE, None)
         assert client.get_action('ooo') == local.SyncAction(local.SyncAction.CONFLICT, 9999)
-        assert client.get_action('dontexist') is None
+        assert client.get_action('dontexist') == local.SyncAction(local.SyncAction.NONE, None)
