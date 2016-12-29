@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import json
 import os
 
@@ -33,7 +34,11 @@ class SyncAction(object):
         return self.action == other.action and self.timestamp == other.timestamp
 
     def __repr__(self):
-        return 'SyncAction<{}, {}>'.format(self.action, self.timestamp)
+        if self.timestamp is not None:
+            timestamp = datetime.datetime.utcfromtimestamp(self.timestamp)
+        else:
+            timestamp = None
+        return 'SyncAction<{}, {}>'.format(self.action, timestamp)
 
 
 class SyncObject(object):
@@ -148,15 +153,16 @@ class LocalSyncClient(object):
         index_timestamp = self.get_index_timestamp(key)
         local_timestamp = self.get_local_timestamp(key)
 
-        if index_timestamp is None and local_timestamp:
+        if local_timestamp is None and index_timestamp is None:
+            # Does not exist in this case, so no action to perform
+            return SyncAction(SyncAction.NONE, None)
+        elif index_timestamp is None and local_timestamp:
             return SyncAction(SyncAction.UPDATE, local_timestamp)
         elif local_timestamp is None and index_timestamp:
             return SyncAction(SyncAction.DELETE, None)
-        elif local_timestamp is None and index_timestamp is None:
-            return None
         elif index_timestamp < local_timestamp:
             return SyncAction(SyncAction.UPDATE, local_timestamp)
         elif index_timestamp > local_timestamp:
             return SyncAction(SyncAction.CONFLICT, index_timestamp)   # corruption?
         else:
-            return SyncAction(SyncAction.NONE, local_timestamp)
+            return SyncAction(SyncAction.NONE, None)
