@@ -263,17 +263,21 @@ class TestLocalSyncClient(object):
                 'local_timestamp': 50032003,
                 'remote_timestamp': 5000,
             },
+            'baz': {
+                'local_timestamp': None,
+                'remote_timestamp': 5000,
+            },
         }
         assert client.index == expected_output
 
-    def test_get_local_timestamp(self):
+    def test_get_real_local_timestamp(self):
         touch(os.path.join(self.target_folder, 'atcg'), 2323230)
 
         client = local.LocalSyncClient(self.target_folder)
-        assert client.get_local_timestamp('atcg') == 2323230
-        assert client.get_local_timestamp('dontexist') is None
+        assert client.get_real_local_timestamp('atcg') == 2323230
+        assert client.get_real_local_timestamp('dontexist') is None
 
-    def test_get_index_timestamp(self):
+    def test_get_index_local_timestamp(self):
         self.set_index({
             'foo': {
                 'local_timestamp': 4000,
@@ -284,9 +288,9 @@ class TestLocalSyncClient(object):
             }
         })
         client = local.LocalSyncClient(self.target_folder)
-        assert client.get_index_timestamp('foo') == 4000
-        assert client.get_index_timestamp('dontexist') is None
-        assert client.get_index_timestamp('bar') == 9999999
+        assert client.get_index_local_timestamp('foo') == 4000
+        assert client.get_index_local_timestamp('dontexist') is None
+        assert client.get_index_local_timestamp('bar') == 9999999
 
         assert client.get_remote_timestamp('foo') == 32000
         assert client.get_remote_timestamp('dontexist') is None
@@ -299,12 +303,18 @@ class TestLocalSyncClient(object):
             },
             'bar': {
                 'local_timestamp': 1000,
+                'remote_timestamp': 1100,
             },
             'baz': {
                 'local_timestamp': 1111,
+                'remote_timestamp': 1400,
             },
             'ooo': {
                 'local_timestamp': 9999,
+            },
+            'ppp': {
+                'local_timestamp': None,
+                'remote_timestamp': 4000,
             }
         })
         touch(os.path.join(self.target_folder, 'foo'), 5000)
@@ -313,7 +323,8 @@ class TestLocalSyncClient(object):
 
         client = local.LocalSyncClient(self.target_folder)
         assert client.get_action('foo') == local.SyncAction(local.SyncAction.UPDATE, 5000)
-        assert client.get_action('bar') == local.SyncAction(local.SyncAction.DELETE, None)
-        assert client.get_action('baz') == local.SyncAction(local.SyncAction.NONE, None)
+        assert client.get_action('bar') == local.SyncAction(local.SyncAction.DELETE, 1100)
+        assert client.get_action('baz') == local.SyncAction(local.SyncAction.NONE, 1400)
         assert client.get_action('ooo') == local.SyncAction(local.SyncAction.CONFLICT, 9999)
+        assert client.get_action('ppp') == local.SyncAction(local.SyncAction.DELETE, 4000)
         assert client.get_action('dontexist') == local.SyncAction(local.SyncAction.NONE, None)

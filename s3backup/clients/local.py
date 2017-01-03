@@ -98,13 +98,13 @@ class LocalSyncClient(object):
         return data
 
     def update_index(self):
-        keys = self.get_local_keys()
+        keys = self.get_all_keys()
         index = {}
 
         for key in keys:
             index[key] = {
                 'remote_timestamp': self.get_remote_timestamp(key),
-                'local_timestamp': self.get_local_timestamp(key),
+                'local_timestamp': self.get_real_local_timestamp(key),
             }
 
         with open(self.index_path(), 'w') as fp:
@@ -114,7 +114,7 @@ class LocalSyncClient(object):
     def get_local_keys(self):
         return list(traverse(self.path, ignore_files={'.index'}))
 
-    def get_local_timestamp(self, key):
+    def get_real_local_timestamp(self, key):
         full_path = os.path.join(self.path, key)
         if os.path.exists(full_path):
             return os.path.getmtime(full_path)
@@ -124,10 +124,10 @@ class LocalSyncClient(object):
     def get_index_keys(self):
         return self.index.keys()
 
-    def get_index_timestamp(self, key):
+    def get_index_local_timestamp(self, key):
         return self.index.get(key, {}).get('local_timestamp')
 
-    def set_index_timestamp(self, key, timestamp):
+    def set_index_local_timestamp(self, key, timestamp):
         if key not in self.index:
             self.index[key] = {}
         self.index[key]['local_timestamp'] = timestamp
@@ -150,20 +150,22 @@ class LocalSyncClient(object):
         returns the action to perform on this key based on its
         state before the last sync.
         """
-        index_timestamp = self.get_index_timestamp(key)
-        local_timestamp = self.get_local_timestamp(key)
+        index_local_timestamp = self.get_index_local_timestamp(key)
+        real_local_timestamp = self.get_real_local_timestamp(key)
+        remote_timestamp = self.get_remote_timestamp(key)
 
-        if local_timestamp is None and index_timestamp is None:
+        if index_local_timestamp is None and real_local_timestamp:
+            return SyncAction(SyncAction.UPDATE, real_local_timestamp)
+        elif real_local_timestamp is None and index_local_timestamp:
+            return SyncAction(SyncAction.DELETE, remote_timestamp)
+        elif real_local_timestamp is None and index_local_timestamp is None and remote_timestamp:
+            return SyncAction(SyncAction.DELETE, remote_timestamp)
+        elif real_local_timestamp is None and index_local_timestamp is None:
             # Does not exist in this case, so no action to perform
             return SyncAction(SyncAction.NONE, None)
-        elif index_timestamp is None and local_timestamp:
-            return SyncAction(SyncAction.UPDATE, local_timestamp)
-        elif local_timestamp is None and index_timestamp:
-            return SyncAction(SyncAction.DELETE, None)
-        elif index_timestamp < local_timestamp:
-            return SyncAction(SyncAction.UPDATE, local_timestamp)
-        elif index_timestamp > local_timestamp:
-            return SyncAction(SyncAction.CONFLICT, index_timestamp)   # corruption?
+        elif index_local_timestamp < real_local_timestamp:
+            return SyncAction(SyncAction.UPDATE, real_local_timestamp)
+        elif index_local_timestamp > real_local_timestamp:
+            return SyncAction(SyncAction.CONFLICT, index_local_timestamp)   # corruption?
         else:
-            remote_timestamp = self.get_remote_timestamp(key)
             return SyncAction(SyncAction.NONE, remote_timestamp)
