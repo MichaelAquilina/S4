@@ -117,3 +117,15 @@ class TestSync(object):
         self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'foo', 1000)
         self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'bar', 8000)
         self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'baz', 3000)
+
+        self.delete(self.folder_3, 'foo')
+
+        s3backup.sync(self.client_1, self.client_2)
+        s3backup.sync(self.client_2, self.client_3)
+        s3backup.sync(self.client_1, self.client_3)
+
+        expected_keys = sorted(['bar', 'baz'])
+
+        assert sorted(self.client_1.get_local_keys()) == expected_keys
+        assert sorted(self.client_2.get_local_keys()) == expected_keys
+        assert sorted(self.client_3.get_local_keys()) == expected_keys
