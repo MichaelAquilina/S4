@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+import json
 import io
 
 import boto3
@@ -129,6 +130,25 @@ class TestS3SyncClient(object):
         assert exc.value.response['Error']['Code'] == '404'
 
     @mock_s3
+    def test_delete_non_existant(self):
+        # given
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id='',
+            aws_secret_access_key='',
+            aws_session_token='',
+        )
+        s3_client.create_bucket(Bucket='testbucket')
+
+        # when
+        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
+
+        # then
+        with pytest.raises(IndexError) as exc:
+            client.delete('idontexist.png')
+        assert exc.value.args[0] == 'The specified key does not exist: idontexist.png'
+
+    @mock_s3
     def test_get_local_keys(self):
         # given
         s3_client = boto3.client(
@@ -151,3 +171,32 @@ class TestS3SyncClient(object):
         # then
         expected_output = ['war.png', 'this/is/fine']
         assert sorted(actual_output) == sorted(expected_output)
+
+    @mock_s3
+    def test_get_index_timestamps(self):
+        # given
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id='',
+            aws_secret_access_key='',
+            aws_session_token='',
+        )
+        s3_client.create_bucket(Bucket='testbucket')
+        s3_client.put_object(Bucket='testbucket', Key='foo/bar/.index', Body=json.dumps({
+            'hello': {
+                'remote_timestamp': 1234,
+                'local_timestamp': 1200,
+            },
+            'world': {
+                'remote_timestamp': 5000,
+            }
+        }))
+
+        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
+
+        # then
+        assert client.get_remote_timestamp('hello') == 1234
+        assert client.get_index_local_timestamp('hello') == 1200
+
+        assert client.get_remote_timestamp('world') == 5000
+        assert client.get_index_local_timestamp('world') is None
