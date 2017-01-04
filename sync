@@ -1,6 +1,39 @@
 #! /usr/bin/env python
 
-from s3backup import main
+import os
+import json
+
+import boto3
+
+import s3backup
+from s3backup.clients import local, s3
+
+
+def get_client(target):
+    if target.startswith('s3://'):
+        tokens = target.replace('s3://', '').split('/')
+        bucket = tokens[0]
+        prefix = '/'.join(tokens[1:])
+        s3_client = boto3.client('s3')
+        return s3.S3SyncClient(s3_client, bucket, prefix)
+    else:
+        return local.LocalSyncClient(target)
+
+
+def main():
+    config_path = os.path.expanduser('~/.config/s3backup/sync.conf')
+    if not os.path.exists(config_path):
+        raise ValueError('Expected Config file:', config_path)
+
+    with open(config_path, 'r') as fp:
+        config = json.load(fp)
+
+    for target_1, target_2 in config['directories'].items():
+        client_1 = get_client(target_1)
+        client_2 = get_client(target_2)
+
+        print('Syncing', target_1, 'with', target_2)
+        s3backup.sync(client_1, client_2)
 
 if __name__ == '__main__':
-    main.sync()
+    main()
