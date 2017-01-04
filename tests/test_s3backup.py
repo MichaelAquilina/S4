@@ -8,20 +8,38 @@ import s3backup
 from s3backup.clients.local import LocalSyncClient
 
 
+def get_pairs(list_of_things):
+    for i in range(len(list_of_things)):
+        yield list_of_things[i], list_of_things[(i + 1) % len(list_of_things)]
+
+
+class TestGetPairs(object):
+    def test_empty(self):
+        assert list(get_pairs([])) == []
+
+    def test_correct_output(self):
+        assert list(get_pairs(['a', 'b', 'c'])) == [('a', 'b'), ('b', 'c'), ('c', 'a')]
+
+
 class TestSync(object):
     def setup_method(self):
-        self.folder_1 = tempfile.mkdtemp()
-        self.client_1 = LocalSyncClient(self.folder_1)
-
-        self.folder_2 = tempfile.mkdtemp()
-        self.client_2 = LocalSyncClient(self.folder_2)
-
-        self.folder_3 = tempfile.mkdtemp()
-        self.client_3 = LocalSyncClient(self.folder_3)
+        self.clients = []
+        self.folders = []
 
     def teardown_method(self):
-        shutil.rmtree(self.folder_1)
-        shutil.rmtree(self.folder_2)
+        for folder in self.folders:
+            shutil.rmtree(folder)
+
+    def create_clients(self, n):
+        for _ in range(n):
+            folder = tempfile.mkdtemp()
+            client = LocalSyncClient(folder)
+            self.folders.append(folder)
+            self.clients.append(client)
+
+    def sync_clients(self):
+        for client_1, client_2 in get_pairs(self.clients):
+            s3backup.sync(client_1, client_2)
 
     def set_contents(self, folder, key, timestamp=None, data=''):
         path = os.path.join(folder, key)
@@ -33,99 +51,86 @@ class TestSync(object):
     def delete(self, folder, key):
         os.remove(os.path.join(folder, key))
 
-    def assert_contents(self, folders, key, data):
-        for folder in folders:
+    def assert_file_existence(self, keys, exists):
+        for folder in self.folders:
+            for key in keys:
+                assert os.path.exists(os.path.join(folder, key)) is exists
+
+    def assert_contents(self, key, data):
+        for folder in self.folders:
             path = os.path.join(folder, key)
             with open(path, 'r') as fp:
                 assert data == fp.read()
 
-    def assert_remote_timestamp(self, clients, key, timestamp):
-        for client in clients:
-            assert client.get_remote_timestamp(key) == timestamp
+    def assert_remote_timestamp(self, key, expected_timestamp):
+        for client in self.clients:
+            assert client.get_remote_timestamp(key) == expected_timestamp
+
+    def assert_local_keys(self, expected_keys):
+        for client in self.clients:
+            assert sorted(client.get_local_keys()) == sorted(expected_keys)
 
     def test_fresh_sync(self):
-        self.set_contents(self.folder_1, 'foo', timestamp=1000)
-        self.set_contents(self.folder_1, 'bar', timestamp=2000)
-        self.set_contents(self.folder_2, 'baz', timestamp=3000, data='what is up?')
+        self.create_clients(2)
 
-        s3backup.sync(self.client_1, self.client_2)
+        self.set_contents(self.folders[0], 'foo', timestamp=1000)
+        self.set_contents(self.folders[0], 'bar', timestamp=2000)
+        self.set_contents(self.folders[1], 'baz', timestamp=3000, data='what is up?')
 
-        expected_keys = sorted(['foo', 'bar', 'baz'])
+        self.sync_clients()
 
-        assert sorted(self.client_1.get_local_keys()) == expected_keys
-        assert sorted(self.client_2.get_local_keys()) == expected_keys
+        self.assert_local_keys(['foo', 'bar', 'baz'])
+        self.assert_remote_timestamp('foo', 1000)
+        self.assert_remote_timestamp('bar', 2000)
+        self.assert_remote_timestamp('baz', 3000)
+        self.assert_file_existence(['foo', 'bar', 'baz'], True)
+        self.assert_contents('baz', 'what is up?')
 
-        self.assert_remote_timestamp([self.client_1, self.client_2], 'foo', 1000)
-        self.assert_remote_timestamp([self.client_1, self.client_2], 'bar', 2000)
-        self.assert_remote_timestamp([self.client_1, self.client_2], 'baz', 3000)
-        self.assert_contents([self.folder_1, self.folder_2], 'baz', 'what is up?')
+        self.delete(self.folders[0], 'foo')
+        self.set_contents(self.folders[0], 'test', timestamp=5000)
+        self.set_contents(self.folders[1], 'hello', timestamp=6000)
+        self.set_contents(self.folders[1], 'baz', timestamp=8000, data='just syncing some stuff')
 
-        self.delete(self.folder_1, 'foo')
-        self.set_contents(self.folder_1, 'test', timestamp=5000)
-        self.set_contents(self.folder_2, 'hello', timestamp=6000)
-        self.set_contents(self.folder_2, 'baz', timestamp=8000, data='just syncing some stuff')
+        self.sync_clients()
 
-        s3backup.sync(self.client_1, self.client_2)
+        self.assert_file_existence(['foo'], False)
+        self.assert_local_keys(['test', 'bar', 'baz', 'hello'])
+        self.assert_remote_timestamp('bar', 2000)
+        self.assert_remote_timestamp('test', 5000)
+        self.assert_remote_timestamp('hello', 6000)
+        self.assert_remote_timestamp('baz', 8000)
+        self.assert_contents('baz', 'just syncing some stuff')
 
-        expected_keys = sorted(['test', 'bar', 'baz', 'hello'])
-
-        assert os.path.exists(os.path.join(self.folder_1, 'foo')) is False
-        assert os.path.exists(os.path.join(self.folder_2, 'foo')) is False
-
-        assert sorted(self.client_1.get_local_keys()) == expected_keys
-        assert sorted(self.client_2.get_local_keys()) == expected_keys
-
-        self.assert_remote_timestamp([self.client_1, self.client_2], 'bar', 2000)
-        self.assert_remote_timestamp([self.client_1, self.client_2], 'test', 5000)
-        self.assert_remote_timestamp([self.client_1, self.client_2], 'hello', 6000)
-        self.assert_remote_timestamp([self.client_1, self.client_2], 'baz', 8000)
-        self.assert_contents([self.folder_1, self.folder_2], 'baz', 'just syncing some stuff')
+        self.sync_clients()
 
     def test_three_way_sync(self):
-        self.set_contents(self.folder_1, 'foo', timestamp=1000)
-        self.set_contents(self.folder_2, 'bar', timestamp=2000, data='red')
-        self.set_contents(self.folder_3, 'baz', timestamp=3000)
+        self.create_clients(3)
 
-        s3backup.sync(self.client_1, self.client_2)
-        s3backup.sync(self.client_2, self.client_3)
-        s3backup.sync(self.client_1, self.client_3)
+        self.set_contents(self.folders[0], 'foo', timestamp=1000)
+        self.set_contents(self.folders[1], 'bar', timestamp=2000, data='red')
+        self.set_contents(self.folders[2], 'baz', timestamp=3000)
 
-        expected_keys = sorted(['foo', 'bar', 'baz'])
+        self.sync_clients()
 
-        assert sorted(self.client_1.get_local_keys()) == expected_keys
-        assert sorted(self.client_2.get_local_keys()) == expected_keys
-        assert sorted(self.client_3.get_local_keys()) == expected_keys
-        self.assert_contents([self.folder_1, self.folder_2, self.folder_3], 'bar', 'red')
+        self.assert_local_keys(['foo', 'bar', 'baz'])
+        self.assert_contents('bar', 'red')
+        self.assert_remote_timestamp('foo', 1000)
+        self.assert_remote_timestamp('bar', 2000)
+        self.assert_remote_timestamp('baz', 3000)
 
-        self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'foo', 1000)
-        self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'bar', 2000)
-        self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'baz', 3000)
+        self.set_contents(self.folders[1], 'bar', timestamp=8000, data='green')
+        self.sync_clients()
 
-        self.set_contents(self.folder_2, 'bar', timestamp=8000, data='green')
+        self.assert_local_keys(['foo', 'bar', 'baz'])
+        self.assert_contents('bar', 'green')
+        self.assert_remote_timestamp('foo', 1000)
+        self.assert_remote_timestamp('bar', 8000)
+        self.assert_remote_timestamp('baz', 3000)
 
-        s3backup.sync(self.client_1, self.client_2)
-        s3backup.sync(self.client_2, self.client_3)
-        s3backup.sync(self.client_1, self.client_3)
+        self.delete(self.folders[2], 'foo')
+        self.sync_clients()
 
-        expected_keys = sorted(['foo', 'bar', 'baz'])
+        self.assert_file_existence(['foo'], False)
+        self.assert_local_keys(['bar', 'baz'])
 
-        assert sorted(self.client_1.get_local_keys()) == expected_keys
-        assert sorted(self.client_2.get_local_keys()) == expected_keys
-        assert sorted(self.client_3.get_local_keys()) == expected_keys
-        self.assert_contents([self.folder_1, self.folder_2, self.folder_3], 'bar', 'green')
-
-        self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'foo', 1000)
-        self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'bar', 8000)
-        self.assert_remote_timestamp([self.client_1, self.client_2, self.client_3], 'baz', 3000)
-
-        self.delete(self.folder_3, 'foo')
-
-        s3backup.sync(self.client_1, self.client_2)
-        s3backup.sync(self.client_2, self.client_3)
-        s3backup.sync(self.client_1, self.client_3)
-
-        expected_keys = sorted(['bar', 'baz'])
-
-        assert sorted(self.client_1.get_local_keys()) == expected_keys
-        assert sorted(self.client_2.get_local_keys()) == expected_keys
-        assert sorted(self.client_3.get_local_keys()) == expected_keys
+        self.sync_clients()
