@@ -10,14 +10,13 @@ Setup
 
 First, [configure boto3 to use appropriate aws credentials](https://boto3.readthedocs.io/en/latest/guide/configuration.html).
 
-Create a `.s3syncrc` file in your home directory with the following JSON structure:
+Create a `sync.conf` file in your `~/.config/s3backup` directory with the following JSON structure:
 
 ```json
 {
-  "bucket": "s3://mybucketurl",
   "directories": {
-    "/home/username/myfolder1": "myfolder1",
-    "/home/username/myfolder2": "myfolder2"
+    "/home/username/myfolder1": "s3://mybucket/myfolder1",
+    "/home/username/myfolder2": "s3://mybucket/myfolder2"
   }
 }
 ```
