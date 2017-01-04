@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import datetime
 import io
 import json
 import os
@@ -9,7 +8,7 @@ import tempfile
 
 import pytest
 
-from s3backup.clients import local, SyncAction
+from s3backup.clients import local, SyncAction, SyncObject
 
 
 def touch(path, mtime=None):
@@ -53,23 +52,6 @@ class TestTraverse(object):
         assert actual_output == expected_output
 
 
-class TestSyncAction(object):
-    def test_repr(self):
-        action = SyncAction(SyncAction.UPDATE, 1000)
-        assert repr(action) == 'SyncAction<UPDATE, {}>'.format(
-            datetime.datetime.utcfromtimestamp(1000)
-        )
-
-
-class TestSyncObject(object):
-    def test_repr(self):
-        dev_null = open('/dev/null', 'r')
-        sync_object = local.SyncObject(dev_null, 312313)
-        assert sync_object.timestamp == 312313
-        assert sync_object.fp == dev_null
-        assert repr(sync_object) == 'SyncObject<{}, 312313>'.format(dev_null)
-
-
 class TestLocalSyncClient(object):
     def setup_method(self):
         self.target_folder = tempfile.mkdtemp()
@@ -98,7 +80,7 @@ class TestLocalSyncClient(object):
         client = local.LocalSyncClient(self.target_folder)
         client.put(
             key='hello_world.txt',
-            sync_object=local.SyncObject(io.BytesIO(b'hi'), 20000)
+            sync_object=SyncObject(io.BytesIO(b'hi'), 20000)
         )
 
         assert client.index['hello_world.txt']['remote_timestamp'] == 20000
@@ -113,7 +95,7 @@ class TestLocalSyncClient(object):
         client = local.LocalSyncClient(self.target_folder)
         client.put(
             key='doge.txt',
-            sync_object=local.SyncObject(io.BytesIO(data), 20000)
+            sync_object=SyncObject(io.BytesIO(data), 20000)
         )
 
         assert client.index['doge.txt']['remote_timestamp'] == 20000
