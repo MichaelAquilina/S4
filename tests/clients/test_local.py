@@ -9,7 +9,7 @@ import tempfile
 
 import pytest
 
-from s3backup.clients import local
+from s3backup.clients import local, SyncAction
 
 
 def touch(path, mtime=None):
@@ -55,7 +55,7 @@ class TestTraverse(object):
 
 class TestSyncAction(object):
     def test_repr(self):
-        action = local.SyncAction(local.SyncAction.UPDATE, 1000)
+        action = SyncAction(SyncAction.UPDATE, 1000)
         assert repr(action) == 'SyncAction<UPDATE, {}>'.format(
             datetime.datetime.utcfromtimestamp(1000)
         )
@@ -322,9 +322,9 @@ class TestLocalSyncClient(object):
         touch(os.path.join(self.target_folder, 'ooo'), 1000)
 
         client = local.LocalSyncClient(self.target_folder)
-        assert client.get_action('foo') == local.SyncAction(local.SyncAction.UPDATE, 5000)
-        assert client.get_action('bar') == local.SyncAction(local.SyncAction.DELETE, 1100)
-        assert client.get_action('baz') == local.SyncAction(local.SyncAction.NONE, 1400)
-        assert client.get_action('ooo') == local.SyncAction(local.SyncAction.CONFLICT, 9999)
-        assert client.get_action('ppp') == local.SyncAction(local.SyncAction.DELETE, 4000)
-        assert client.get_action('dontexist') == local.SyncAction(local.SyncAction.NONE, None)
+        assert client.get_action('foo') == SyncAction(SyncAction.UPDATE, 5000)
+        assert client.get_action('bar') == SyncAction(SyncAction.DELETE, 1100)
+        assert client.get_action('baz') == SyncAction(SyncAction.NONE, 1400)
+        assert client.get_action('ooo') == SyncAction(SyncAction.CONFLICT, 9999)
+        assert client.get_action('ppp') == SyncAction(SyncAction.DELETE, 4000)
+        assert client.get_action('dontexist') == SyncAction(SyncAction.NONE, None)
