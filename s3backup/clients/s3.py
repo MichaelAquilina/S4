@@ -97,11 +97,14 @@ class S3SyncClient(SyncClient):
         return results
 
     def get_real_local_timestamp(self, key):
-        response = self.client.head_object(
-            Bucket=self.bucket,
-            Key=os.path.join(self.prefix, key),
-        )
-        return to_timestamp(response['LastModified'])
+        try:
+            response = self.client.head_object(
+                Bucket=self.bucket,
+                Key=os.path.join(self.prefix, key),
+            )
+            return to_timestamp(response['LastModified'])
+        except ClientError:
+            return None
 
     def get_index_keys(self):
         return self.index.keys()
