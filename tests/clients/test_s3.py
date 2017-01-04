@@ -38,7 +38,7 @@ class TestS3SyncClient(object):
         assert repr(client) == 'S3SyncClient<testbucket, foo/bar>'
 
     @mock_s3
-    def test_put_get(self):
+    def test_put(self):
         # given
         s3_client = boto3.client(
             's3',
@@ -50,10 +50,54 @@ class TestS3SyncClient(object):
 
         client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
 
+        # when
+        input_object = SyncObject(io.BytesIO(b'munchkin'), 4000)
+        client.put('something/boardgame.rst', input_object)
+
+        # then
+        resp = s3_client.get_object(Bucket='testbucket', Key='foo/bar/something/boardgame.rst')
+        assert resp['Body'].read() == b'munchkin'
+        assert client.get_remote_timestamp('something/boardgame.rst') == 4000
+
+    @mock_s3
+    def test_get(self):
+        # given
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id='',
+            aws_secret_access_key='',
+            aws_session_token='',
+        )
+        s3_client.create_bucket(Bucket='testbucket')
+
+        frozen_time = datetime.datetime(2016, 10, 23, 10, 30, tzinfo=datetime.timezone.utc)
+        with freezegun.freeze_time(frozen_time):
+            s3_client.put_object(Bucket='testbucket', Key='foo/bar/black.color', Body='#000000')
+
+        # when
+        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
+        output_object = client.get('black.color')
+
+        # then
+        assert output_object.fp.read() == b'#000000'
+        assert output_object.timestamp == s3.to_timestamp(frozen_time)
+
+    @mock_s3
+    def test_put_get(self):
+        # given
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id='',
+            aws_secret_access_key='',
+            aws_session_token='',
+        )
+        s3_client.create_bucket(Bucket='testbucket')
+
         input_object = SyncObject(io.BytesIO(b'woooooooooshhh'), 4000)
         frozen_time = datetime.datetime(2016, 10, 23, 10, 30, tzinfo=datetime.timezone.utc)
 
         # when
+        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
         with freezegun.freeze_time(frozen_time):
             client.put('something/woosh.gif', input_object)
 
