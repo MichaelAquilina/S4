@@ -42,10 +42,15 @@ class S3SyncClient(SyncClient):
         return SyncObject(resp['Body'], to_timestamp(resp['LastModified']))
 
     def delete(self, key):
-        self.client.delete_object(
+        resp = self.client.delete_objects(
             Bucket=self.bucket,
-            Key=os.path.join(self.prefix, key),
+            Delete={
+                'Objects': [{'Key': os.path.join(self.prefix, key)}]
+            }
         )
+
+        if 'Deleted' not in resp:
+            raise IndexError('The specified key does not exist: {}'.format(key))
 
     def load_index(self):
         try:
