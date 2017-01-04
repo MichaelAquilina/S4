@@ -76,6 +76,12 @@ def sync(client_1, client_2):
                 (delete_client, [client_1, key])
             )
 
+        elif action_1.action == 'DELETE' and action_2.action == 'DELETE':
+            # nothing to do
+            continue
+
+        # TODO: Check DELETE timestamp. if it is older than you should be able to safely ignore it
+
         else:
             raise ValueError(
                 'Unhandled state, aborting before anything is updated', key, action_1, action_2
