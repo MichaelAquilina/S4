@@ -21,7 +21,6 @@ def get_client(target):
 
 
 def main():
-
     config_path = os.path.expanduser('~/.config/s3backup/sync.conf')
     if not os.path.exists(config_path):
         raise ValueError('Expected Config file:', config_path)
