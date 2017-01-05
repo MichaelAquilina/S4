@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from s3backup.clients import SyncAction
+
 
 def update_client(to_client, from_client, key, timestamp):
     print('UPDATING ', key, 'on', to_client, 'to', from_client, 'version')
@@ -31,7 +33,7 @@ def sync(client_1, client_2):
     deferred_calls = []
 
     for key, action_1, action_2 in get_actions(client_1, client_2):
-        if action_1.action == 'NONE' and action_2.action == 'NONE':
+        if action_1.action == SyncAction.NONE and action_2.action == SyncAction.NONE:
             if action_1.timestamp == action_2.timestamp:
                 continue
             elif action_1.timestamp is None and action_2.timestamp:
@@ -51,27 +53,26 @@ def sync(client_1, client_2):
                     (update_client, [client_1, client_2, key, action_2.timestamp])
                 )
 
-        elif action_1.action == 'UPDATE' and action_2.action == 'NONE':
+        elif action_1.action == SyncAction.UPDATED and action_2.action == SyncAction.NONE:
             deferred_calls.append(
                 (update_client, [client_2, client_1, key, action_1.timestamp])
             )
 
-        elif action_2.action == 'UPDATE' and action_1.action == 'NONE':
+        elif action_2.action == SyncAction.UPDATED and action_1.action == SyncAction.NONE:
             deferred_calls.append(
                 (update_client, [client_1, client_2, key, action_2.timestamp])
             )
-
-        elif action_1.action == 'DELETE' and action_2.action == 'NONE':
+        elif action_1.action == SyncAction.DELETED and action_2.action == SyncAction.NONE:
             deferred_calls.append(
                 (delete_client, [client_2, key, action_1.timestamp])
             )
 
-        elif action_2.action == 'DELETE' and action_1.action == 'NONE':
+        elif action_2.action == SyncAction.DELETED and action_1.action == SyncAction.NONE:
             deferred_calls.append(
                 (delete_client, [client_1, key, action_2.timestamp])
             )
 
-        elif action_1.action == 'DELETE' and action_2.action == 'DELETE':
+        elif action_1.action == SyncAction.DELETED and action_2.action == SyncAction.DELETED:
             # nothing to do
             continue
 
