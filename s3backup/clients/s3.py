@@ -48,7 +48,6 @@ class S3SyncClient(SyncClient):
                 'Objects': [{'Key': os.path.join(self.prefix, key)}]
             }
         )
-
         return 'Deleted' in resp
 
     def load_index(self):
