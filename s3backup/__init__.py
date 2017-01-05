@@ -89,6 +89,9 @@ def sync(client_1, client_2):
     for func, args in deferred_calls:
         func(*args)
 
-    print('Updating Index')
-    client_1.update_index()
-    client_2.update_index()
+    if len(deferred_calls) > 0:
+        print('Updating Index')
+        client_1.update_index()
+        client_2.update_index()
+    else:
+        print('Nothing to update')
