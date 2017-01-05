@@ -7,8 +7,8 @@ from s3backup.clients import SyncAction, SyncObject
 
 class TestSyncAction(object):
     def test_repr(self):
-        action = SyncAction(SyncAction.UPDATE, 1000)
-        assert repr(action) == 'SyncAction<UPDATE, {}>'.format(
+        action = SyncAction(SyncAction.UPDATED, 1000)
+        assert repr(action) == 'SyncAction<UPDATED, {}>'.format(
             datetime.datetime.utcfromtimestamp(1000)
         )
 

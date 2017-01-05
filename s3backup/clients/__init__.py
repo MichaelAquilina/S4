@@ -4,8 +4,8 @@ import datetime
 
 
 class SyncAction(object):
-    UPDATE = 'UPDATE'
-    DELETE = 'DELETE'
+    UPDATED = 'UPDATED'
+    DELETED = 'DELETED'
     CONFLICT = 'CONFLICT'
     NONE = 'NONE'
 
@@ -84,16 +84,16 @@ class SyncClient(object):
         remote_timestamp = self.get_remote_timestamp(key)
 
         if index_local_timestamp is None and real_local_timestamp:
-            return SyncAction(SyncAction.UPDATE, real_local_timestamp)
+            return SyncAction(SyncAction.UPDATED, real_local_timestamp)
         elif real_local_timestamp is None and index_local_timestamp:
-            return SyncAction(SyncAction.DELETE, remote_timestamp)
+            return SyncAction(SyncAction.DELETED, remote_timestamp)
         elif real_local_timestamp is None and index_local_timestamp is None and remote_timestamp:
-            return SyncAction(SyncAction.DELETE, remote_timestamp)
+            return SyncAction(SyncAction.DELETED, remote_timestamp)
         elif real_local_timestamp is None and index_local_timestamp is None:
             # Does not exist in this case, so no action to perform
             return SyncAction(SyncAction.NONE, None)
         elif index_local_timestamp < real_local_timestamp:
-            return SyncAction(SyncAction.UPDATE, real_local_timestamp)
+            return SyncAction(SyncAction.UPDATED, real_local_timestamp)
         elif index_local_timestamp > real_local_timestamp:
             return SyncAction(SyncAction.CONFLICT, index_local_timestamp)   # corruption?
         else:

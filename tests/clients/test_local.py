@@ -302,9 +302,9 @@ class TestLocalSyncClient(object):
         touch(os.path.join(self.target_folder, 'ooo'), 1000)
 
         client = local.LocalSyncClient(self.target_folder)
-        assert client.get_action('foo') == SyncAction(SyncAction.UPDATE, 5000)
-        assert client.get_action('bar') == SyncAction(SyncAction.DELETE, 1100)
+        assert client.get_action('foo') == SyncAction(SyncAction.UPDATED, 5000)
+        assert client.get_action('bar') == SyncAction(SyncAction.DELETED, 1100)
         assert client.get_action('baz') == SyncAction(SyncAction.NONE, 1400)
         assert client.get_action('ooo') == SyncAction(SyncAction.CONFLICT, 9999)
-        assert client.get_action('ppp') == SyncAction(SyncAction.DELETE, 4000)
+        assert client.get_action('ppp') == SyncAction(SyncAction.DELETED, 4000)
         assert client.get_action('dontexist') == SyncAction(SyncAction.NONE, None)
