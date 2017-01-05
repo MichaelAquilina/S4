@@ -119,14 +119,12 @@ class TestLocalSyncClient(object):
         client = local.LocalSyncClient(self.target_folder)
 
         assert os.path.exists(target_file) is True
-        client.delete('foo')
+        assert client.delete('foo') is True
         assert os.path.exists(target_file) is False
 
     def test_delete_non_existant(self):
         client = local.LocalSyncClient(self.target_folder)
-        with pytest.raises(IndexError) as exc:
-            client.delete('idontexist.txt')
-        assert exc.value.args[0] == 'The specified key does not exist: idontexist.txt'
+        assert client.delete('idontexist.txt') is False
 
     def test_index_path(self):
         client = local.LocalSyncClient(self.target_folder)

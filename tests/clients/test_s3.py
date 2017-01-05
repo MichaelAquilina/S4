@@ -134,7 +134,7 @@ class TestS3SyncClient(object):
         client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
 
         # when
-        client.delete('war.png')
+        assert client.delete('war.png') is True
 
         # then
         with pytest.raises(ClientError) as exc:
@@ -156,9 +156,7 @@ class TestS3SyncClient(object):
         client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
 
         # then
-        with pytest.raises(IndexError) as exc:
-            client.delete('idontexist.png')
-        assert exc.value.args[0] == 'The specified key does not exist: idontexist.png'
+        assert client.delete('idontexist.png') is False
 
     @mock_s3
     def test_get_local_keys(self):
