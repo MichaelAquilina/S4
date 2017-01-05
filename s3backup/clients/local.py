@@ -55,8 +55,9 @@ class LocalSyncClient(SyncClient):
         path = os.path.join(self.path, key)
         if os.path.exists(path):
             os.remove(path)
+            return True
         else:
-            raise IndexError('The specified key does not exist: {}'.format(key))
+            return False
 
     def load_index(self):
         if not os.path.exists(self.index_path()):

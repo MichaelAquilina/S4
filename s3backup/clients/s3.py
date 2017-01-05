@@ -49,8 +49,7 @@ class S3SyncClient(SyncClient):
             }
         )
 
-        if 'Deleted' not in resp:
-            raise IndexError('The specified key does not exist: {}'.format(key))
+        return 'Deleted' in resp
 
     def load_index(self):
         try:
