@@ -3,6 +3,19 @@
 from s3backup.clients import SyncAction
 
 
+class DeferredFunction(object):
+    def __init__(self, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self):
+        self.func(*self.args, **self.kwargs)
+
+    def __repr__(self):
+        return 'DeferredFunction<{self.func}, {self.args}, {self.kwargs}>'.format(self)
+
+
 def update_client(to_client, from_client, key, timestamp):
     print('UPDATING ', key, 'on', to_client, 'to', from_client, 'version')
     to_client.put(key, from_client.get(key))
@@ -38,38 +51,38 @@ def sync(client_1, client_2):
                 continue
             elif action_1.timestamp is None and action_2.timestamp:
                 deferred_calls.append(
-                    (update_client, [client_1, client_2, key, action_2.timestamp])
+                    DeferredFunction(update_client, client_1, client_2, key, action_2.timestamp)
                 )
             elif action_2.timestamp is None and action_1.timestamp:
                 deferred_calls.append(
-                    (update_client, [client_2, client_1, key, action_1.timestamp])
+                    DeferredFunction(update_client, client_2, client_1, key, action_1.timestamp)
                 )
             elif action_1.timestamp > action_2.timestamp:
                 deferred_calls.append(
-                    (update_client, [client_2, client_1, key, action_1.timestamp])
+                    DeferredFunction(update_client, client_2, client_1, key, action_1.timestamp)
                 )
             elif action_2.timestamp > action_1.timestamp:
                 deferred_calls.append(
-                    (update_client, [client_1, client_2, key, action_2.timestamp])
+                    DeferredFunction(update_client, client_1, client_2, key, action_2.timestamp)
                 )
 
         elif action_1.action == SyncAction.UPDATED and action_2.action == SyncAction.NONE:
             deferred_calls.append(
-                (update_client, [client_2, client_1, key, action_1.timestamp])
+                DeferredFunction(update_client, client_2, client_1, key, action_1.timestamp)
             )
 
         elif action_2.action == SyncAction.UPDATED and action_1.action == SyncAction.NONE:
             deferred_calls.append(
-                (update_client, [client_1, client_2, key, action_2.timestamp])
+                DeferredFunction(update_client, client_1, client_2, key, action_2.timestamp)
             )
         elif action_1.action == SyncAction.DELETED and action_2.action == SyncAction.NONE:
             deferred_calls.append(
-                (delete_client, [client_2, key, action_1.timestamp])
+                DeferredFunction(delete_client, client_2, key, action_1.timestamp)
             )
 
         elif action_2.action == SyncAction.DELETED and action_1.action == SyncAction.NONE:
             deferred_calls.append(
-                (delete_client, [client_1, key, action_2.timestamp])
+                DeferredFunction(delete_client, client_1, key, action_2.timestamp)
             )
 
         elif action_1.action == SyncAction.DELETED and action_2.action == SyncAction.DELETED:
@@ -86,8 +99,8 @@ def sync(client_1, client_2):
 
     # call everything once we know we can handle all of it
     # TODO: Should probably catch any exception and update the index anyway here
-    for func, args in deferred_calls:
-        func(*args)
+    for deferred_function in deferred_calls:
+        deferred_function()
 
     if len(deferred_calls) > 0:
         print('Updating Index')
