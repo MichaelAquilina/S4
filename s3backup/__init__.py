@@ -18,7 +18,11 @@ class DeferredFunction(object):
         self.func(*self.args, **self.kwargs)
 
     def __repr__(self):
-        return 'DeferredFunction<{self.func}, {self.args}, {self.kwargs}>'.format(self)
+        return 'DeferredFunction<func{func}, args={args}, kwargs={kwargs}>'.format(
+            func=self.func,
+            args=self.args,
+            kwargs=self.kwargs,
+        )
 
 
 def update_client(to_client, from_client, key, timestamp):
@@ -104,6 +108,7 @@ def sync(client_1, client_2):
 
     # call everything once we know we can handle all of it
     # TODO: Should probably catch any exception and update the index anyway here
+    logger.debug('Deferred calls: %s', deferred_calls)
     for deferred_function in deferred_calls:
         deferred_function()
 
