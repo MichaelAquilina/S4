@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import logging
+
 from s3backup.clients import SyncAction
+
+
+logger = logging.getLogger('s3backup')
 
 
 class DeferredFunction(object):
@@ -17,14 +22,14 @@ class DeferredFunction(object):
 
 
 def update_client(to_client, from_client, key, timestamp):
-    print('UPDATING ', key, 'on', to_client, 'to', from_client, 'version')
+    logger.info('UPDATING %s on %s to %s version', key, to_client, from_client)
     to_client.put(key, from_client.get(key))
     to_client.set_remote_timestamp(key, timestamp)
     from_client.set_remote_timestamp(key, timestamp)
 
 
 def delete_client(client, key, remote_timestamp):
-    print('DELETING ', key, 'on', client, 'at timestamp', remote_timestamp)
+    logger.info('DELETING %s on %s at timestamp %s ', key, client, remote_timestamp)
     client.delete(key)
     client.set_remote_timestamp(key, remote_timestamp)
 
@@ -103,8 +108,8 @@ def sync(client_1, client_2):
         deferred_function()
 
     if len(deferred_calls) > 0:
-        print('Updating Index')
+        logger.info('Updating Index')
         client_1.update_index()
         client_2.update_index()
     else:
-        print('Nothing to update')
+        logger.info('Nothing to update')
