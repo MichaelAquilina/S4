@@ -52,47 +52,32 @@ def get_actions(client_1, client_2):
 def sync(client_1, client_2):
     # we store a list of deferred calls to make sure we can handle everything before
     # running any updates on the file system and indexes
-    deferred_calls = []
+    deferred_calls = {}
 
     for key, action_1, action_2 in get_actions(client_1, client_2):
         if action_1.action == SyncAction.NONE and action_2.action == SyncAction.NONE:
             if action_1.timestamp == action_2.timestamp:
                 continue
             elif action_1.timestamp is None and action_2.timestamp:
-                deferred_calls.append(
-                    DeferredFunction(update_client, client_1, client_2, key, action_2.timestamp)
-                )
+                deferred_calls[key] = DeferredFunction(update_client, client_1, client_2, key, action_2.timestamp)
             elif action_2.timestamp is None and action_1.timestamp:
-                deferred_calls.append(
-                    DeferredFunction(update_client, client_2, client_1, key, action_1.timestamp)
-                )
+                deferred_calls[key] = DeferredFunction(update_client, client_2, client_1, key, action_1.timestamp)
             elif action_1.timestamp > action_2.timestamp:
-                deferred_calls.append(
-                    DeferredFunction(update_client, client_2, client_1, key, action_1.timestamp)
-                )
+                deferred_calls[key] = DeferredFunction(update_client, client_2, client_1, key, action_1.timestamp)
             elif action_2.timestamp > action_1.timestamp:
-                deferred_calls.append(
-                    DeferredFunction(update_client, client_1, client_2, key, action_2.timestamp)
-                )
+                deferred_calls[key] = DeferredFunction(update_client, client_1, client_2, key, action_2.timestamp)
 
         elif action_1.action == SyncAction.UPDATED and action_2.action == SyncAction.NONE:
-            deferred_calls.append(
-                DeferredFunction(update_client, client_2, client_1, key, action_1.timestamp)
-            )
+            deferred_calls[key] = DeferredFunction(update_client, client_2, client_1, key, action_1.timestamp)
 
         elif action_2.action == SyncAction.UPDATED and action_1.action == SyncAction.NONE:
-            deferred_calls.append(
-                DeferredFunction(update_client, client_1, client_2, key, action_2.timestamp)
-            )
+            deferred_calls[key] = DeferredFunction(update_client, client_1, client_2, key, action_2.timestamp)
+
         elif action_1.action == SyncAction.DELETED and action_2.action == SyncAction.NONE:
-            deferred_calls.append(
-                DeferredFunction(delete_client, client_2, key, action_1.timestamp)
-            )
+            deferred_calls[key] = DeferredFunction(delete_client, client_2, key, action_1.timestamp)
 
         elif action_2.action == SyncAction.DELETED and action_1.action == SyncAction.NONE:
-            deferred_calls.append(
-                DeferredFunction(delete_client, client_1, key, action_2.timestamp)
-            )
+            deferred_calls[key] = DeferredFunction(delete_client, client_1, key, action_2.timestamp)
 
         elif action_1.action == SyncAction.DELETED and action_2.action == SyncAction.DELETED:
             # nothing to do
@@ -107,14 +92,18 @@ def sync(client_1, client_2):
             )
 
     # call everything once we know we can handle all of it
-    # TODO: Should probably catch any exception and update the index anyway here
     logger.debug('Deferred calls: %s', deferred_calls)
-    for deferred_function in deferred_calls:
-        deferred_function()
+    for key, deferred_function in deferred_calls.items():
+        try:
+            deferred_function()
+            client_1.update_index_entry(key)
+            client_2.update_index_entry(key)
+        except Exception as e:
+            logger.error('An error occurred while trying to update %s: %s', key, e)
 
     if len(deferred_calls) > 0:
-        logger.info('Updating Index')
-        client_1.update_index()
-        client_2.update_index()
+        logger.info('Flushing Index to Storage')
+        client_1.flush_index()
+        client_2.flush_index()
     else:
         logger.info('Nothing to update')

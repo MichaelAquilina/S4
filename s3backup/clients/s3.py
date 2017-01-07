@@ -61,21 +61,12 @@ class S3SyncClient(SyncClient):
         except (ClientError, ValueError):
             return {}
 
-    def update_index(self):
-        keys = self.get_all_keys()
-        index = {}
-        for key in keys:
-            index[key] = {
-                'remote_timestamp': self.get_remote_timestamp(key),
-                'local_timestamp': self.get_real_local_timestamp(key),
-            }
-
+    def flush_index(self):
         self.client.put_object(
             Bucket=self.bucket,
             Key=self.index_path(),
-            Body=json.dumps(index),
+            Body=json.dumps(self.index),
         )
-        self.index = index
 
     def get_local_keys(self):
         results = []
