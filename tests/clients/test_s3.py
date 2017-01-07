@@ -13,7 +13,7 @@ from moto import mock_s3
 
 import pytest
 
-from s3backup.clients import s3, SyncAction, SyncObject
+from s3backup.clients import s3, SyncState, SyncObject
 
 
 def touch(client, bucket, key, timestamp=None):
@@ -351,9 +351,9 @@ class TestS3SyncClient(object):
         touch(s3_client, 'testbucket', 'foo/bar/ooo', 1000)
 
         client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
-        assert client.get_action('foo') == SyncAction(SyncAction.UPDATED, 5000)
-        assert client.get_action('bar') == SyncAction(SyncAction.DELETED, 1100)
-        assert client.get_action('baz') == SyncAction(SyncAction.NONE, 1400)
-        assert client.get_action('ooo') == SyncAction(SyncAction.CONFLICT, 9999)
-        assert client.get_action('ppp') == SyncAction(SyncAction.DELETED, 4000)
-        assert client.get_action('dontexist') == SyncAction(SyncAction.NONE, None)
+        assert client.get_action('foo') == SyncState(SyncState.UPDATED, 5000)
+        assert client.get_action('bar') == SyncState(SyncState.DELETED, 1100)
+        assert client.get_action('baz') == SyncState(SyncState.NONE, 1400)
+        assert client.get_action('ooo') == SyncState(SyncState.CONFLICT, 9999)
+        assert client.get_action('ppp') == SyncState(SyncState.DELETED, 4000)
+        assert client.get_action('dontexist') == SyncState(SyncState.NONE, None)

@@ -8,7 +8,7 @@ import tempfile
 
 import pytest
 
-from s3backup.clients import local, SyncAction, SyncObject
+from s3backup.clients import local, SyncState, SyncObject
 
 
 def touch(path, mtime=None):
@@ -302,9 +302,9 @@ class TestLocalSyncClient(object):
         touch(os.path.join(self.target_folder, 'ooo'), 1000)
 
         client = local.LocalSyncClient(self.target_folder)
-        assert client.get_action('foo') == SyncAction(SyncAction.UPDATED, 5000)
-        assert client.get_action('bar') == SyncAction(SyncAction.DELETED, 1100)
-        assert client.get_action('baz') == SyncAction(SyncAction.NONE, 1400)
-        assert client.get_action('ooo') == SyncAction(SyncAction.CONFLICT, 9999)
-        assert client.get_action('ppp') == SyncAction(SyncAction.DELETED, 4000)
-        assert client.get_action('dontexist') == SyncAction(SyncAction.NONE, None)
+        assert client.get_action('foo') == SyncState(SyncState.UPDATED, 5000)
+        assert client.get_action('bar') == SyncState(SyncState.DELETED, 1100)
+        assert client.get_action('baz') == SyncState(SyncState.NONE, 1400)
+        assert client.get_action('ooo') == SyncState(SyncState.CONFLICT, 9999)
+        assert client.get_action('ppp') == SyncState(SyncState.DELETED, 4000)
+        assert client.get_action('dontexist') == SyncState(SyncState.NONE, None)

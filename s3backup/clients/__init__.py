@@ -3,7 +3,7 @@
 import datetime
 
 
-class SyncAction(object):
+class SyncState(object):
     UPDATED = 'UPDATED'
     DELETED = 'DELETED'
     CONFLICT = 'CONFLICT'
@@ -14,7 +14,7 @@ class SyncAction(object):
         self.timestamp = timestamp
 
     def __eq__(self, other):
-        if not isinstance(other, SyncAction):
+        if not isinstance(other, SyncState):
             return False
         return self.action == other.action and self.timestamp == other.timestamp
 
@@ -23,7 +23,7 @@ class SyncAction(object):
             timestamp = datetime.datetime.utcfromtimestamp(self.timestamp)
         else:
             timestamp = None
-        return 'SyncAction<{}, {}>'.format(self.action, timestamp)
+        return 'SyncState<{}, {}>'.format(self.action, timestamp)
 
 
 class SyncObject(object):
@@ -101,17 +101,17 @@ class SyncClient(object):
         remote_timestamp = self.get_remote_timestamp(key)
 
         if index_local_timestamp is None and real_local_timestamp:
-            return SyncAction(SyncAction.UPDATED, real_local_timestamp)
+            return SyncState(SyncState.UPDATED, real_local_timestamp)
         elif real_local_timestamp is None and index_local_timestamp:
-            return SyncAction(SyncAction.DELETED, remote_timestamp)
+            return SyncState(SyncState.DELETED, remote_timestamp)
         elif real_local_timestamp is None and index_local_timestamp is None and remote_timestamp:
-            return SyncAction(SyncAction.DELETED, remote_timestamp)
+            return SyncState(SyncState.DELETED, remote_timestamp)
         elif real_local_timestamp is None and index_local_timestamp is None:
             # Does not exist in this case, so no action to perform
-            return SyncAction(SyncAction.NONE, None)
+            return SyncState(SyncState.NONE, None)
         elif index_local_timestamp < real_local_timestamp:
-            return SyncAction(SyncAction.UPDATED, real_local_timestamp)
+            return SyncState(SyncState.UPDATED, real_local_timestamp)
         elif index_local_timestamp > real_local_timestamp:
-            return SyncAction(SyncAction.CONFLICT, index_local_timestamp)   # corruption?
+            return SyncState(SyncState.CONFLICT, index_local_timestamp)   # corruption?
         else:
-            return SyncAction(SyncAction.NONE, remote_timestamp)
+            return SyncState(SyncState.NONE, remote_timestamp)
