@@ -59,19 +59,31 @@ def sync(client_1, client_2):
             if action_1.timestamp == action_2.timestamp:
                 continue
             elif action_1.timestamp is None and action_2.timestamp:
-                deferred_calls[key] = DeferredFunction(update_client, client_1, client_2, key, action_2.timestamp)
+                deferred_calls[key] = DeferredFunction(
+                    update_client, client_1, client_2, key, action_2.timestamp
+                )
             elif action_2.timestamp is None and action_1.timestamp:
-                deferred_calls[key] = DeferredFunction(update_client, client_2, client_1, key, action_1.timestamp)
+                deferred_calls[key] = DeferredFunction(
+                    update_client, client_2, client_1, key, action_1.timestamp
+                )
             elif action_1.timestamp > action_2.timestamp:
-                deferred_calls[key] = DeferredFunction(update_client, client_2, client_1, key, action_1.timestamp)
+                deferred_calls[key] = DeferredFunction(
+                    update_client, client_2, client_1, key, action_1.timestamp
+                )
             elif action_2.timestamp > action_1.timestamp:
-                deferred_calls[key] = DeferredFunction(update_client, client_1, client_2, key, action_2.timestamp)
+                deferred_calls[key] = DeferredFunction(
+                    update_client, client_1, client_2, key, action_2.timestamp
+                )
 
         elif action_1.action == SyncState.UPDATED and action_2.action == SyncState.NONE:
-            deferred_calls[key] = DeferredFunction(update_client, client_2, client_1, key, action_1.timestamp)
+            deferred_calls[key] = DeferredFunction(
+                update_client, client_2, client_1, key, action_1.timestamp
+            )
 
         elif action_2.action == SyncState.UPDATED and action_1.action == SyncState.NONE:
-            deferred_calls[key] = DeferredFunction(update_client, client_1, client_2, key, action_2.timestamp)
+            deferred_calls[key] = DeferredFunction(
+                update_client, client_1, client_2, key, action_2.timestamp
+            )
 
         elif action_1.action == SyncState.DELETED and action_2.action == SyncState.NONE:
             deferred_calls[key] = DeferredFunction(delete_client, client_2, key, action_1.timestamp)
