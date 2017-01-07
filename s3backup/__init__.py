@@ -80,7 +80,7 @@ def sync(client_1, client_2):
             deferred_calls[key] = DeferredFunction(delete_client, client_1, key, action_2.timestamp)
 
         elif action_1.action == SyncAction.DELETED and action_2.action == SyncAction.DELETED:
-            # nothing to do
+            # nothing to do, they have already both been deleted
             continue
 
         # TODO: Check DELETE timestamp. if it is older than you should be able to safely ignore it
