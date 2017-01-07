@@ -67,19 +67,9 @@ class LocalSyncClient(SyncClient):
             data = json.load(fp)
         return data
 
-    def update_index(self):
-        keys = self.get_all_keys()
-        index = {}
-
-        for key in keys:
-            index[key] = {
-                'remote_timestamp': self.get_remote_timestamp(key),
-                'local_timestamp': self.get_real_local_timestamp(key),
-            }
-
+    def flush_index(self):
         with open(self.index_path(), 'w') as fp:
-            json.dump(index, fp)
-        self.index = index
+            json.dump(self.index, fp)
 
     def get_local_keys(self):
         return list(traverse(self.path, ignore_files={'.index'}))

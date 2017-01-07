@@ -45,9 +45,6 @@ class SyncClient(object):
     def delete(self, key):
         raise NotImplemented
 
-    def update_index(self):
-        raise NotImplemented
-
     def get_local_keys(self):
         raise NotImplemented
 
@@ -73,6 +70,26 @@ class SyncClient(object):
         local_keys = self.get_local_keys()
         index_keys = self.get_index_keys()
         return list(set(local_keys) | set(index_keys))
+
+    def update_index(self):
+        keys = self.get_all_keys()
+        index = {}
+
+        for key in keys:
+            index[key] = {
+                'remote_timestamp': self.get_remote_timestamp(key),
+                'local_timestamp': self.get_real_local_timestamp(key),
+            }
+        self.index = index
+
+    def update_index_entry(self, key):
+        self.index[key] = {
+            'remote_timestamp': self.get_remote_timestamp(key),
+            'local_timestamp': self.get_real_local_timestamp(key),
+        }
+
+    def flush_index(self):
+        raise NotImplemented
 
     def get_action(self, key):
         """
