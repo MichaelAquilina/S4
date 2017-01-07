@@ -2,13 +2,13 @@
 
 import datetime
 
-from s3backup.clients import SyncAction, SyncObject
+from s3backup.clients import SyncState, SyncObject
 
 
-class TestSyncAction(object):
+class TestSyncState(object):
     def test_repr(self):
-        action = SyncAction(SyncAction.UPDATED, 1000)
-        assert repr(action) == 'SyncAction<UPDATED, {}>'.format(
+        action = SyncState(SyncState.UPDATED, 1000)
+        assert repr(action) == 'SyncState<UPDATED, {}>'.format(
             datetime.datetime.utcfromtimestamp(1000)
         )
 
