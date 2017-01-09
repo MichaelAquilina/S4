@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import logging
 
 from s3backup.clients import SyncState
@@ -26,14 +27,20 @@ class DeferredFunction(object):
 
 
 def update_client(to_client, from_client, key, timestamp):
-    logger.info('UPDATING %s on %s to %s version', key, to_client, from_client)
+    logger.info(
+        'UPDATING %s on %s to %s version (last updated at %s)',
+        key, to_client, from_client, datetime.datetime.utcfromtimestamp(timestamp),
+    )
     to_client.put(key, from_client.get(key))
     to_client.set_remote_timestamp(key, timestamp)
     from_client.set_remote_timestamp(key, timestamp)
 
 
 def delete_client(client, key, remote_timestamp):
-    logger.info('DELETING %s on %s at timestamp %s ', key, client, remote_timestamp)
+    logger.info(
+        'DELETING %s on %s (last seen at %s)',
+        key, client, datetime.datetime.utcfromtimestamp(remote_timestamp)
+    )
     client.delete(key)
     client.set_remote_timestamp(key, remote_timestamp)
 
