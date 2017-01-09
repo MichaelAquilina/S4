@@ -11,15 +11,15 @@ import s3backup
 from s3backup.clients import local, s3
 
 
-def get_client(target):
+def get_client(target, ignore_files):
     if target.startswith('s3://'):
         tokens = target.replace('s3://', '').split('/')
         bucket = tokens[0]
         prefix = '/'.join(tokens[1:])
         s3_client = boto3.client('s3')
-        return s3.S3SyncClient(s3_client, bucket, prefix)
+        return s3.S3SyncClient(s3_client, bucket, prefix, ignore_files)
     else:
-        return local.LocalSyncClient(target)
+        return local.LocalSyncClient(target, ignore_files)
 
 
 def main():
@@ -39,9 +39,13 @@ def main():
     with open(config_path, 'r') as fp:
         config = json.load(fp)
 
-    for target_1, target_2 in config['directories'].items():
-        client_1 = get_client(target_1)
-        client_2 = get_client(target_2)
+    for entry in config['directories']:
+        target_1 = entry['source']
+        target_2 = entry['target']
+        ignore_files = entry.get('ignore_files')
+
+        client_1 = get_client(target_1, ignore_files)
+        client_2 = get_client(target_2, ignore_files)
 
         logger.info('Syncing %s with %s', target_1, target_2)
         s3backup.sync(client_1, client_2)

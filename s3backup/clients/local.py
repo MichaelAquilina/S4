@@ -1,28 +1,37 @@
 # -*- coding: utf-8 -*-
 
+import fnmatch
 import json
+import logging
 import os
 
 from s3backup.clients import SyncClient, SyncObject
 
+logger = logging.getLogger('s3backup')
+
 
 def traverse(path, ignore_files=None):
     if ignore_files is None:
-        ignore_files = set()
+        ignore_files = []
 
     for item in sorted(os.listdir(path)):
         full_path = os.path.join(path, item)
         if os.path.isdir(full_path):
             for result in traverse(full_path, ignore_files):
                 yield os.path.join(item, result)
-        elif item not in ignore_files:
+        elif not any(fnmatch.fnmatch(item, pattern) for pattern in ignore_files):
             yield item
+        else:
+            logger.debug('Ingoring %s', item)
 
 
 class LocalSyncClient(SyncClient):
-    def __init__(self, path):
+    def __init__(self, path, ignore_files=None):
         self.path = path
         self.index = self.load_index()
+        self.ignore_files = ['.index']
+        if ignore_files is not None:
+            self.ignore_files.extend(ignore_files)
 
     def __repr__(self):
         return 'LocalSyncClient<{}>'.format(self.path)
@@ -72,7 +81,7 @@ class LocalSyncClient(SyncClient):
             json.dump(self.index, fp)
 
     def get_local_keys(self):
-        return list(traverse(self.path, ignore_files={'.index'}))
+        return list(traverse(self.path, ignore_files=self.ignore_files))
 
     def get_real_local_timestamp(self, key):
         full_path = os.path.join(self.path, key)

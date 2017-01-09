@@ -41,11 +41,12 @@ class TestTraverse(object):
         touch(os.path.join(self.target_folder, 'bar.md'))
         touch(os.path.join(self.target_folder, 'baz', 'bar'))
         touch(os.path.join(self.target_folder, '.index'))
+        touch(os.path.join(self.target_folder, 'garbage~'))
         touch(os.path.join(self.target_folder, 'saw/.index'))
 
         actual_output = list(local.traverse(
             self.target_folder,
-            ignore_files={'.index', '.idontexist'}
+            ignore_files={'.index', '.idontexist', '*~'}
         ))
 
         expected_output = ['bar.md', 'baz/bar', 'baz/zoo', 'foo']
