@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 import datetime
+import fnmatch
 import json
+import logging
 import os
 
 from botocore.exceptions import ClientError
 
 from s3backup.clients import SyncClient, SyncObject
+
+
+logger = logging.getLogger('s3backup')
 
 
 def to_timestamp(dt):
@@ -14,11 +19,14 @@ def to_timestamp(dt):
 
 
 class S3SyncClient(SyncClient):
-    def __init__(self, client, bucket, prefix):
+    def __init__(self, client, bucket, prefix, ignore_files=None):
         self.client = client
         self.bucket = bucket
         self.prefix = prefix
         self.index = self.load_index()
+        self.ignore_files = ['.index']
+        if ignore_files is not None:
+            self.ignore_files.extend(ignore_files)
 
     def __repr__(self):
         return 'S3SyncClient<{}, {}>'.format(self.bucket, self.prefix)
@@ -79,9 +87,10 @@ class S3SyncClient(SyncClient):
 
         for obj in resp['Contents']:
             key = os.path.relpath(obj['Key'], self.prefix)
-            if key == '.index':
-                continue
-            results.append(key)
+            if not any(fnmatch.fnmatch(key, pattern) for pattern in self.ignore_files):
+                results.append(key)
+            else:
+                logger.debug('Ignoring %s', key)
 
         return results
 
