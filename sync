@@ -11,6 +11,9 @@ import s3backup
 from s3backup.clients import local, s3
 
 
+CONFIG_FILE_PATH = os.path.expanduser('~/.config/s3backup/sync.conf')
+
+
 def get_client(target, ignore_files):
     if target.startswith('s3://'):
         tokens = target.replace('s3://', '').split('/')
@@ -32,11 +35,10 @@ def main():
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(args.log_level)
 
-    config_path = os.path.expanduser('~/.config/s3backup/sync.conf')
-    if not os.path.exists(config_path):
-        raise ValueError('Expected Config file:', config_path)
+    if not os.path.exists(CONFIG_FILE_PATH):
+        raise ValueError('Expected Config file:', CONFIG_FILE_PATH)
 
-    with open(config_path, 'r') as fp:
+    with open(CONFIG_FILE_PATH, 'r') as fp:
         config = json.load(fp)
 
     for entry in config['directories']:
