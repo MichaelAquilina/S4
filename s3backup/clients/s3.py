@@ -34,7 +34,7 @@ class S3SyncClient(SyncClient):
     def index_path(self):
         return os.path.join(self.prefix, '.index')
 
-    def put(self, key, sync_object):
+    def put(self, key, sync_object, callback=None):
         self.client.put_object(
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
@@ -47,7 +47,7 @@ class S3SyncClient(SyncClient):
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
         )
-        return SyncObject(resp['Body'], to_timestamp(resp['LastModified']))
+        return SyncObject(resp['Body'], resp['ContentLength'], to_timestamp(resp['LastModified']))
 
     def delete(self, key):
         resp = self.client.delete_objects(

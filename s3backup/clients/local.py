@@ -30,6 +30,7 @@ class LocalSyncClient(SyncClient):
         self.path = path
         self.index = self.load_index()
         self.ignore_files = ['.index']
+
         if ignore_files is not None:
             self.ignore_files.extend(ignore_files)
 
@@ -39,15 +40,23 @@ class LocalSyncClient(SyncClient):
     def index_path(self):
         return os.path.join(self.path, '.index')
 
-    def put(self, key, sync_object):
+    def put(self, key, sync_object, callback=None):
         path = os.path.join(self.path, key)
 
         parent = os.path.dirname(path)
         if not os.path.exists(parent):
             os.makedirs(parent)
 
+        BUFFER_SIZE = 4096
+
         with open(path, 'wb') as fp1:
-            fp1.write(sync_object.fp.read())
+            while True:
+                data = sync_object.fp.read(BUFFER_SIZE)
+                fp1.write(data)
+                if callback is not None:
+                    callback(len(data))
+                if len(data) < BUFFER_SIZE:
+                    break
 
         self.set_remote_timestamp(key, sync_object.timestamp)
 
@@ -56,7 +65,7 @@ class LocalSyncClient(SyncClient):
         if os.path.exists(path):
             fp = open(path, 'rb')
             stat = os.stat(path)
-            return SyncObject(fp, stat.st_mtime)
+            return SyncObject(fp, stat.st_size, stat.st_mtime)
         else:
             return None
 

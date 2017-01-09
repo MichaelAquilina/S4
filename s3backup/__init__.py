@@ -3,6 +3,8 @@
 import datetime
 import logging
 
+import tqdm
+
 from s3backup.clients import SyncState
 
 
@@ -26,12 +28,27 @@ class DeferredFunction(object):
         )
 
 
+def get_progress_bar(max_value, desc):
+    return tqdm.tqdm(
+        total=max_value,
+        leave=False,
+        desc=desc,
+        unit='B',
+        unit_scale=True,
+        mininterval=0.2,
+    )
+
+
 def update_client(to_client, from_client, key, timestamp):
     logger.info(
         'UPDATING %s on %s to %s version (last updated at %s)',
         key, to_client, from_client, datetime.datetime.utcfromtimestamp(timestamp),
     )
-    to_client.put(key, from_client.get(key))
+    sync_object = from_client.get(key)
+
+    with get_progress_bar(sync_object.total_size, key) as progress_bar:
+        to_client.put(key, sync_object, callback=progress_bar.update)
+
     to_client.set_remote_timestamp(key, timestamp)
     from_client.set_remote_timestamp(key, timestamp)
 
@@ -62,6 +79,7 @@ def sync(client_1, client_2):
     deferred_calls = {}
 
     for key, action_1, action_2 in get_actions(client_1, client_2):
+        logger.debug('%s: %s %s', key, action_1, action_2)
         if action_1.action == SyncState.NONE and action_2.action == SyncState.NONE:
             if action_1.timestamp == action_2.timestamp:
                 continue

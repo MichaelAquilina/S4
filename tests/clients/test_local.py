@@ -6,8 +6,6 @@ import os
 import shutil
 import tempfile
 
-import pytest
-
 from s3backup.clients import local, SyncState, SyncObject
 
 
@@ -79,13 +77,14 @@ class TestLocalSyncClient(object):
 
     def test_put_new(self):
         client = local.LocalSyncClient(self.target_folder)
+        data = b'hi'
         client.put(
             key='hello_world.txt',
-            sync_object=SyncObject(io.BytesIO(b'hi'), 20000)
+            sync_object=SyncObject(io.BytesIO(data), len(data), 20000)
         )
 
         assert client.index['hello_world.txt']['remote_timestamp'] == 20000
-        assert self.get_file_data('hello_world.txt') == b'hi'
+        assert self.get_file_data('hello_world.txt') == data
 
     def test_put_existing(self):
         self.set_index({
@@ -96,7 +95,7 @@ class TestLocalSyncClient(object):
         client = local.LocalSyncClient(self.target_folder)
         client.put(
             key='doge.txt',
-            sync_object=SyncObject(io.BytesIO(data), 20000)
+            sync_object=SyncObject(io.BytesIO(data), len(data), 20000)
         )
 
         assert client.index['doge.txt']['remote_timestamp'] == 20000
@@ -106,9 +105,12 @@ class TestLocalSyncClient(object):
 
     def test_get_existing(self):
         client = local.LocalSyncClient(self.target_folder)
-        self.set_file_data('whatup.md', b'blue green yellow')
+
+        data = b'blue green yellow'
+        self.set_file_data('whatup.md', data)
         sync_object = client.get('whatup.md')
-        assert sync_object.fp.read() == b'blue green yellow'
+        assert sync_object.fp.read() == data
+        assert sync_object.total_size == len(data)
 
     def test_get_non_existant(self):
         client = local.LocalSyncClient(self.target_folder)
