@@ -54,6 +54,23 @@ def set_s3_contents(client, bucket, key, timestamp=None, data=''):
         )
 
 
+class TestGetActions(object):
+    @mock_s3
+    def test_empty_clients(self):
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id='',
+            aws_secret_access_key='',
+            aws_session_token='',
+        )
+        s3_client.create_bucket(Bucket='testbucket')
+
+        client_1 = LocalSyncClient(tempfile.mkdtemp())
+        client_2 = S3SyncClient(s3_client, 'testbucket', 'foo')
+        actual_output = list(s3backup.get_actions(client_1, client_2))
+        assert actual_output == []
+
+
 class TestIntegrations(object):
     def setup_method(self):
         self.clients = []
