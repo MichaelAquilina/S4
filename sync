@@ -42,6 +42,7 @@ def main():
     for entry in config['directories']:
         target_1 = entry['source']
         target_2 = entry['target']
+        # TODO: What if two config files with different ignore_files try to sync?
         ignore_files = entry.get('ignore_files')
 
         client_1 = get_client(target_1, ignore_files)
