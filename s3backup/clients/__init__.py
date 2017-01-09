@@ -27,12 +27,13 @@ class SyncState(object):
 
 
 class SyncObject(object):
-    def __init__(self, fp, timestamp):
+    def __init__(self, fp, total_size, timestamp):
         self.fp = fp
+        self.total_size = total_size
         self.timestamp = timestamp
 
     def __repr__(self):
-        return 'SyncObject<{}, {}>'.format(self.fp, self.timestamp)
+        return 'SyncObject<{}, {}, {}>'.format(self.fp, self.total_size, self.timestamp)
 
 
 class SyncClient(object):

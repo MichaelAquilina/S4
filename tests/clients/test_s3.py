@@ -62,14 +62,15 @@ class TestS3SyncClient(object):
         s3_client.create_bucket(Bucket='testbucket')
 
         client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
+        data = b'munchkin'
 
         # when
-        input_object = SyncObject(io.BytesIO(b'munchkin'), 4000)
+        input_object = SyncObject(io.BytesIO(data), len(data), 4000)
         client.put('something/boardgame.rst', input_object)
 
         # then
         resp = s3_client.get_object(Bucket='testbucket', Key='foo/bar/something/boardgame.rst')
-        assert resp['Body'].read() == b'munchkin'
+        assert resp['Body'].read() == data
         assert client.get_remote_timestamp('something/boardgame.rst') == 4000
 
     @mock_s3
@@ -83,16 +84,18 @@ class TestS3SyncClient(object):
         )
         s3_client.create_bucket(Bucket='testbucket')
 
+        data = b'#000000'
         frozen_time = datetime.datetime(2016, 10, 23, 10, 30, tzinfo=datetime.timezone.utc)
         with freezegun.freeze_time(frozen_time):
-            s3_client.put_object(Bucket='testbucket', Key='foo/bar/black.color', Body='#000000')
+            s3_client.put_object(Bucket='testbucket', Key='foo/bar/black.color', Body=data)
 
         # when
         client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
         output_object = client.get('black.color')
 
         # then
-        assert output_object.fp.read() == b'#000000'
+        assert output_object.fp.read() == data
+        assert output_object.total_size == len(data)
         assert output_object.timestamp == s3.to_timestamp(frozen_time)
 
     @mock_s3
@@ -106,7 +109,8 @@ class TestS3SyncClient(object):
         )
         s3_client.create_bucket(Bucket='testbucket')
 
-        input_object = SyncObject(io.BytesIO(b'woooooooooshhh'), 4000)
+        data = b'woooooooooshhh'
+        input_object = SyncObject(io.BytesIO(data), len(data), 4000)
         frozen_time = datetime.datetime(2016, 10, 23, 10, 30, tzinfo=datetime.timezone.utc)
 
         # when
@@ -116,7 +120,7 @@ class TestS3SyncClient(object):
 
         # then
         output_object = client.get('something/woosh.gif')
-        assert output_object.fp.read() == b'woooooooooshhh'
+        assert output_object.fp.read() == data
         assert output_object.timestamp == s3.to_timestamp(frozen_time)
 
     @mock_s3
