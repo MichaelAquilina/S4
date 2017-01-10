@@ -37,6 +37,9 @@ class LocalSyncClient(SyncClient):
     def __repr__(self):
         return 'LocalSyncClient<{}>'.format(self.path)
 
+    def get_uri(self):
+        return self.path
+
     def index_path(self):
         return os.path.join(self.path, '.index')
 

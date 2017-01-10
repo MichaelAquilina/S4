@@ -39,7 +39,7 @@ def get_progress_bar(max_value, desc):
 
 
 def update_client(to_client, from_client, key, timestamp):
-    logger.info('%s => %s', from_client, to_client)
+    logger.info('Updating %s (%s => %s)', key, from_client.get_uri(), to_client.get_uri())
     sync_object = from_client.get(key)
 
     with get_progress_bar(sync_object.total_size, key) as progress_bar:

@@ -37,6 +37,9 @@ class SyncObject(object):
 
 
 class SyncClient(object):
+    def get_uri(self):
+        raise NotImplemented
+
     def put(self, key, sync_object):
         raise NotImplemented
 
