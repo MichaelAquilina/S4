@@ -58,8 +58,12 @@ def delete_client(client, key, remote_timestamp):
 def get_actions(client_1, client_2):
     keys_1 = client_1.get_all_keys()
     keys_2 = client_2.get_all_keys()
-
     all_keys = set(keys_1) | set(keys_2)
+    logger.debug(
+        '%s keys in total (%s for %s and %s for %s)',
+        len(all_keys), len(keys_1), client_1.get_uri(), len(keys_2), client_2.get_uri()
+    )
+
     for key in all_keys:
         action_1 = client_1.get_action(key)
         action_2 = client_2.get_action(key)
@@ -71,6 +75,7 @@ def sync(client_1, client_2):
     # running any updates on the file system and indexes
     deferred_calls = {}
 
+    logger.debug('Generating deferred calls based on client states')
     for key, action_1, action_2 in get_actions(client_1, client_2):
         logger.debug('%s: %s %s', key, action_1, action_2)
         if action_1.action == SyncState.NONE and action_2.action == SyncState.NONE:
