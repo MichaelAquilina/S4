@@ -130,13 +130,16 @@ def sync(client_1, client_2):
 
     # call everything once we know we can handle all of it
     logger.debug('Deferred calls: %s', deferred_calls)
-    for key, deferred_function in deferred_calls.items():
-        try:
-            deferred_function()
-            client_1.update_index_entry(key)
-            client_2.update_index_entry(key)
-        except Exception as e:
-            logger.error('An error occurred while trying to update %s: %s', key, e)
+    try:
+        for key, deferred_function in deferred_calls.items():
+            try:
+                deferred_function()
+                client_1.update_index_entry(key)
+                client_2.update_index_entry(key)
+            except Exception as e:
+                logger.error('An error occurred while trying to update %s: %s', key, e)
+    except KeyboardInterrupt:
+        logger.warning('Session interrupted by Keyboard Interrupt. Cleaning up....')
 
     if len(deferred_calls) > 0:
         logger.info('Flushing Index to Storage')
