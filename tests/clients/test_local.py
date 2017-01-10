@@ -30,6 +30,9 @@ class TestTraverse(object):
     def teardown_method(self):
         shutil.rmtree(self.target_folder)
 
+    def test_non_existent_folder(self):
+        assert list(local.traverse('/i/definetely/do/not/exist')) == []
+
     def test_empty_folder(self):
         assert list(local.traverse(self.target_folder)) == []
 

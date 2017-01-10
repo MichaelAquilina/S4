@@ -11,6 +11,9 @@ logger = logging.getLogger('s3backup')
 
 
 def traverse(path, ignore_files=None):
+    if not os.path.exists(path):
+        return
+
     if ignore_files is None:
         ignore_files = []
 
