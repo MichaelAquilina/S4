@@ -35,10 +35,11 @@ class S3SyncClient(SyncClient):
         return os.path.join(self.prefix, '.index')
 
     def put(self, key, sync_object, callback=None):
-        self.client.put_object(
+        self.client.upload_fileobj(
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
-            Body=sync_object.fp,
+            Fileobj=sync_object.fp,
+            Callback=callback,
         )
         self.set_remote_timestamp(key, sync_object.timestamp)
 
