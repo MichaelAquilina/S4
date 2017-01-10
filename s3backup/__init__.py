@@ -51,10 +51,7 @@ def update_client(to_client, from_client, key, timestamp):
 
 
 def delete_client(client, key, remote_timestamp):
-    logger.info(
-        'DELETING %s on %s (last seen at %s)',
-        key, client, datetime.datetime.utcfromtimestamp(remote_timestamp)
-    )
+    logger.info('Deleting %s on %s', key, client)
     client.delete(key)
     client.set_remote_timestamp(key, remote_timestamp)
 
