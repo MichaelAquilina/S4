@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import collections
 import datetime
 import fnmatch
 import json
@@ -11,6 +12,19 @@ from s3backup.clients import SyncClient, SyncObject
 
 
 logger = logging.getLogger('s3backup')
+
+
+S3Uri = collections.namedtuple('S3Uri', ['bucket', 'key'])
+
+
+def parse_s3_uri(uri):
+    tokens = uri.replace('s3://', '').split('/')
+    if len(tokens) < 2:
+        return None
+
+    bucket = tokens[0]
+    key = '/'.join(tokens[1:])
+    return S3Uri(bucket, key)
 
 
 def to_timestamp(dt):

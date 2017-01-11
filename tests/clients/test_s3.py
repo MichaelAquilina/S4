@@ -25,6 +25,16 @@ def touch(client, bucket, key, timestamp=None):
         client.put_object(Bucket=bucket, Key=key)
 
 
+class TestParseS3URI(object):
+    def test_empty(self):
+        assert s3.parse_s3_uri('') is None
+
+    def test_correct_output(self):
+        actual_output = s3.parse_s3_uri('s3://fruit.bowl/apples/and/oranges/')
+        assert actual_output.bucket == 'fruit.bowl'
+        assert actual_output.key == 'apples/and/oranges/'
+
+
 class TestS3SyncClient(object):
     @mock_s3
     def test_repr(self):
