@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import fnmatch
+import gzip
 import json
 import logging
 import os
+
+import magic
 
 from s3backup.clients import SyncClient, SyncObject
 
@@ -84,15 +87,25 @@ class LocalSyncClient(SyncClient):
             return False
 
     def load_index(self):
-        if not os.path.exists(self.index_path()):
+        index_path = self.index_path()
+        if not os.path.exists(index_path):
             return {}
 
-        with open(self.index_path(), 'r') as fp:
+        content_type = magic.from_file(index_path, mime=True)
+        if content_type == 'text/plain':
+            method = open
+        elif content_type == 'application/gzip':
+            method = gzip.open
+        else:
+            raise ValueError('Index is of unknown type', content_type)
+
+        with method(index_path, 'r') as fp:
             data = json.load(fp)
         return data
 
-    def flush_index(self):
-        with open(self.index_path(), 'w') as fp:
+    def flush_index(self, compressed=True):
+        method = gzip.open if compressed else open
+        with method(self.index_path(), 'wt') as fp:
             json.dump(self.index, fp)
 
     def get_local_keys(self):
