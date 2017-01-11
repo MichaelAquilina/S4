@@ -5,8 +5,11 @@ import fnmatch
 import json
 import logging
 import os
+import zlib
 
 from botocore.exceptions import ClientError
+
+import magic
 
 from s3backup.clients import SyncClient, SyncObject
 
@@ -82,16 +85,34 @@ class S3SyncClient(SyncClient):
                 Bucket=self.bucket,
                 Key=self.index_path(),
             )
-            data = json.loads(resp['Body'].read().decode('utf-8'))
-            return data
-        except (ClientError, ValueError):
+            body = resp['Body'].read()
+            content_type = magic.from_buffer(body, mime=True)
+            if content_type == 'text/plain':
+                logger.debug('Detected plain text encoding for index')
+                return json.loads(body.decode('utf-8'))
+            elif content_type == 'application/zlib':
+                logger.debug('Detected zlib encoding for index')
+                body = zlib.decompress(body)
+                return json.loads(body.decode('utf-8'))
+            elif content_type == 'application/x-empty':
+                return {}
+            else:
+                raise ValueError('Unknown content type for index', content_type)
+        except (ClientError):
             return {}
 
-    def flush_index(self):
+    def flush_index(self, compressed=True):
+        data = json.dumps(self.index).encode('utf-8')
+        if compressed:
+            logger.debug('Using zlib encoding for writing index')
+            data = zlib.compress(data)
+        else:
+            logger.debug('Using plain text encoding for writing index')
+
         self.client.put_object(
             Bucket=self.bucket,
             Key=self.index_path(),
-            Body=json.dumps(self.index),
+            Body=data,
         )
 
     def get_local_keys(self):
