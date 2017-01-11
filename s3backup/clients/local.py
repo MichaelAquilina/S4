@@ -10,7 +10,7 @@ import magic
 
 from s3backup.clients import SyncClient, SyncObject
 
-logger = logging.getLogger('s3backup')
+logger = logging.getLogger(__name__)
 
 
 def traverse(path, ignore_files=None):

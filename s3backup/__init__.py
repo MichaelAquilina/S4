@@ -7,7 +7,7 @@ import tqdm
 from s3backup.clients import SyncState
 
 
-logger = logging.getLogger('s3backup')
+logger = logging.getLogger(__name__)
 
 
 class DeferredFunction(object):
