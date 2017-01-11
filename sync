@@ -14,18 +14,11 @@ from s3backup.clients import local, s3
 CONFIG_FILE_PATH = os.path.expanduser('~/.config/s3backup/sync.conf')
 
 
-def parse_s3_uri(uri):
-    tokens = uri.replace('s3://', '').split('/')
-    bucket = tokens[0]
-    key = '/'.join(tokens[1:])
-    return bucket, key
-
-
 def get_client(target, ignore_files):
     if target.startswith('s3://'):
-        bucket, prefix = parse_s3_uri(target)
+        s3_uri = s3.parse_s3_uri(target)
         s3_client = boto3.client('s3')
-        return s3.S3SyncClient(s3_client, bucket, prefix, ignore_files)
+        return s3.S3SyncClient(s3_client, s3_uri.bucket, s3_uri.key, ignore_files)
     else:
         return local.LocalSyncClient(target, ignore_files)
 
