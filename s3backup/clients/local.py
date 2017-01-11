@@ -93,8 +93,10 @@ class LocalSyncClient(SyncClient):
 
         content_type = magic.from_file(index_path, mime=True)
         if content_type == 'text/plain':
+            logger.debug('Detected plaintext encoding for reading index')
             method = open
         elif content_type == 'application/gzip':
+            logger.debug('Detected gzip encoding for reading index')
             method = gzip.open
         else:
             raise ValueError('Index is of unknown type', content_type)
@@ -104,7 +106,13 @@ class LocalSyncClient(SyncClient):
         return data
 
     def flush_index(self, compressed=True):
-        method = gzip.open if compressed else open
+        if compressed:
+            logger.debug('Using gzip encoding for writing index')
+            method = gzip.open
+        else:
+            logger.debug('Using plaintext encoding for writing index')
+            method = open
+
         with method(self.index_path(), 'wt') as fp:
             json.dump(self.index, fp)
 
