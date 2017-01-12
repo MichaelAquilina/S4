@@ -70,10 +70,25 @@ def get_actions(client_1, client_2):
         yield key, client_1_actions[key], client_2_actions[key]
 
 
+def get_deferred_function(key, action, to_client, from_client):
+    if action.action == 'UPDATED':
+        return DeferredFunction(
+            update_client, to_client, from_client, key, action.timestamp
+        )
+    elif action.action == 'DELETED':
+        return DeferredFunction(delete_client, to_client, key, action.timestamp)
+    else:
+        raise ValueError('Unknown how to handle Action', action)
+
+
 def sync(client_1, client_2):
     # we store a list of deferred calls to make sure we can handle everything before
     # running any updates on the file system and indexes
     deferred_calls = {}
+
+    # list of unhandled events which cannot be solved automatically (or alternatively the
+    # the automated solution has not yet been implemented)
+    unhandled_events = {}
 
     logger.debug('Generating deferred calls based on client states')
     for key, action_1, action_2 in get_actions(client_1, client_2):
@@ -135,13 +150,36 @@ def sync(client_1, client_2):
         # TODO: Check DELETE timestamp. if it is older than you should be able to safely ignore it
 
         else:
-            raise ValueError(
-                'Unhandled state, aborting before anything is updated',
-                key, client_1, action_1, client_2, action_2
+            unhandled_events[key] = (action_1, action_2)
+
+    logger.debug('There are %s unhandled events for the user to solve', len(unhandled_events))
+    logger.debug('There are %s automatically deferred calls', len(deferred_calls))
+    if len(unhandled_events) > 0:
+        logger.debug('%s', unhandled_events)
+        for key, (action_1, action_2) in unhandled_events.items():
+            logger.info(
+                'Conflict for %s\n'
+                'which version would you like to keep\n'
+                '%s at %s on %s (1) or\n'
+                '%s at %s on %s (2)?',
+                key,
+                action_1.action, action_1.get_datetime(), client_1.get_uri(),
+                action_2.action, action_2.get_datetime(), client_2.get_uri(),
             )
+            choice = input('choice: ')
+            if choice == '1':
+                deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
+            elif choice == '2':
+                deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
+            else:
+                raise ValueError('Unknown choice', choice)
+
+        # Temporary debug point to analyse the new entries before committing to them
+        import ipdb
+        ipdb.set_trace()
 
     # call everything once we know we can handle all of it
-    logger.debug('Deferred calls: %s', deferred_calls)
+    logger.debug('There are %s total deferred calls', len(deferred_calls))
     try:
         for key, deferred_function in deferred_calls.items():
             try:
