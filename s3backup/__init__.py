@@ -78,7 +78,7 @@ def sync(client_1, client_2):
     logger.debug('Generating deferred calls based on client states')
     for key, action_1, action_2 in get_actions(client_1, client_2):
         logger.debug('%s: %s %s', key, action_1, action_2)
-        if action_1.action == SyncState.NONE and action_2.action == SyncState.NONE:
+        if action_1.action == SyncState.NOCHANGES and action_2.action == SyncState.NOCHANGES:
             if action_1.timestamp == action_2.timestamp:
                 continue
             elif action_1.timestamp is None and action_2.timestamp:
@@ -98,20 +98,20 @@ def sync(client_1, client_2):
                     update_client, client_1, client_2, key, action_2.timestamp
                 )
 
-        elif action_1.action == SyncState.UPDATED and action_2.action == SyncState.NONE:
+        elif action_1.action == SyncState.UPDATED and action_2.action == SyncState.NOCHANGES:
             deferred_calls[key] = DeferredFunction(
                 update_client, client_2, client_1, key, action_1.timestamp
             )
 
-        elif action_2.action == SyncState.UPDATED and action_1.action == SyncState.NONE:
+        elif action_2.action == SyncState.UPDATED and action_1.action == SyncState.NOCHANGES:
             deferred_calls[key] = DeferredFunction(
                 update_client, client_1, client_2, key, action_2.timestamp
             )
 
-        elif action_1.action == SyncState.DELETED and action_2.action == SyncState.NONE:
+        elif action_1.action == SyncState.DELETED and action_2.action == SyncState.NOCHANGES:
             deferred_calls[key] = DeferredFunction(delete_client, client_2, key, action_1.timestamp)
 
-        elif action_2.action == SyncState.DELETED and action_1.action == SyncState.NONE:
+        elif action_2.action == SyncState.DELETED and action_1.action == SyncState.NOCHANGES:
             deferred_calls[key] = DeferredFunction(delete_client, client_1, key, action_2.timestamp)
 
         elif action_1.action == SyncState.DELETED and action_2.action == SyncState.DELETED:
