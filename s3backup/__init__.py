@@ -81,14 +81,6 @@ def sync(client_1, client_2):
         if action_1.action == SyncState.NOCHANGES and action_2.action == SyncState.NOCHANGES:
             if action_1.timestamp == action_2.timestamp:
                 continue
-            elif action_1.timestamp is None and action_2.timestamp:
-                deferred_calls[key] = DeferredFunction(
-                    update_client, client_1, client_2, key, action_2.timestamp
-                )
-            elif action_2.timestamp is None and action_1.timestamp:
-                deferred_calls[key] = DeferredFunction(
-                    update_client, client_2, client_1, key, action_1.timestamp
-                )
             elif action_1.timestamp > action_2.timestamp:
                 deferred_calls[key] = DeferredFunction(
                     update_client, client_2, client_1, key, action_1.timestamp
@@ -97,6 +89,15 @@ def sync(client_1, client_2):
                 deferred_calls[key] = DeferredFunction(
                     update_client, client_1, client_2, key, action_2.timestamp
                 )
+        elif action_1.action == SyncState.NOCHANGES and action_2.action == SyncState.DOESNOTEXIST:
+            deferred_calls[key] = DeferredFunction(
+                update_client, client_2, client_1, key, action_1.timestamp
+            )
+
+        elif action_2.action == SyncState.NOCHANGES and action_1.action == SyncState.DOESNOTEXIST:
+            deferred_calls[key] = DeferredFunction(
+                update_client, client_1, client_2, key, action_2.timestamp
+            )
 
         elif action_1.action == SyncState.UPDATED and action_2.action == SyncState.NOCHANGES:
             deferred_calls[key] = DeferredFunction(
@@ -108,14 +109,27 @@ def sync(client_1, client_2):
                 update_client, client_1, client_2, key, action_2.timestamp
             )
 
+        elif action_1.action == SyncState.UPDATED and action_2.action == SyncState.DOESNOTEXIST:
+            deferred_calls[key] = DeferredFunction(
+                update_client, client_2, client_1, key, action_1.timestamp
+            )
+
+        elif action_2.action == SyncState.UPDATED and action_1.action == SyncState.DOESNOTEXIST:
+            deferred_calls[key] = DeferredFunction(
+                update_client, client_1, client_2, key, action_2.timestamp
+            )
+
         elif action_1.action == SyncState.DELETED and action_2.action == SyncState.NOCHANGES:
             deferred_calls[key] = DeferredFunction(delete_client, client_2, key, action_1.timestamp)
 
         elif action_2.action == SyncState.DELETED and action_1.action == SyncState.NOCHANGES:
             deferred_calls[key] = DeferredFunction(delete_client, client_1, key, action_2.timestamp)
 
-        elif action_1.action == SyncState.DELETED and action_2.action == SyncState.DELETED:
-            # nothing to do, they have already both been deleted
+        elif (
+            action_1.action in (SyncState.DELETED, SyncState.NOCHANGES) and
+            action_2.action in (SyncState.DELETED, SyncState.NOCHANGES)
+        ):
+            # nothing to do, they have already both been deleted/do not exist
             continue
 
         # TODO: Check DELETE timestamp. if it is older than you should be able to safely ignore it
