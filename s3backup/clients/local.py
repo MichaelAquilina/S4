@@ -101,7 +101,7 @@ class LocalSyncClient(SyncClient):
         else:
             raise ValueError('Index is of unknown type', content_type)
 
-        with method(index_path, 'r') as fp:
+        with method(index_path, 'rt') as fp:
             data = json.load(fp)
         return data
 
