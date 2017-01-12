@@ -7,6 +7,7 @@ class SyncState(object):
     UPDATED = 'UPDATED'
     DELETED = 'DELETED'
     CONFLICT = 'CONFLICT'
+    NOCHANGES = 'NOCHANGES'
     NONE = 'NONE'
 
     def __init__(self, action, timestamp):
@@ -112,10 +113,10 @@ class SyncClient(object):
             return SyncState(SyncState.DELETED, remote_timestamp)
         elif real_local_timestamp is None and index_local_timestamp is None:
             # Does not exist in this case, so no action to perform
-            return SyncState(SyncState.NONE, None)
+            return SyncState(SyncState.NOCHANGES, None)
         elif index_local_timestamp < real_local_timestamp:
             return SyncState(SyncState.UPDATED, real_local_timestamp)
         elif index_local_timestamp > real_local_timestamp:
             return SyncState(SyncState.CONFLICT, index_local_timestamp)   # corruption?
         else:
-            return SyncState(SyncState.NONE, remote_timestamp)
+            return SyncState(SyncState.NOCHANGES, remote_timestamp)
