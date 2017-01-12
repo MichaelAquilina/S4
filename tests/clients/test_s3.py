@@ -370,4 +370,4 @@ class TestS3SyncClient(object):
         assert client.get_action('baz') == SyncState(SyncState.NOCHANGES, 1400)
         assert client.get_action('ooo') == SyncState(SyncState.CONFLICT, 9999)
         assert client.get_action('ppp') == SyncState(SyncState.DELETED, 4000)
-        assert client.get_action('dontexist') == SyncState(SyncState.NOCHANGES, None)
+        assert client.get_action('dontexist') == SyncState(SyncState.DOESNOTEXIST, None)
