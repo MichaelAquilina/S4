@@ -64,7 +64,7 @@ def get_actions(client_1, client_2):
         len(all_keys), len(keys_1), client_1.get_uri(), len(keys_2), client_2.get_uri()
     )
 
-    for key in all_keys:
+    for key in sorted(all_keys):
         action_1 = client_1.get_action(key)
         action_2 = client_2.get_action(key)
         yield key, action_1, action_2
