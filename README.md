@@ -3,9 +3,10 @@ S3 Backup
 
 [![CircleCI](https://circleci.com/gh/MichaelAquilina/s3backup.svg?style=svg)](https://circleci.com/gh/MichaelAquilina/s3backup)
 
-WIP synchronisation of local files with S3 for backup. Please note that because this is under heavy
-developmeny you should expect incomplete features, lotsof bugs and many breaking changes between
-commits.
+WIP synchronisation of local files with S3 for backup.
+
+Please note that because this is under heavy development you should expect incomplete features, lots
+of bugs and many breaking changes between commits.
 
 Setup
 -----
