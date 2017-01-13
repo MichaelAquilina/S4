@@ -54,6 +54,11 @@ def main():
     for entry in config['directories']:
         target_1 = entry['source']
         target_2 = entry['target']
+        if not target_1.endswith('/'):
+            target_1 += '/'
+        if not target_2.endswith('/'):
+            target_2 += '/'
+
         # TODO: What if two config files with different ignore_files try to sync?
         ignore_files = entry.get('ignore_files')
 
