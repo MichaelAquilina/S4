@@ -54,6 +54,8 @@ def main():
     for entry in config['directories']:
         target_1 = entry['source']
         target_2 = entry['target']
+
+        # append trailing slashes to prevent incorrect prefix matching on s3
         if not target_1.endswith('/'):
             target_1 += '/'
         if not target_2.endswith('/'):
