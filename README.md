@@ -14,10 +14,16 @@ Create a `sync.conf` file in your `~/.config/s3backup` directory with the follow
 
 ```json
 {
-  "directories": {
-    "/home/username/myfolder1": "s3://mybucket/myfolder1",
-    "/home/username/myfolder2": "s3://mybucket/myfolder2"
-  }
+  "directories": [
+    {
+      "source": "/home/username/myfolder1",
+      "target": "s3://mybucket/myfolder1"
+    },
+    {
+      "source": "/home/username/myfolder2",
+      "target": "s3://mybucket/myfolder2"
+    }
+  ]
 }
 ```
 
