@@ -183,7 +183,11 @@ class S3SyncClient(SyncClient):
                 results[key] = SyncState(SyncState.UPDATED, real_local_timestamp)
             elif real_local_timestamp is None and index_local_timestamp:
                 results[key] = SyncState(SyncState.DELETED, remote_timestamp)
-            elif real_local_timestamp is None and index_local_timestamp is None and remote_timestamp:
+            elif (
+                real_local_timestamp is None and
+                index_local_timestamp is None and
+                remote_timestamp is not None
+            ):
                 results[key] = SyncState(SyncState.DELETED, remote_timestamp)
             elif real_local_timestamp is None and index_local_timestamp is None:
                 # Does not exist in this case, so no action to perform
