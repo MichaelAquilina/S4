@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 
 import magic
 
-from s3backup.clients import SyncClient, SyncObject, SyncState
+from s3backup.clients import SyncClient, SyncObject
 
 
 logger = logging.getLogger(__name__)
@@ -162,41 +162,20 @@ class S3SyncClient(SyncClient):
             self.index[key] = {}
         self.index[key]['remote_timestamp'] = timestamp
 
-    def get_actions(self, keys):
-        # overwrite default for better performance
-        real_local_timestamps = {}
+    def get_all_real_local_timestamps(self):
+        result = {}
         resp = self.client.list_objects_v2(
             Bucket=self.bucket,
             Prefix=self.prefix,
         )
         for obj in resp.get('Contents', []):
             key = os.path.relpath(obj['Key'], self.prefix)
-            real_local_timestamps[key] = to_timestamp(obj['LastModified'])
+            if not any(fnmatch.fnmatch(key, pattern) for pattern in self.ignore_files):
+                result[key] = to_timestamp(obj['LastModified'])
+        return result
 
-        results = {}
-        for key in keys:
-            index_local_timestamp = self.get_index_local_timestamp(key)
-            real_local_timestamp = real_local_timestamps.get(key)
-            remote_timestamp = self.get_remote_timestamp(key)
+    def get_all_remote_timestamps(self):
+        return {key: value['remote_timestamp'] for key, value in self.index.items()}
 
-            if index_local_timestamp is None and real_local_timestamp:
-                results[key] = SyncState(SyncState.UPDATED, real_local_timestamp)
-            elif real_local_timestamp is None and index_local_timestamp:
-                results[key] = SyncState(SyncState.DELETED, remote_timestamp)
-            elif (
-                real_local_timestamp is None and
-                index_local_timestamp is None and
-                remote_timestamp is not None
-            ):
-                results[key] = SyncState(SyncState.DELETED, remote_timestamp)
-            elif real_local_timestamp is None and index_local_timestamp is None:
-                # Does not exist in this case, so no action to perform
-                results[key] = SyncState(SyncState.DOESNOTEXIST, None)
-            elif index_local_timestamp < int(real_local_timestamp):
-                results[key] = SyncState(SyncState.UPDATED, real_local_timestamp)
-            elif index_local_timestamp > int(real_local_timestamp):
-                results[key] = SyncState(SyncState.CONFLICT, index_local_timestamp)   # corruption?
-            else:
-                results[key] = SyncState(SyncState.NOCHANGES, remote_timestamp)
-
-        return results
+    def get_all_index_local_timestamps(self):
+        return {key: value['local_timestamp'] for key, value in self.index.items()}
