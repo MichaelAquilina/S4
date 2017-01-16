@@ -120,3 +120,9 @@ class SyncClient(object):
             return SyncState(SyncState.CONFLICT, index_local_timestamp)   # corruption?
         else:
             return SyncState(SyncState.NOCHANGES, remote_timestamp)
+
+    def get_actions(self, keys):
+        result = {}
+        for key in keys:
+            result[key] = self.get_action(key)
+        return result

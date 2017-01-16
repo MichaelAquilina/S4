@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 
 import magic
 
-from s3backup.clients import SyncClient, SyncObject
+from s3backup.clients import SyncClient, SyncObject, SyncState
 
 
 logger = logging.getLogger(__name__)
@@ -161,3 +161,38 @@ class S3SyncClient(SyncClient):
         if key not in self.index:
             self.index[key] = {}
         self.index[key]['remote_timestamp'] = timestamp
+
+    def get_actions(self, keys):
+        # overwrite default for better performance
+        real_local_timestamps = {}
+        resp = self.client.list_objects_v2(
+            Bucket=self.bucket,
+            Prefix=self.prefix,
+        )
+        for obj in resp.get('Contents', []):
+            key = os.path.relpath(obj['Key'], self.prefix)
+            real_local_timestamps[key] = to_timestamp(obj['LastModified'])
+
+        results = {}
+        for key in keys:
+            index_local_timestamp = self.get_index_local_timestamp(key)
+            real_local_timestamp = real_local_timestamps.get(key)
+            remote_timestamp = self.get_remote_timestamp(key)
+
+            if index_local_timestamp is None and real_local_timestamp:
+                results[key] = SyncState(SyncState.UPDATED, real_local_timestamp)
+            elif real_local_timestamp is None and index_local_timestamp:
+                results[key] = SyncState(SyncState.DELETED, remote_timestamp)
+            elif real_local_timestamp is None and index_local_timestamp is None and remote_timestamp:
+                results[key] = SyncState(SyncState.DELETED, remote_timestamp)
+            elif real_local_timestamp is None and index_local_timestamp is None:
+                # Does not exist in this case, so no action to perform
+                results[key] = SyncState(SyncState.DOESNOTEXIST, None)
+            elif index_local_timestamp < int(real_local_timestamp):
+                results[key] = SyncState(SyncState.UPDATED, real_local_timestamp)
+            elif index_local_timestamp > int(real_local_timestamp):
+                results[key] = SyncState(SyncState.CONFLICT, index_local_timestamp)   # corruption?
+            else:
+                results[key] = SyncState(SyncState.NOCHANGES, remote_timestamp)
+
+        return results
