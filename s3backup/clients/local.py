@@ -132,6 +132,18 @@ class LocalSyncClient(SyncClient):
     def get_index_local_timestamp(self, key):
         return self.index.get(key, {}).get('local_timestamp')
 
+    def get_all_real_local_timestamps(self):
+        result = {}
+        for key in self.get_local_keys():
+            result[key] = self.get_real_local_timestamp(key)
+        return result
+
+    def get_all_remote_timestamps(self):
+        return {key: value['remote_timestamp'] for key, value in self.index.items()}
+
+    def get_all_index_local_timestamps(self):
+        return {key: value['local_timestamp'] for key, value in self.index.items()}
+
     def set_index_local_timestamp(self, key, timestamp):
         if key not in self.index:
             self.index[key] = {}
