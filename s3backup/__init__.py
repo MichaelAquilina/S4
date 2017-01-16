@@ -63,11 +63,11 @@ def get_actions(client_1, client_2):
         '%s keys in total (%s for %s and %s for %s)',
         len(all_keys), len(keys_1), client_1.get_uri(), len(keys_2), client_2.get_uri()
     )
+    client_1_actions = client_1.get_actions(all_keys)
+    client_2_actions = client_2.get_actions(all_keys)
 
     for key in sorted(all_keys):
-        action_1 = client_1.get_action(key)
-        action_2 = client_2.get_action(key)
-        yield key, action_1, action_2
+        yield key, client_1_actions[key], client_2_actions[key]
 
 
 def sync(client_1, client_2):
