@@ -92,13 +92,13 @@ class SyncClient(object):
         raise NotImplemented()
 
     def get_all_remote_timestamps(self):
-        raise NotImplemented
+        raise NotImplemented()
 
     def get_all_index_local_timestamps(self):
-        raise NotImplemented
+        raise NotImplemented()
 
     def get_all_real_local_timestamps(self):
-        raise NotImplemented
+        raise NotImplemented()
 
     def get_all_keys(self):
         local_keys = self.get_local_keys()
