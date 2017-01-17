@@ -39,37 +39,37 @@ class SyncObject(object):
 
 class SyncClient(object):
     def get_uri(self):
-        raise NotImplemented
+        raise NotImplemented()
 
     def put(self, key, sync_object):
-        raise NotImplemented
+        raise NotImplemented()
 
     def get(self, key):
-        raise NotImplemented
+        raise NotImplemented()
 
     def delete(self, key):
-        raise NotImplemented
+        raise NotImplemented()
 
     def get_local_keys(self):
-        raise NotImplemented
+        raise NotImplemented()
 
     def get_real_local_timestamp(self, key):
-        raise NotImplemented
+        raise NotImplemented()
 
     def get_index_keys(self):
-        raise NotImplemented
+        raise NotImplemented()
 
     def get_index_local_timestamp(self, key):
-        raise NotImplemented
+        raise NotImplemented()
 
     def set_index_local_timestamp(self, key, timestamp):
-        raise NotImplemented
+        raise NotImplemented()
 
     def get_remote_timestamp(self, key):
-        raise NotImplemented
+        raise NotImplemented()
 
     def set_remote_timestamp(self, key, timestamp):
-        raise NotImplemented
+        raise NotImplemented()
 
     def get_all_keys(self):
         local_keys = self.get_local_keys()
