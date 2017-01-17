@@ -94,7 +94,7 @@ class SyncClient(object):
         }
 
     def flush_index(self):
-        raise NotImplemented
+        raise NotImplemented()
 
     def get_action(self, key):
         """
