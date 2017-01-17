@@ -263,6 +263,18 @@ class TestLocalSyncClient(object):
         assert client.get_real_local_timestamp('atcg') == 2323230
         assert client.get_real_local_timestamp('dontexist') is None
 
+    def test_get_all_real_local_timestamps(self):
+        touch(os.path.join(self.target_folder, 'red'), 2323230)
+        touch(os.path.join(self.target_folder, 'blue'), 80808008)
+
+        client = local.LocalSyncClient(self.target_folder)
+        expected_output = {
+            'red': 2323230,
+            'blue': 80808008,
+        }
+        actual_output = client.get_all_real_local_timestamps()
+        assert actual_output == expected_output
+
     def test_get_index_local_timestamp(self):
         self.set_index({
             'foo': {
@@ -281,6 +293,42 @@ class TestLocalSyncClient(object):
         assert client.get_remote_timestamp('foo') == 32000
         assert client.get_remote_timestamp('dontexist') is None
         assert client.get_remote_timestamp('bar') is None
+
+    def test_get_all_index_local_timestamps(self):
+        self.set_index({
+            'frap': {
+                'local_timestamp': 4000,
+            },
+            'brap': {
+                'local_timestamp': 9999999,
+            }
+        })
+
+        client = local.LocalSyncClient(self.target_folder)
+        expected_output = {
+            'frap': 4000,
+            'brap': 9999999,
+        }
+        actual_output = client.get_all_index_local_timestamps()
+        assert actual_output == expected_output
+
+    def test_get_all_remote_timestamps(self):
+        self.set_index({
+            'frap': {
+                'remote_timestamp': 4000,
+            },
+            'brap': {
+                'remote_timestamp': 9999999,
+            }
+        })
+
+        client = local.LocalSyncClient(self.target_folder)
+        expected_output = {
+            'frap': 4000,
+            'brap': 9999999,
+        }
+        actual_output = client.get_all_remote_timestamps()
+        assert actual_output == expected_output
 
     def test_get_action(self):
         self.set_index({

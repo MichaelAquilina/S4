@@ -2,7 +2,7 @@
 
 import datetime
 
-from s3backup.clients import SyncState, SyncObject
+from s3backup.clients import get_sync_state, SyncState, SyncObject
 
 
 class TestSyncState(object):
@@ -27,3 +27,71 @@ class TestSyncObject(object):
 
         expected_repr = 'SyncObject<{}, 4096, 312313>'.format(dev_null)
         assert repr(sync_object) == expected_repr
+
+
+class TestGetSyncState(object):
+    def test_does_not_exist(self):
+        assert get_sync_state(None, None, None) == SyncState(SyncState.DOESNOTEXIST, None)
+
+    def test_no_changes(self):
+        actual_state = get_sync_state(
+            index_local=8130,
+            real_local=8130,
+            remote=8130,
+        )
+        expected_state = SyncState(SyncState.NOCHANGES, 8130)
+        assert actual_state == expected_state
+
+    def test_deleted(self):
+        actual_state = get_sync_state(
+            index_local=90000,
+            real_local=None,
+            remote=90000,
+        )
+        expected_state = SyncState(SyncState.DELETED, 90000)
+        assert actual_state == expected_state
+
+    def test_already_deleted(self):
+        actual_state = get_sync_state(
+            index_local=None,
+            real_local=None,
+            remote=77777,
+        )
+        expected_state = SyncState(SyncState.DELETED, 77777)
+        assert actual_state == expected_state
+
+    def test_updated(self):
+        actual_state = get_sync_state(
+            index_local=5000,
+            real_local=6000,
+            remote=5000,
+        )
+        expected_state = SyncState(SyncState.UPDATED, 6000)
+        assert actual_state == expected_state
+
+    def test_updated_new(self):
+        actual_state = get_sync_state(
+            index_local=None,
+            real_local=6000,
+            remote=None,
+        )
+        expected_state = SyncState(SyncState.UPDATED, 6000)
+        assert actual_state == expected_state
+
+    def test_conflict(self):
+        actual_state = get_sync_state(
+            index_local=6000,
+            real_local=5000,
+            remote=6000,
+        )
+        expected_state = SyncState(SyncState.CONFLICT, 6000)
+        assert actual_state == expected_state
+
+    def test_ignores_floating_precision(self):
+        actual_state = get_sync_state(
+            index_local=8000.80,
+            real_local=8000.32,
+            remote=6000,
+        )
+        expected_state = SyncState(SyncState.NOCHANGES, 6000)
+        assert actual_state == expected_state

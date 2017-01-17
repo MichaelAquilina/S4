@@ -226,6 +226,35 @@ class TestS3SyncClient(object):
         assert client.get_index_local_timestamp('world') is None
 
     @mock_s3
+    def test_get_all_index_timestamps(self):
+        # given
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id='',
+            aws_secret_access_key='',
+            aws_session_token='',
+        )
+        s3_client.create_bucket(Bucket='testbucket')
+        s3_client.put_object(Bucket='testbucket', Key='foo/bar/.index', Body=json.dumps({
+            'hello': {
+                'local_timestamp': 1200,
+            },
+            'world': {
+                'local_timestamp': 4000,
+            }
+        }))
+
+        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
+
+        # then
+        expected_output = {
+            'hello': 1200,
+            'world': 4000,
+        }
+        actual_output = client.get_all_index_local_timestamps()
+        assert actual_output == expected_output
+
+    @mock_s3
     def test_update_index(self):
         # given
         s3_client = boto3.client(
@@ -290,6 +319,32 @@ class TestS3SyncClient(object):
         # then
         assert client.get_real_local_timestamp('orange') == 2000
         assert client.get_real_local_timestamp('idontexist') is None
+
+    @mock_s3
+    def test_get_all_real_local_timestamps(self):
+        # given
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id='',
+            aws_secret_access_key='',
+            aws_session_token='',
+        )
+        s3_client.create_bucket(Bucket='testbucket')
+        touch(s3_client, 'testbucket', 'food/chocolate/oranges', 2600)
+        touch(s3_client, 'testbucket', 'food/gummy/bears', 2400)
+        touch(s3_client, 'testbucket', 'food/carrot_cake', 2000)
+        touch(s3_client, 'testbucket', 'food/.index', 2043)
+
+        client = s3.S3SyncClient(s3_client, 'testbucket', 'food')
+
+        # then
+        expected_output = {
+            'chocolate/oranges': 2600,
+            'gummy/bears': 2400,
+            'carrot_cake': 2000,
+        }
+        actual_output = client.get_all_real_local_timestamps()
+        assert actual_output == expected_output
 
     @mock_s3
     def test_set_index_timestamps(self):
