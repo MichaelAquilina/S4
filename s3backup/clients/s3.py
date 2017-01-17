@@ -161,3 +161,21 @@ class S3SyncClient(SyncClient):
         if key not in self.index:
             self.index[key] = {}
         self.index[key]['remote_timestamp'] = timestamp
+
+    def get_all_real_local_timestamps(self):
+        result = {}
+        resp = self.client.list_objects_v2(
+            Bucket=self.bucket,
+            Prefix=self.prefix,
+        )
+        for obj in resp.get('Contents', []):
+            key = os.path.relpath(obj['Key'], self.prefix)
+            if not any(fnmatch.fnmatch(key, pattern) for pattern in self.ignore_files):
+                result[key] = to_timestamp(obj['LastModified'])
+        return result
+
+    def get_all_remote_timestamps(self):
+        return {key: value['remote_timestamp'] for key, value in self.index.items()}
+
+    def get_all_index_local_timestamps(self):
+        return {key: value['local_timestamp'] for key, value in self.index.items()}
