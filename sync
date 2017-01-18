@@ -7,7 +7,7 @@ import logging
 
 import boto3
 
-import s3backup
+from s3backup import sync
 from s3backup.clients import local, s3
 
 
@@ -68,7 +68,7 @@ def main():
         client_2 = get_client(target_2, ignore_files)
 
         logger.info('Syncing %s with %s', target_1, target_2)
-        s3backup.sync(client_1, client_2)
+        sync.sync(client_1, client_2)
 
 if __name__ == '__main__':
     main()

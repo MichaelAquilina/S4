@@ -11,7 +11,7 @@ import freezegun
 
 from moto import mock_s3
 
-import s3backup
+from s3backup import sync
 from s3backup.clients.local import LocalSyncClient
 from s3backup.clients.s3 import S3SyncClient
 
@@ -67,7 +67,7 @@ class TestGetActions(object):
 
         client_1 = LocalSyncClient(tempfile.mkdtemp())
         client_2 = S3SyncClient(s3_client, 'testbucket', 'foo')
-        actual_output = list(s3backup.get_actions(client_1, client_2))
+        actual_output = list(sync.get_actions(client_1, client_2))
         assert actual_output == []
 
 
@@ -140,7 +140,7 @@ class TestIntegrations(object):
 
     def sync_clients(self):
         for client_1, client_2 in get_pairs(self.clients):
-            s3backup.sync(client_1, client_2)
+            sync.sync(client_1, client_2)
 
     def delete_local(self, folder, key):
         os.remove(os.path.join(folder, key))
