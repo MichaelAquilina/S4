@@ -27,60 +27,6 @@ class DeferredFunction(object):
         )
 
 
-def get_progress_bar(max_value, desc):
-    return tqdm.tqdm(
-        total=max_value,
-        leave=False,
-        desc=desc,
-        unit='B',
-        unit_scale=True,
-        mininterval=0.2,
-    )
-
-
-def update_client(to_client, from_client, key, timestamp):
-    logger.info('Updating %s (%s => %s)', key, from_client.get_uri(), to_client.get_uri())
-    sync_object = from_client.get(key)
-
-    with get_progress_bar(sync_object.total_size, key) as progress_bar:
-        to_client.put(key, sync_object, callback=progress_bar.update)
-
-    to_client.set_remote_timestamp(key, timestamp)
-    from_client.set_remote_timestamp(key, timestamp)
-
-
-def delete_client(client, key, remote_timestamp):
-    logger.info('Deleting %s on %s', key, client.get_uri())
-    client.delete(key)
-    client.set_remote_timestamp(key, remote_timestamp)
-
-
-def get_actions(client_1, client_2):
-    keys_1 = client_1.get_all_keys()
-    keys_2 = client_2.get_all_keys()
-    all_keys = set(keys_1) | set(keys_2)
-    logger.debug(
-        '%s keys in total (%s for %s and %s for %s)',
-        len(all_keys), len(keys_1), client_1.get_uri(), len(keys_2), client_2.get_uri()
-    )
-    client_1_actions = client_1.get_actions(all_keys)
-    client_2_actions = client_2.get_actions(all_keys)
-
-    for key in sorted(all_keys):
-        yield key, client_1_actions[key], client_2_actions[key]
-
-
-def get_deferred_function(key, action, to_client, from_client):
-    if action.action == 'UPDATED':
-        return DeferredFunction(
-            update_client, to_client, from_client, key, action.timestamp
-        )
-    elif action.action == 'DELETED':
-        return DeferredFunction(delete_client, to_client, key, action.timestamp)
-    else:
-        raise ValueError('Unknown how to handle Action', action)
-
-
 def sync(client_1, client_2):
     deferred_calls, unhandled_events = get_sync_actions(client_1, client_2)
 
@@ -203,3 +149,57 @@ def get_sync_actions(client_1, client_2):
             unhandled_events[key] = (action_1, action_2)
 
     return deferred_calls, unhandled_events
+
+
+def get_actions(client_1, client_2):
+    keys_1 = client_1.get_all_keys()
+    keys_2 = client_2.get_all_keys()
+    all_keys = set(keys_1) | set(keys_2)
+    logger.debug(
+        '%s keys in total (%s for %s and %s for %s)',
+        len(all_keys), len(keys_1), client_1.get_uri(), len(keys_2), client_2.get_uri()
+    )
+    client_1_actions = client_1.get_actions(all_keys)
+    client_2_actions = client_2.get_actions(all_keys)
+
+    for key in sorted(all_keys):
+        yield key, client_1_actions[key], client_2_actions[key]
+
+
+def get_deferred_function(key, action, to_client, from_client):
+    if action.action == 'UPDATED':
+        return DeferredFunction(
+            update_client, to_client, from_client, key, action.timestamp
+        )
+    elif action.action == 'DELETED':
+        return DeferredFunction(delete_client, to_client, key, action.timestamp)
+    else:
+        raise ValueError('Unknown how to handle Action', action)
+
+
+def get_progress_bar(max_value, desc):
+    return tqdm.tqdm(
+        total=max_value,
+        leave=False,
+        desc=desc,
+        unit='B',
+        unit_scale=True,
+        mininterval=0.2,
+    )
+
+
+def update_client(to_client, from_client, key, timestamp):
+    logger.info('Updating %s (%s => %s)', key, from_client.get_uri(), to_client.get_uri())
+    sync_object = from_client.get(key)
+
+    with get_progress_bar(sync_object.total_size, key) as progress_bar:
+        to_client.put(key, sync_object, callback=progress_bar.update)
+
+    to_client.set_remote_timestamp(key, timestamp)
+    from_client.set_remote_timestamp(key, timestamp)
+
+
+def delete_client(client, key, remote_timestamp):
+    logger.info('Deleting %s on %s', key, client.get_uri())
+    client.delete(key)
+    client.set_remote_timestamp(key, remote_timestamp)
