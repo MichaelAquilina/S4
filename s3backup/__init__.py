@@ -82,6 +82,56 @@ def get_deferred_function(key, action, to_client, from_client):
 
 
 def sync(client_1, client_2):
+    deferred_calls, unhandled_events = get_sync_actions(client_1, client_2)
+
+    logger.debug('There are %s unhandled events for the user to solve', len(unhandled_events))
+    logger.debug('There are %s automatically deferred calls', len(deferred_calls))
+    if len(unhandled_events) > 0:
+        logger.debug('%s', unhandled_events)
+        for key, (action_1, action_2) in unhandled_events.items():
+            logger.info(
+                'Conflict for %s\n'
+                'which version would you like to keep\n'
+                '%s at %s on %s (1) or\n'
+                '%s at %s on %s (2)?',
+                key,
+                action_1.action, action_1.get_datetime(), client_1.get_uri(),
+                action_2.action, action_2.get_datetime(), client_2.get_uri(),
+            )
+            choice = input('choice: ')
+            if choice == '1':
+                deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
+            elif choice == '2':
+                deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
+            else:
+                raise ValueError('Unknown choice', choice)
+
+        # Temporary debug point to analyse the new entries before committing to them
+        import ipdb
+        ipdb.set_trace()
+
+    # call everything once we know we can handle all of it
+    logger.debug('There are %s total deferred calls', len(deferred_calls))
+    try:
+        for key, deferred_function in deferred_calls.items():
+            try:
+                deferred_function()
+                client_1.update_index_entry(key)
+                client_2.update_index_entry(key)
+            except Exception as e:
+                logger.error('An error occurred while trying to update %s: %s', key, e)
+    except KeyboardInterrupt:
+        logger.warning('Session interrupted by Keyboard Interrupt. Cleaning up....')
+
+    if len(deferred_calls) > 0:
+        logger.info('Flushing Index to Storage')
+        client_1.flush_index()
+        client_2.flush_index()
+    else:
+        logger.info('Nothing to update')
+
+
+def get_sync_actions(client_1, client_2):
     # we store a list of deferred calls to make sure we can handle everything before
     # running any updates on the file system and indexes
     deferred_calls = {}
@@ -152,48 +202,4 @@ def sync(client_1, client_2):
         else:
             unhandled_events[key] = (action_1, action_2)
 
-    logger.debug('There are %s unhandled events for the user to solve', len(unhandled_events))
-    logger.debug('There are %s automatically deferred calls', len(deferred_calls))
-    if len(unhandled_events) > 0:
-        logger.debug('%s', unhandled_events)
-        for key, (action_1, action_2) in unhandled_events.items():
-            logger.info(
-                'Conflict for %s\n'
-                'which version would you like to keep\n'
-                '%s at %s on %s (1) or\n'
-                '%s at %s on %s (2)?',
-                key,
-                action_1.action, action_1.get_datetime(), client_1.get_uri(),
-                action_2.action, action_2.get_datetime(), client_2.get_uri(),
-            )
-            choice = input('choice: ')
-            if choice == '1':
-                deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
-            elif choice == '2':
-                deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
-            else:
-                raise ValueError('Unknown choice', choice)
-
-        # Temporary debug point to analyse the new entries before committing to them
-        import ipdb
-        ipdb.set_trace()
-
-    # call everything once we know we can handle all of it
-    logger.debug('There are %s total deferred calls', len(deferred_calls))
-    try:
-        for key, deferred_function in deferred_calls.items():
-            try:
-                deferred_function()
-                client_1.update_index_entry(key)
-                client_2.update_index_entry(key)
-            except Exception as e:
-                logger.error('An error occurred while trying to update %s: %s', key, e)
-    except KeyboardInterrupt:
-        logger.warning('Session interrupted by Keyboard Interrupt. Cleaning up....')
-
-    if len(deferred_calls) > 0:
-        logger.info('Flushing Index to Storage')
-        client_1.flush_index()
-        client_2.flush_index()
-    else:
-        logger.info('Nothing to update')
+    return deferred_calls, unhandled_events
