@@ -43,8 +43,8 @@ def sync(client_1, client_2):
             logger.info(
                 'Conflict for %s\n'
                 'which version would you like to keep\n'
-                '%s at %s on %s (1) or\n'
-                '%s at %s on %s (2)?',
+                '   %s at %s on %s (1) or\n'
+                '   %s at %s on %s (2)?',
                 key,
                 action_1.action, action_1.get_datetime(), client_1.get_uri(),
                 action_2.action, action_2.get_datetime(), client_2.get_uri(),
@@ -56,10 +56,6 @@ def sync(client_1, client_2):
                 deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
             else:
                 raise ValueError('Unknown choice', choice)
-
-        # Temporary debug point to analyse the new entries before committing to them
-        import ipdb
-        ipdb.set_trace()
 
     # call everything once we know we can handle all of it
     logger.debug('There are %s total deferred calls', len(deferred_calls))
