@@ -14,6 +14,7 @@ from moto import mock_s3
 from s3backup import sync
 from s3backup.clients.local import LocalSyncClient
 from s3backup.clients.s3 import S3SyncClient
+from s3backup.clients import SyncState
 
 
 def get_pairs(list_of_things):
@@ -69,6 +70,44 @@ class TestGetActions(object):
         client_2 = S3SyncClient(s3_client, 'testbucket', 'foo')
         actual_output = list(sync.get_actions(client_1, client_2))
         assert actual_output == []
+
+
+class TestGetSyncActions(object):
+    def setup(self):
+        self.folder_1 = tempfile.mkdtemp()
+        self.client_1 = LocalSyncClient(self.folder_1)
+        self.folder_2 = tempfile.mkdtemp()
+        self.client_2 = LocalSyncClient(self.folder_2)
+
+    def teardown(self):
+        shutil.rmtree(self.folder_1)
+        shutil.rmtree(self.folder_2)
+
+    def test_empty(self):
+        assert sync.get_sync_actions(self.client_1, self.client_2) == ({}, {})
+
+    def test_correct_output(self):
+        set_local_contents(self.folder_1, 'history.txt', timestamp=5000)
+        set_local_contents(self.folder_2, 'art.txt', timestamp=200000)
+        set_local_contents(self.folder_1, 'english.txt', timestamp=90000)
+        set_local_contents(self.folder_2, 'english.txt', timestamp=93000)
+
+        deferred_calls, unhandled_events = sync.get_sync_actions(self.client_1, self.client_2)
+        expected_unhandled_events = {
+            'english.txt': (
+                SyncState(SyncState.UPDATED, 90000), SyncState(SyncState.UPDATED, 93000)
+            )
+        }
+        expected_deferred_calls = {
+            'history.txt': sync.DeferredFunction(
+                sync.update_client, self.client_2, self.client_1, 'history.txt', 5000
+            ),
+            'art.txt': sync.DeferredFunction(
+                sync.update_client, self.client_1, self.client_2, 'art.txt', 200000
+            ),
+        }
+        assert unhandled_events == expected_unhandled_events
+        assert deferred_calls == expected_deferred_calls
 
 
 class TestIntegrations(object):
