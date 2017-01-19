@@ -14,17 +14,19 @@ class SyncState(object):
         self.action = action
         self.timestamp = timestamp
 
+    def get_datetime(self):
+        if self.timestamp is not None:
+            return datetime.datetime.utcfromtimestamp(self.timestamp)
+        else:
+            return None
+
     def __eq__(self, other):
         if not isinstance(other, SyncState):
             return False
         return self.action == other.action and self.timestamp == other.timestamp
 
     def __repr__(self):
-        if self.timestamp is not None:
-            timestamp = datetime.datetime.utcfromtimestamp(self.timestamp)
-        else:
-            timestamp = None
-        return 'SyncState<{}, {}>'.format(self.action, timestamp)
+        return 'SyncState<{}, {}>'.format(self.action, self.get_datetime())
 
 
 class SyncObject(object):
