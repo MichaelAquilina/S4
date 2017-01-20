@@ -5,6 +5,7 @@ import datetime
 
 class SyncState(object):
     UPDATED = 'UPDATED'
+    CREATED = 'CREATED'
     DELETED = 'DELETED'
     CONFLICT = 'CONFLICT'
     NOCHANGES = 'NOCHANGES'
@@ -41,7 +42,7 @@ class SyncObject(object):
 
 def get_sync_state(index_local, real_local, remote):
     if index_local is None and real_local:
-        return SyncState(SyncState.UPDATED, real_local)
+        return SyncState(SyncState.CREATED, real_local)
     elif real_local is None and index_local:
         return SyncState(SyncState.DELETED, remote)
     elif real_local is None and index_local is None and remote:

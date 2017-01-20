@@ -69,13 +69,13 @@ class TestGetSyncState(object):
         expected_state = SyncState(SyncState.UPDATED, 6000)
         assert actual_state == expected_state
 
-    def test_updated_new(self):
+    def test_created(self):
         actual_state = get_sync_state(
             index_local=None,
             real_local=6000,
             remote=None,
         )
-        expected_state = SyncState(SyncState.UPDATED, 6000)
+        expected_state = SyncState(SyncState.CREATED, 6000)
         assert actual_state == expected_state
 
     def test_conflict(self):
