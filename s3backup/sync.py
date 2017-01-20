@@ -41,13 +41,13 @@ def sync(client_1, client_2):
         logger.debug('%s', unhandled_events)
         for key, (action_1, action_2) in unhandled_events.items():
             logger.info(
-                '\nConflict for %s! Which version would you like to keep?\n'
-                '   (1) %s at %s on %s\n'
-                '   (2) %s at %s on %s\n'
+                '\nConflict for "%s". Which version would you like to keep?\n'
+                '   (1) %s%s %s at %s\n'
+                '   (2) %s%s %s at %s\n'
                 '   (3) Skip this file',
                 key,
-                action_1.action, action_1.get_datetime(), client_1.get_uri(),
-                action_2.action, action_2.get_datetime(), client_2.get_uri(),
+                client_1.get_uri(), key, action_1.action, action_1.get_datetime(),
+                client_2.get_uri(), key, action_2.action, action_2.get_datetime(),
             )
             choice = input('Choice (default=skip): ')
             logger.info('')
