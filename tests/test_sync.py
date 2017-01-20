@@ -95,7 +95,7 @@ class TestGetSyncActions(object):
         deferred_calls, unhandled_events = sync.get_sync_actions(self.client_1, self.client_2)
         expected_unhandled_events = {
             'english.txt': (
-                SyncState(SyncState.UPDATED, 90000), SyncState(SyncState.UPDATED, 93000)
+                SyncState(SyncState.CREATED, 90000), SyncState(SyncState.CREATED, 93000)
             )
         }
         expected_deferred_calls = {
