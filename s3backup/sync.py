@@ -104,14 +104,10 @@ def get_sync_actions(client_1, client_2):
                 )
 
         elif action_1.action == SyncState.CREATED and action_2.action == SyncState.DOESNOTEXIST:
-            deferred_calls[key] = DeferredFunction(
-                create_client, client_2, client_1, key, action_1.timestamp
-            )
+            deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
 
         elif action_2.action == SyncState.CREATED and action_1.action == SyncState.DOESNOTEXIST:
-            deferred_calls[key] = DeferredFunction(
-                create_client, client_1, client_2, key, action_2.timestamp
-            )
+            deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
 
         elif action_1.action == SyncState.NOCHANGES and action_2.action == SyncState.DOESNOTEXIST:
             deferred_calls[key] = DeferredFunction(
@@ -124,30 +120,22 @@ def get_sync_actions(client_1, client_2):
             )
 
         elif action_1.action == SyncState.UPDATED and action_2.action == SyncState.NOCHANGES:
-            deferred_calls[key] = DeferredFunction(
-                update_client, client_2, client_1, key, action_1.timestamp
-            )
+            deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
 
         elif action_2.action == SyncState.UPDATED and action_1.action == SyncState.NOCHANGES:
-            deferred_calls[key] = DeferredFunction(
-                update_client, client_1, client_2, key, action_2.timestamp
-            )
+            deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
 
         elif action_1.action == SyncState.UPDATED and action_2.action == SyncState.DOESNOTEXIST:
-            deferred_calls[key] = DeferredFunction(
-                update_client, client_2, client_1, key, action_1.timestamp
-            )
+            deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
 
         elif action_2.action == SyncState.UPDATED and action_1.action == SyncState.DOESNOTEXIST:
-            deferred_calls[key] = DeferredFunction(
-                update_client, client_1, client_2, key, action_2.timestamp
-            )
+            deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
 
         elif action_1.action == SyncState.DELETED and action_2.action == SyncState.NOCHANGES:
-            deferred_calls[key] = DeferredFunction(delete_client, client_2, key, action_1.timestamp)
+            deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
 
         elif action_2.action == SyncState.DELETED and action_1.action == SyncState.NOCHANGES:
-            deferred_calls[key] = DeferredFunction(delete_client, client_1, key, action_2.timestamp)
+            deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
 
         elif (
             action_1.action in (SyncState.DELETED, SyncState.NOCHANGES) and
