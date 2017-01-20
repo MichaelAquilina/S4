@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+import json
 import os
 import shutil
 import tempfile
@@ -108,6 +109,19 @@ class TestGetSyncActions(object):
         }
         assert unhandled_events == expected_unhandled_events
         assert deferred_calls == expected_deferred_calls
+
+    def test_deleted_doesnotexist(self):
+        with open(os.path.join(self.folder_1, '.index'), 'w') as fp:
+            json.dump({
+                'physics.txt': {
+                    'local_timestamp': 5000,
+                    'remote_timestamp': 4550,
+                }
+            }, fp)
+        self.client_1.reload_index()
+        deferred_calls, unhandled_events = sync.get_sync_actions(self.client_1, self.client_2)
+        assert deferred_calls == {}
+        assert unhandled_events == {}
 
 
 class TestIntegrations(object):

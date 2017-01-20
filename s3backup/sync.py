@@ -138,8 +138,8 @@ def get_sync_actions(client_1, client_2):
             deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
 
         elif (
-            action_1.action in (SyncState.DELETED, SyncState.NOCHANGES) and
-            action_2.action in (SyncState.DELETED, SyncState.NOCHANGES)
+            action_1.action in (SyncState.DELETED, SyncState.DOESNOTEXIST) and
+            action_2.action in (SyncState.DELETED, SyncState.DOESNOTEXIST)
         ):
             # nothing to do, they have already both been deleted/do not exist
             continue
