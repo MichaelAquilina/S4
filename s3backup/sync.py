@@ -41,21 +41,22 @@ def sync(client_1, client_2):
         logger.debug('%s', unhandled_events)
         for key, (action_1, action_2) in unhandled_events.items():
             logger.info(
-                'Conflict for %s\n'
-                'which version would you like to keep?\n'
-                '   %s at %s on %s (1)\n'
-                '   %s at %s on %s (2)',
+                '\nConflict for %s! Which version would you like to keep?\n'
+                '   (1) %s at %s on %s\n'
+                '   (2) %s at %s on %s\n'
+                '   (3) Skip this file',
                 key,
                 action_1.action, action_1.get_datetime(), client_1.get_uri(),
                 action_2.action, action_2.get_datetime(), client_2.get_uri(),
             )
-            choice = input('choice: ')
+            choice = input('Choice (default=skip): ')
+            logger.info('')
             if choice == '1':
                 deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
             elif choice == '2':
                 deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
             else:
-                raise ValueError('Unknown choice', choice)
+                continue
 
     # call everything once we know we can handle all of it
     logger.debug('There are %s total deferred calls', len(deferred_calls))
