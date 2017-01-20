@@ -34,7 +34,7 @@ def traverse(path, ignore_files=None):
 class LocalSyncClient(SyncClient):
     def __init__(self, path, ignore_files=None):
         self.path = path
-        self.index = self.load_index()
+        self.reload_index()
         self.ignore_files = ['.index']
 
         if ignore_files is not None:
@@ -86,7 +86,10 @@ class LocalSyncClient(SyncClient):
         else:
             return False
 
-    def load_index(self):
+    def reload_index(self):
+        self.index = self._load_index()
+
+    def _load_index(self):
         index_path = self.index_path()
         if not os.path.exists(index_path):
             return {}
