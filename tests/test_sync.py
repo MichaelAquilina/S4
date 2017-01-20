@@ -100,10 +100,10 @@ class TestGetSyncActions(object):
         }
         expected_deferred_calls = {
             'history.txt': sync.DeferredFunction(
-                sync.update_client, self.client_2, self.client_1, 'history.txt', 5000
+                sync.create_client, self.client_2, self.client_1, 'history.txt', 5000
             ),
             'art.txt': sync.DeferredFunction(
-                sync.update_client, self.client_1, self.client_2, 'art.txt', 200000
+                sync.create_client, self.client_1, self.client_2, 'art.txt', 200000
             ),
         }
         assert unhandled_events == expected_unhandled_events

@@ -105,12 +105,12 @@ def get_sync_actions(client_1, client_2):
 
         elif action_1.action == SyncState.CREATED and action_2.action == SyncState.DOESNOTEXIST:
             deferred_calls[key] = DeferredFunction(
-                update_client, client_2, client_1, key, action_1.timestamp
+                create_client, client_2, client_1, key, action_1.timestamp
             )
 
         elif action_2.action == SyncState.CREATED and action_1.action == SyncState.DOESNOTEXIST:
             deferred_calls[key] = DeferredFunction(
-                update_client, client_1, client_2, key, action_2.timestamp
+                create_client, client_1, client_2, key, action_2.timestamp
             )
 
         elif action_1.action == SyncState.NOCHANGES and action_2.action == SyncState.DOESNOTEXIST:
@@ -184,6 +184,10 @@ def get_deferred_function(key, action, to_client, from_client):
         return DeferredFunction(
             update_client, to_client, from_client, key, action.timestamp
         )
+    elif action.action == 'CREATED':
+        return DeferredFunction(
+            create_client, to_client, from_client, key, action.timestamp
+        )
     elif action.action == 'DELETED':
         return DeferredFunction(delete_client, to_client, key, action.timestamp)
     else:
@@ -201,8 +205,17 @@ def get_progress_bar(max_value, desc):
     )
 
 
+def create_client(to_client, from_client, key, timestamp):
+    logger.info('Creating %s (%s => %s)', key, from_client.get_uri(), to_client.get_uri())
+    move(to_client, from_client, key, timestamp)
+
+
 def update_client(to_client, from_client, key, timestamp):
     logger.info('Updating %s (%s => %s)', key, from_client.get_uri(), to_client.get_uri())
+    move(to_client, from_client, key, timestamp)
+
+
+def move(to_client, from_client, key, timestamp):
     sync_object = from_client.get(key)
 
     with get_progress_bar(sync_object.total_size, key) as progress_bar:
