@@ -51,7 +51,7 @@ class TestTraverse(object):
         ))
 
         expected_output = ['bar.md', 'baz/bar', 'baz/zoo', 'foo']
-        assert actual_output == expected_output
+        assert sorted(actual_output) == sorted(expected_output)
 
 
 class TestLocalSyncClient(object):
