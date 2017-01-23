@@ -51,24 +51,27 @@ def main():
     with open(CONFIG_FILE_PATH, 'r') as fp:
         config = json.load(fp)
 
-    for entry in config['directories']:
-        target_1 = entry['source']
-        target_2 = entry['target']
+    try:
+        for entry in config['directories']:
+            target_1 = entry['source']
+            target_2 = entry['target']
 
-        # append trailing slashes to prevent incorrect prefix matching on s3
-        if not target_1.endswith('/'):
-            target_1 += '/'
-        if not target_2.endswith('/'):
-            target_2 += '/'
+            # append trailing slashes to prevent incorrect prefix matching on s3
+            if not target_1.endswith('/'):
+                target_1 += '/'
+            if not target_2.endswith('/'):
+                target_2 += '/'
 
-        # TODO: What if two config files with different ignore_files try to sync?
-        ignore_files = entry.get('ignore_files')
+            # TODO: What if two config files with different ignore_files try to sync?
+            ignore_files = entry.get('ignore_files')
 
-        client_1 = get_client(target_1, ignore_files)
-        client_2 = get_client(target_2, ignore_files)
+            client_1 = get_client(target_1, ignore_files)
+            client_2 = get_client(target_2, ignore_files)
 
-        logger.info('Syncing %s with %s', target_1, target_2)
-        sync.sync(client_1, client_2)
+            logger.info('Syncing %s with %s', target_1, target_2)
+            sync.sync(client_1, client_2)
+    except KeyboardInterrupt:
+        logger.warning('Quitting due to Keyboard Interrupt...')
 
 if __name__ == '__main__':
     main()

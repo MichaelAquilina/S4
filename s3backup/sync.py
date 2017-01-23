@@ -33,30 +33,34 @@ class DeferredFunction(object):
 
 
 def sync(client_1, client_2):
-    deferred_calls, unhandled_events = get_sync_actions(client_1, client_2)
+    try:
+        deferred_calls, unhandled_events = get_sync_actions(client_1, client_2)
 
-    logger.debug('There are %s unhandled events for the user to solve', len(unhandled_events))
-    logger.debug('There are %s automatically deferred calls', len(deferred_calls))
-    if len(unhandled_events) > 0:
-        logger.debug('%s', unhandled_events)
-        for key, (action_1, action_2) in unhandled_events.items():
-            logger.info(
-                '\nConflict for "%s". Which version would you like to keep?\n'
-                '   (1) %s%s %s at %s\n'
-                '   (2) %s%s %s at %s\n'
-                '   (3) Skip this file',
-                key,
-                client_1.get_uri(), key, action_1.action, action_1.get_datetime(),
-                client_2.get_uri(), key, action_2.action, action_2.get_datetime(),
-            )
-            choice = input('Choice (default=skip): ')
-            logger.info('')
-            if choice == '1':
-                deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
-            elif choice == '2':
-                deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
-            else:
-                continue
+        logger.debug('There are %s unhandled events for the user to solve', len(unhandled_events))
+        logger.debug('There are %s automatically deferred calls', len(deferred_calls))
+        if len(unhandled_events) > 0:
+            logger.debug('%s', unhandled_events)
+            for key, (action_1, action_2) in unhandled_events.items():
+                logger.info(
+                    '\nConflict for "%s". Which version would you like to keep?\n'
+                    '   (1) %s%s %s at %s\n'
+                    '   (2) %s%s %s at %s\n'
+                    '   (3) Skip this file',
+                    key,
+                    client_1.get_uri(), key, action_1.action, action_1.get_datetime(),
+                    client_2.get_uri(), key, action_2.action, action_2.get_datetime(),
+                )
+                choice = input('Choice (default=skip): ')
+                logger.info('')
+                if choice == '1':
+                    deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
+                elif choice == '2':
+                    deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
+                else:
+                    continue
+    except KeyboardInterrupt:
+        logger.warning('Session interrupted by Keyboard Interrupt. Aborting....')
+        return
 
     # call everything once we know we can handle all of it
     logger.debug('There are %s total deferred calls', len(deferred_calls))
