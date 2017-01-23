@@ -20,13 +20,12 @@ def traverse(path, ignore_files=None):
     if ignore_files is None:
         ignore_files = []
 
-    for item in sorted(os.listdir(path)):
-        full_path = os.path.join(path, item)
-        if os.path.isdir(full_path):
-            for result in traverse(full_path, ignore_files):
-                yield os.path.join(item, result)
-        elif not any(fnmatch.fnmatch(item, pattern) for pattern in ignore_files):
-            yield item
+    for item in os.scandir(path):
+        if item.is_dir():
+            for result in traverse(item.path, ignore_files):
+                yield os.path.join(item.name, result)
+        elif not any(fnmatch.fnmatch(item.name, pattern) for pattern in ignore_files):
+            yield item.name
         else:
             logger.debug('Ingoring %s', item)
 
