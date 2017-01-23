@@ -31,3 +31,31 @@ Create a `sync.conf` file in your `~/.config/s3backup` directory with the follow
 ```
 
 Run `./sync` in the project directory to synchronise the local folders you specified with the folders in the bucket.
+
+All files will be automatically synced between the source and target destinations where possible.
+
+```
+Syncing /home/username/myfolder1/ with s3://mybucket/folder1/
+Creating foobar.jpg (/home/username/myfolder1/ => s3://mybucket/folder1/)
+Creating boarding-pass.pdf (/home/username/myfolder1/ => s3://mybucket/folder1/)
+Flushing Index to Storage
+```
+
+In the case where s3backup cannot decide on a reasonable action by itself, it will ask you to intervene:
+
+```
+Syncing /home/username/myfolder1/ with s3://mybucket/folder1/
+
+Conflict for "test.txt". Which version would you like to keep?
+   (1) /home/username/myfolder1/test.txt CREATED at 2017-01-23 12:26:24
+   (2) s3://mybucket/folder1/test.txt CREATED at 2017-01-23 12:26:30
+   (3) Skip this file
+Choice (default=skip):
+```
+
+If you do not wish to fix the issue, you can simply skip the file for now.
+
+s3backup keeps track of changes between files with a `.index` file at the root of each folder you are syncing. This is
+compressed (currently using gzip) to save space and increase performance when loading. Deleting this file will result
+in that folder being treated as if it was never synced before so make sure you *do not* delete it unless you know what
+you are doing.
