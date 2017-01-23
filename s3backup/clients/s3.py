@@ -21,6 +21,9 @@ S3Uri = collections.namedtuple('S3Uri', ['bucket', 'key'])
 
 
 def parse_s3_uri(uri):
+    if not uri.startswith('s3://'):
+        return None
+
     tokens = uri.replace('s3://', '').split('/')
     if len(tokens) < 2:
         return None

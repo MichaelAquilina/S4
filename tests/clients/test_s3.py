@@ -29,6 +29,10 @@ class TestParseS3URI(object):
     def test_empty(self):
         assert s3.parse_s3_uri('') is None
 
+    def test_incorrect_format(self):
+        assert s3.parse_s3_uri('nos3infront/some/path') is None
+        assert s3.parse_s3_uri(':/232red+-32') is None
+
     def test_correct_output(self):
         actual_output = s3.parse_s3_uri('s3://fruit.bowl/apples/and/oranges/')
         assert actual_output.bucket == 'fruit.bowl'
