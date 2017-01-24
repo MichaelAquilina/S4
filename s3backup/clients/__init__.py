@@ -11,23 +11,36 @@ class SyncState(object):
     NOCHANGES = 'NOCHANGES'
     DOESNOTEXIST = 'DOESNOTEXIST'
 
-    def __init__(self, action, timestamp):
+    def __init__(self, action, local_timestamp, remote_timestamp):
         self.action = action
-        self.timestamp = timestamp
+        self.local_timestamp = local_timestamp
+        self.remote_timestamp = remote_timestamp
 
-    def get_datetime(self):
-        if self.timestamp is not None:
-            return datetime.datetime.utcfromtimestamp(self.timestamp)
+    def get_local_datetime(self):
+        if self.local_timestamp is not None:
+            return datetime.datetime.utcfromtimestamp(self.local_timestamp)
+        else:
+            return None
+
+    def get_remote_datetime(self):
+        if self.remote_timestamp is not None:
+            return datetime.datetime.utcfromtimestamp(self.remote_timestamp)
         else:
             return None
 
     def __eq__(self, other):
         if not isinstance(other, SyncState):
             return False
-        return self.action == other.action and self.timestamp == other.timestamp
+        return (
+            self.action == other.action and
+            self.local_timestamp == other.local_timestamp and
+            self.remote_timestamp == other.remote_timestamp
+        )
 
     def __repr__(self):
-        return 'SyncState<{}, {}>'.format(self.action, self.get_datetime())
+        return 'SyncState<{}, local={}, remote={}>'.format(
+            self.action, self.get_local_datetime(), self.get_remote_datetime()
+        )
 
 
 class SyncObject(object):
@@ -41,23 +54,27 @@ class SyncObject(object):
 
 
 def get_sync_state(index_local, real_local, remote):
+    # convert to int because not all clients support float precision
+    index_local = int(index_local) if index_local is not None else None
+    real_local = int(real_local) if real_local is not None else None
+    remote = int(remote) if remote is not None else None
+
     if index_local is None and real_local:
-        return SyncState(SyncState.CREATED, real_local)
+        return SyncState(SyncState.CREATED, real_local, remote)
     elif real_local is None and index_local:
-        return SyncState(SyncState.DELETED, remote)
+        return SyncState(SyncState.DELETED, real_local, remote)
     elif real_local is None and index_local is None and remote:
-        return SyncState(SyncState.DELETED, remote)
+        return SyncState(SyncState.DELETED, real_local, remote)
     elif real_local is None and index_local is None:
         # Does not exist in this case, so no action to perform
-        return SyncState(SyncState.DOESNOTEXIST, None)
+        return SyncState(SyncState.DOESNOTEXIST, None, None)
 
-    # convert to int because not all clients support float precision
-    elif int(index_local) < int(real_local):
-        return SyncState(SyncState.UPDATED, real_local)
-    elif int(index_local) > int(real_local):
-        return SyncState(SyncState.CONFLICT, index_local)   # corruption?
+    elif index_local < real_local:
+        return SyncState(SyncState.UPDATED, real_local, remote)
+    elif index_local > real_local:
+        return SyncState(SyncState.CONFLICT, index_local, remote)   # corruption?
     else:
-        return SyncState(SyncState.NOCHANGES, remote)
+        return SyncState(SyncState.NOCHANGES, real_local, remote)
 
 
 class SyncClient(object):

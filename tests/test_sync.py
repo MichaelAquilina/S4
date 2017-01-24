@@ -93,18 +93,65 @@ class TestGetSyncActions(object):
         assert sync.get_sync_actions(self.client_1, self.client_2) == ({}, {})
 
     def test_correct_output(self):
+        set_local_index(self.folder_1, {
+            'chemistry.txt': {
+                'local_timestamp': 9431,
+                'remote_timestamp': 9431,
+            },
+            'physics.txt': {
+                'local_timestamp': 10000,
+                'remote_timestamp': 10000,
+            },
+            'maltese.txt': {
+                'local_timestamp': 7000,
+                'remote_timestamp': 6000,
+            },
+        })
+        set_local_index(self.folder_2, {
+            'chemistry.txt': {
+                'local_timestamp': 10000,
+                'remote_timestamp': 9431,
+            },
+            'physics.txt': {
+                'local_timestamp': 13000,
+                'remote_timestamp': 12000,
+            },
+            'maltese.txt': {
+                'local_timestamp': 6000,
+                'remote_timestamp': 6000,
+            },
+        })
+
         set_local_contents(self.folder_1, 'history.txt', timestamp=5000)
         set_local_contents(self.folder_2, 'art.txt', timestamp=200000)
         set_local_contents(self.folder_1, 'english.txt', timestamp=90000)
         set_local_contents(self.folder_2, 'english.txt', timestamp=93000)
+        set_local_contents(self.folder_2, 'chemistry.txt', timestamp=10000)
+        set_local_contents(self.folder_1, 'physics.txt', timestamp=11000)
+        set_local_contents(self.folder_2, 'physics.txt', timestamp=13000)
+        set_local_contents(self.folder_1, 'maltese.txt', timestamp=7000)
+        set_local_contents(self.folder_2, 'maltese.txt', timestamp=8000)
 
+        self.client_1.reload_index()
+        self.client_2.reload_index()
         deferred_calls, unhandled_events = sync.get_sync_actions(self.client_1, self.client_2)
         expected_unhandled_events = {
             'english.txt': (
-                SyncState(SyncState.CREATED, 90000), SyncState(SyncState.CREATED, 93000)
+                SyncState(SyncState.CREATED, 90000, None),
+                SyncState(SyncState.CREATED, 93000, None)
+            ),
+            'physics.txt': (
+                SyncState(SyncState.UPDATED, 11000, 10000),
+                SyncState(SyncState.NOCHANGES, 13000, 12000),
             )
         }
         expected_deferred_calls = {
+            'maltese.txt': sync.DeferredFunction(
+                sync.update_client, self.client_1, self.client_2, 'maltese.txt', 8000
+            ),
+            'chemistry.txt': sync.DeferredFunction(
+                sync.delete_client, self.client_2, 'chemistry.txt', None
+            ),
             'history.txt': sync.DeferredFunction(
                 sync.create_client, self.client_2, self.client_1, 'history.txt', 5000
             ),
@@ -114,6 +161,59 @@ class TestGetSyncActions(object):
         }
         assert unhandled_events == expected_unhandled_events
         assert deferred_calls == expected_deferred_calls
+
+    def test_updated_but_different_remote_timestamp(self):
+        set_local_index(self.folder_1, {
+            'biology.txt': {
+                'local_timestamp': 4000,
+                'remote_timestamp': 3000,
+            }
+        })
+        set_local_index(self.folder_2, {
+            'biology.txt': {
+                'local_timestamp': 6000,
+                'remote_timestamp': 6000,
+            }
+        })
+        set_local_contents(self.folder_1, 'biology.txt', timestamp=4500)
+        set_local_contents(self.folder_2, 'biology.txt', timestamp=6000)
+
+        self.client_1.reload_index()
+        self.client_2.reload_index()
+        deferred_calls, unhandled_events = sync.get_sync_actions(self.client_1, self.client_2)
+        expected_unhandled_events = {
+            'biology.txt': (
+                SyncState(SyncState.UPDATED, 4500, 3000), SyncState(SyncState.NOCHANGES, 6000, 6000)
+            )
+        }
+        assert deferred_calls == {}
+        assert unhandled_events == expected_unhandled_events
+
+    def test_deleted_but_different_remote_timestamp(self):
+        set_local_index(self.folder_1, {
+            'chemistry.txt': {
+                'local_timestamp': 4000,
+                'remote_timestamp': 3000,
+            }
+        })
+        set_local_index(self.folder_2, {
+            'chemistry.txt': {
+                'local_timestamp': 6000,
+                'remote_timestamp': 6000,
+            }
+        })
+        set_local_contents(self.folder_2, 'chemistry.txt', timestamp=6000)
+
+        self.client_1.reload_index()
+        self.client_2.reload_index()
+        deferred_calls, unhandled_events = sync.get_sync_actions(self.client_1, self.client_2)
+        expected_unhandled_events = {
+            'chemistry.txt': (
+                SyncState(SyncState.DELETED, None, 3000), SyncState(SyncState.NOCHANGES, 6000, 6000)
+            )
+        }
+        assert deferred_calls == {}
+        assert unhandled_events == expected_unhandled_events
 
     def test_deleted_doesnotexist(self):
         set_local_index(self.folder_1, {
