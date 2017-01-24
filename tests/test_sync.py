@@ -42,6 +42,11 @@ def set_local_contents(folder, key, timestamp=None, data=''):
         os.utime(path, (timestamp, timestamp))
 
 
+def set_local_index(folder, data):
+    with open(os.path.join(folder, '.index'), 'w') as fp:
+        json.dump(data, fp)
+
+
 def set_s3_contents(client, bucket, key, timestamp=None, data=''):
     if timestamp is None:
         freeze_time = datetime.datetime.utcnow()
@@ -111,13 +116,12 @@ class TestGetSyncActions(object):
         assert deferred_calls == expected_deferred_calls
 
     def test_deleted_doesnotexist(self):
-        with open(os.path.join(self.folder_1, '.index'), 'w') as fp:
-            json.dump({
-                'physics.txt': {
-                    'local_timestamp': 5000,
-                    'remote_timestamp': 4550,
-                }
-            }, fp)
+        set_local_index(self.folder_1, {
+            'physics.txt': {
+                'local_timestamp': 5000,
+                'remote_timestamp': 4550,
+            }
+        })
         self.client_1.reload_index()
         deferred_calls, unhandled_events = sync.get_sync_actions(self.client_1, self.client_2)
         assert deferred_calls == {}
