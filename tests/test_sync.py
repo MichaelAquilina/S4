@@ -115,6 +115,33 @@ class TestGetSyncActions(object):
         assert unhandled_events == expected_unhandled_events
         assert deferred_calls == expected_deferred_calls
 
+    def test_updated_but_smaller_remote_timestamp(self):
+        set_local_index(self.folder_1, {
+            'biology.txt': {
+                'local_timestamp': 4000,
+                'remote_timestamp': 3000,
+            }
+        })
+        set_local_index(self.folder_2, {
+            'biology.txt': {
+                'local_timestamp': 6000,
+                'remote_timestamp': 6000,
+            }
+        })
+        set_local_contents(self.folder_1, 'biology.txt', timestamp=4500)
+        set_local_contents(self.folder_2, 'biology.txt', timestamp=6000)
+
+        self.client_1.reload_index()
+        self.client_2.reload_index()
+        deferred_calls, unhandled_events = sync.get_sync_actions(self.client_1, self.client_2)
+        expected_unhandled_events = {
+            'biology.txt': (
+                SyncState(SyncState.UPDATED, 4500), SyncState(SyncState.NOCHANGES, 6000)
+            )
+        }
+        assert deferred_calls == []
+        assert unhandled_events == expected_unhandled_events
+
     def test_deleted_doesnotexist(self):
         set_local_index(self.folder_1, {
             'physics.txt': {
