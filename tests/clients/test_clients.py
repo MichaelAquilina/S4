@@ -7,9 +7,10 @@ from s3backup.clients import get_sync_state, SyncState, SyncObject
 
 class TestSyncState(object):
     def test_repr(self):
-        action = SyncState(SyncState.UPDATED, 1000)
-        assert repr(action) == 'SyncState<UPDATED, {}>'.format(
-            datetime.datetime.utcfromtimestamp(1000)
+        action = SyncState(SyncState.UPDATED, 1000, 53434)
+        assert repr(action) == 'SyncState<UPDATED, local={}, remote={}>'.format(
+            datetime.datetime.utcfromtimestamp(1000),
+            datetime.datetime.utcfromtimestamp(53434)
         )
 
 
@@ -31,7 +32,7 @@ class TestSyncObject(object):
 
 class TestGetSyncState(object):
     def test_does_not_exist(self):
-        assert get_sync_state(None, None, None) == SyncState(SyncState.DOESNOTEXIST, None)
+        assert get_sync_state(None, None, None) == SyncState(SyncState.DOESNOTEXIST, None, None)
 
     def test_no_changes(self):
         actual_state = get_sync_state(
@@ -39,7 +40,7 @@ class TestGetSyncState(object):
             real_local=8130,
             remote=8130,
         )
-        expected_state = SyncState(SyncState.NOCHANGES, 8130)
+        expected_state = SyncState(SyncState.NOCHANGES, 8130, 8130)
         assert actual_state == expected_state
 
     def test_deleted(self):
@@ -48,7 +49,7 @@ class TestGetSyncState(object):
             real_local=None,
             remote=90000,
         )
-        expected_state = SyncState(SyncState.DELETED, 90000)
+        expected_state = SyncState(SyncState.DELETED, None, 90000)
         assert actual_state == expected_state
 
     def test_already_deleted(self):
@@ -57,7 +58,7 @@ class TestGetSyncState(object):
             real_local=None,
             remote=77777,
         )
-        expected_state = SyncState(SyncState.DELETED, 77777)
+        expected_state = SyncState(SyncState.DELETED, None, 77777)
         assert actual_state == expected_state
 
     def test_updated(self):
@@ -66,7 +67,7 @@ class TestGetSyncState(object):
             real_local=6000,
             remote=5000,
         )
-        expected_state = SyncState(SyncState.UPDATED, 6000)
+        expected_state = SyncState(SyncState.UPDATED, 6000, 5000)
         assert actual_state == expected_state
 
     def test_created(self):
@@ -75,7 +76,7 @@ class TestGetSyncState(object):
             real_local=6000,
             remote=None,
         )
-        expected_state = SyncState(SyncState.CREATED, 6000)
+        expected_state = SyncState(SyncState.CREATED, 6000, None)
         assert actual_state == expected_state
 
     def test_conflict(self):
@@ -84,7 +85,7 @@ class TestGetSyncState(object):
             real_local=5000,
             remote=6000,
         )
-        expected_state = SyncState(SyncState.CONFLICT, 6000)
+        expected_state = SyncState(SyncState.CONFLICT, 6000, 6000)
         assert actual_state == expected_state
 
     def test_ignores_floating_precision(self):
@@ -93,5 +94,5 @@ class TestGetSyncState(object):
             real_local=8000.32,
             remote=6000,
         )
-        expected_state = SyncState(SyncState.NOCHANGES, 6000)
+        expected_state = SyncState(SyncState.NOCHANGES, 8000, 6000)
         assert actual_state == expected_state
