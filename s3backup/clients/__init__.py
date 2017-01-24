@@ -62,9 +62,9 @@ def get_sync_state(index_local, real_local, remote):
     if index_local is None and real_local:
         return SyncState(SyncState.CREATED, real_local, remote)
     elif real_local is None and index_local:
-        return SyncState(SyncState.DELETED, index_local, remote)
+        return SyncState(SyncState.DELETED, real_local, remote)
     elif real_local is None and index_local is None and remote:
-        return SyncState(SyncState.DELETED, index_local, remote)
+        return SyncState(SyncState.DELETED, real_local, remote)
     elif real_local is None and index_local is None:
         # Does not exist in this case, so no action to perform
         return SyncState(SyncState.DOESNOTEXIST, None, None)
