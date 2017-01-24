@@ -49,7 +49,7 @@ class TestGetSyncState(object):
             real_local=None,
             remote=90000,
         )
-        expected_state = SyncState(SyncState.DELETED, None, 90000)
+        expected_state = SyncState(SyncState.DELETED, 90000, 90000)
         assert actual_state == expected_state
 
     def test_already_deleted(self):
