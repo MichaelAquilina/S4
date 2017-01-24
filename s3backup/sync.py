@@ -47,8 +47,8 @@ def sync(client_1, client_2):
                     '   (2) %s%s %s at %s\n'
                     '   (3) Skip this file',
                     key,
-                    client_1.get_uri(), key, action_1.action, action_1.get_datetime(),
-                    client_2.get_uri(), key, action_2.action, action_2.get_datetime(),
+                    client_1.get_uri(), key, action_1.action, action_1.get_remote_datetime(),
+                    client_2.get_uri(), key, action_2.action, action_2.get_remote_datetime(),
                 )
                 choice = input('Choice (default=skip): ')
                 logger.info('')
@@ -204,15 +204,15 @@ def get_actions(client_1, client_2):
 
 
 def get_deferred_function(key, action, to_client, from_client):
-    if action.action == 'UPDATED':
+    if action.action in (SyncState.UPDATED, SyncState.NOCHANGES):
         return DeferredFunction(
             update_client, to_client, from_client, key, action.local_timestamp
         )
-    elif action.action == 'CREATED':
+    elif action.action == SyncState.CREATED:
         return DeferredFunction(
             create_client, to_client, from_client, key, action.local_timestamp
         )
-    elif action.action == 'DELETED':
+    elif action.action == SyncState.DELETED:
         return DeferredFunction(delete_client, to_client, key, action.remote_timestamp)
     else:
         raise ValueError('Unknown how to handle Action', action)
