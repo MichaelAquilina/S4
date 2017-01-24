@@ -101,7 +101,8 @@ class TestGetSyncActions(object):
         deferred_calls, unhandled_events = sync.get_sync_actions(self.client_1, self.client_2)
         expected_unhandled_events = {
             'english.txt': (
-                SyncState(SyncState.CREATED, 90000), SyncState(SyncState.CREATED, 93000)
+                SyncState(SyncState.CREATED, 90000, None),
+                SyncState(SyncState.CREATED, 93000, None)
             )
         }
         expected_deferred_calls = {
@@ -136,10 +137,10 @@ class TestGetSyncActions(object):
         deferred_calls, unhandled_events = sync.get_sync_actions(self.client_1, self.client_2)
         expected_unhandled_events = {
             'biology.txt': (
-                SyncState(SyncState.UPDATED, 4500), SyncState(SyncState.NOCHANGES, 6000)
+                SyncState(SyncState.UPDATED, 4500, 3000), SyncState(SyncState.NOCHANGES, 6000, 6000)
             )
         }
-        assert deferred_calls == []
+        assert deferred_calls == {}
         assert unhandled_events == expected_unhandled_events
 
     def test_deleted_doesnotexist(self):

@@ -96,50 +96,82 @@ def get_sync_actions(client_1, client_2):
     for key, action_1, action_2 in get_actions(client_1, client_2):
         logger.debug('%s: %s %s', key, action_1, action_2)
         if action_1.action == SyncState.NOCHANGES and action_2.action == SyncState.NOCHANGES:
-            if action_1.timestamp == action_2.timestamp:
+            if action_1.remote_timestamp == action_2.remote_timestamp:
                 continue
-            elif action_1.timestamp > action_2.timestamp:
+            elif action_1.remote_timestamp > action_2.remote_timestamp:
                 deferred_calls[key] = DeferredFunction(
-                    update_client, client_2, client_1, key, action_1.timestamp
+                    update_client, client_2, client_1, key, action_1.remote_timestamp
                 )
-            elif action_2.timestamp > action_1.timestamp:
+            elif action_2.remote_timestamp > action_1.remote_timestamp:
                 deferred_calls[key] = DeferredFunction(
-                    update_client, client_1, client_2, key, action_2.timestamp
+                    update_client, client_1, client_2, key, action_2.remote_timestamp
                 )
 
         elif action_1.action == SyncState.CREATED and action_2.action == SyncState.DOESNOTEXIST:
-            deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
+            deferred_calls[key] = DeferredFunction(
+                create_client, client_2, client_1, key, action_1.local_timestamp
+            )
 
         elif action_2.action == SyncState.CREATED and action_1.action == SyncState.DOESNOTEXIST:
-            deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
+            deferred_calls[key] = DeferredFunction(
+                create_client, client_1, client_2, key, action_2.local_timestamp
+            )
 
         elif action_1.action == SyncState.NOCHANGES and action_2.action == SyncState.DOESNOTEXIST:
             deferred_calls[key] = DeferredFunction(
-                update_client, client_2, client_1, key, action_1.timestamp
+                update_client, client_2, client_1, key, action_1.remote_timestamp
             )
 
         elif action_2.action == SyncState.NOCHANGES and action_1.action == SyncState.DOESNOTEXIST:
             deferred_calls[key] = DeferredFunction(
-                update_client, client_1, client_2, key, action_2.timestamp
+                update_client, client_1, client_2, key, action_2.remote_timestamp
             )
 
-        elif action_1.action == SyncState.UPDATED and action_2.action == SyncState.NOCHANGES:
-            deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
+        elif (
+            action_1.action == SyncState.UPDATED and
+            action_2.action == SyncState.NOCHANGES and
+            action_1.remote_timestamp == action_2.remote_timestamp
+        ):
+            deferred_calls[key] = DeferredFunction(
+                update_client, client_2, client_1, key, action_1.local_timestamp
+            )
 
-        elif action_2.action == SyncState.UPDATED and action_1.action == SyncState.NOCHANGES:
-            deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
+        elif (
+            action_2.action == SyncState.UPDATED and
+            action_1.action == SyncState.NOCHANGES and
+            action_1.remote_timestamp == action_2.remote_timestamp
+        ):
+            deferred_calls[key] = DeferredFunction(
+                update_client, client_1, client_2, key, action_2.local_timestamp
+            )
 
         elif action_1.action == SyncState.UPDATED and action_2.action == SyncState.DOESNOTEXIST:
-            deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
+            deferred_calls[key] = DeferredFunction(
+                update_client, client_2, client_1, key, action_1.local_timestamp
+            )
 
         elif action_2.action == SyncState.UPDATED and action_1.action == SyncState.DOESNOTEXIST:
-            deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
+            deferred_calls[key] = DeferredFunction(
+                update_client, client_2, client_1, key, action_1.local_timestamp
+            )
 
-        elif action_1.action == SyncState.DELETED and action_2.action == SyncState.NOCHANGES:
-            deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
+        elif (
+            action_1.action == SyncState.DELETED and
+            action_2.action == SyncState.NOCHANGES and
+            action_1.remote_timestamp == action_2.remote_timestamp
+        ):
+            deferred_calls[key] = DeferredFunction(
+                delete_client, client_2, key, action_1.local_timestamp
+            )
 
-        elif action_2.action == SyncState.DELETED and action_1.action == SyncState.NOCHANGES:
-            deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
+        elif (
+            action_2.action == SyncState.DELETED and
+            action_1.action == SyncState.NOCHANGES and
+            action_1.remote_timestamp == action_2.remote_timestamp
+        ):
+            deferred_calls[key] = DeferredFunction(
+                delete_client, client_1, key, action_2.local_timestamp
+            )
 
         elif (
             action_1.action in (SyncState.DELETED, SyncState.DOESNOTEXIST) and
@@ -174,14 +206,14 @@ def get_actions(client_1, client_2):
 def get_deferred_function(key, action, to_client, from_client):
     if action.action == 'UPDATED':
         return DeferredFunction(
-            update_client, to_client, from_client, key, action.timestamp
+            update_client, to_client, from_client, key, action.local_timestamp
         )
     elif action.action == 'CREATED':
         return DeferredFunction(
-            create_client, to_client, from_client, key, action.timestamp
+            create_client, to_client, from_client, key, action.local_timestamp
         )
     elif action.action == 'DELETED':
-        return DeferredFunction(delete_client, to_client, key, action.timestamp)
+        return DeferredFunction(delete_client, to_client, key, action.remote_timestamp)
     else:
         raise ValueError('Unknown how to handle Action', action)
 
