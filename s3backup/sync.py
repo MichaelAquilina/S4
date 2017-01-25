@@ -43,12 +43,12 @@ def sync(client_1, client_2):
             for key, (action_1, action_2) in unhandled_events.items():
                 logger.info(
                     '\nConflict for "%s". Which version would you like to keep?\n'
-                    '   (1) %s%s %s at %s\n'
-                    '   (2) %s%s %s at %s\n'
+                    '   (1) %s%s updated at %s (%s)\n'
+                    '   (2) %s%s updated at %s (%s)\n'
                     '   (3) Skip this file',
                     key,
-                    client_1.get_uri(), key, action_1.action, action_1.get_remote_datetime(),
-                    client_2.get_uri(), key, action_2.action, action_2.get_remote_datetime(),
+                    client_1.get_uri(), key, action_1.get_remote_datetime(), action_1.action,
+                    client_2.get_uri(), key, action_2.get_remote_datetime(), action_2.action,
                 )
                 choice = input('Choice (default=skip): ')
                 logger.info('')
