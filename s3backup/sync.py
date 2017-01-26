@@ -215,7 +215,7 @@ def get_deferred_function(key, action, to_client, from_client):
     elif action.action == SyncState.DELETED:
         return DeferredFunction(delete_client, to_client, key, action.remote_timestamp)
     else:
-        raise ValueError('Unknown how to handle Action', action)
+        raise ValueError('Unknown action provided', action)
 
 
 def get_progress_bar(max_value, desc):
