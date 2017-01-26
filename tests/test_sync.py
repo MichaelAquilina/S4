@@ -42,6 +42,13 @@ def set_local_contents(folder, key, timestamp=None, data=''):
         os.utime(path, (timestamp, timestamp))
 
 
+def get_local_contents(folder, key):
+    path = os.path.join(folder, key)
+    with open(path, 'r') as fp:
+        data = fp.read()
+    return data
+
+
 def set_local_index(folder, data):
     with open(os.path.join(folder, '.index'), 'w') as fp:
         json.dump(data, fp)
@@ -416,3 +423,27 @@ class TestIntegrations(object):
         self.assert_local_keys(['bar', 'baz'])
 
         self.sync_clients()
+
+
+class TestMove(object):
+    def setup(self):
+        self.folder_1 = tempfile.mkdtemp()
+        self.client_1 = LocalSyncClient(self.folder_1)
+        self.folder_2 = tempfile.mkdtemp()
+        self.client_2 = LocalSyncClient(self.folder_2)
+
+    def teardown(self):
+        shutil.rmtree(self.folder_1)
+        shutil.rmtree(self.folder_2)
+
+    def test_correct_behaviour(self):
+        set_local_contents(self.folder_1, 'art.txt', data='swirly abstract objects')
+        sync.move(
+            to_client=self.client_2,
+            from_client=self.client_1,
+            key='art.txt',
+            timestamp=6000,
+        )
+
+        assert get_local_contents(self.folder_2, 'art.txt') == 'swirly abstract objects'
+        assert self.client_2.get_remote_timestamp('art.txt') == 6000
