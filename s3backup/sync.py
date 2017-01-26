@@ -126,6 +126,22 @@ def get_sync_actions(client_1, client_2):
             deferred_calls[key] = DeferredFunction(
                 update_client, client_1, client_2, key, action_2.remote_timestamp
             )
+        elif action_1.action == SyncState.UPDATED and action_2.action == SyncState.DOESNOTEXIST:
+            deferred_calls[key] = DeferredFunction(
+                update_client, client_2, client_1, key, action_1.local_timestamp
+            )
+
+        elif action_2.action == SyncState.UPDATED and action_1.action == SyncState.DOESNOTEXIST:
+            deferred_calls[key] = DeferredFunction(
+                update_client, client_2, client_1, key, action_1.local_timestamp
+            )
+
+        elif (
+            action_1.action in (SyncState.DELETED, SyncState.DOESNOTEXIST) and
+            action_2.action in (SyncState.DELETED, SyncState.DOESNOTEXIST)
+        ):
+            # nothing to do, they have already both been deleted/do not exist
+            continue
 
         elif (
             action_1.action == SyncState.UPDATED and
@@ -145,16 +161,6 @@ def get_sync_actions(client_1, client_2):
                 update_client, client_1, client_2, key, action_2.local_timestamp
             )
 
-        elif action_1.action == SyncState.UPDATED and action_2.action == SyncState.DOESNOTEXIST:
-            deferred_calls[key] = DeferredFunction(
-                update_client, client_2, client_1, key, action_1.local_timestamp
-            )
-
-        elif action_2.action == SyncState.UPDATED and action_1.action == SyncState.DOESNOTEXIST:
-            deferred_calls[key] = DeferredFunction(
-                update_client, client_2, client_1, key, action_1.local_timestamp
-            )
-
         elif (
             action_1.action == SyncState.DELETED and
             action_2.action == SyncState.NOCHANGES and
@@ -172,13 +178,6 @@ def get_sync_actions(client_1, client_2):
             deferred_calls[key] = DeferredFunction(
                 delete_client, client_1, key, action_2.local_timestamp
             )
-
-        elif (
-            action_1.action in (SyncState.DELETED, SyncState.DOESNOTEXIST) and
-            action_2.action in (SyncState.DELETED, SyncState.DOESNOTEXIST)
-        ):
-            # nothing to do, they have already both been deleted/do not exist
-            continue
 
         # TODO: Check DELETE timestamp. if it is older than you should be able to safely ignore it
 
