@@ -31,13 +31,10 @@ def traverse(path, ignore_files=None):
 
 
 class LocalSyncClient(SyncClient):
-    def __init__(self, path, ignore_files=None):
+    def __init__(self, path):
         self.path = path
         self.reload_index()
-        self.ignore_files = ['.index']
-
-        if ignore_files is not None:
-            self.ignore_files.extend(ignore_files)
+        self.reload_ignore_files()
 
     def __repr__(self):
         return 'LocalSyncClient<{}>'.format(self.path)
@@ -158,3 +155,11 @@ class LocalSyncClient(SyncClient):
         if key not in self.index:
             self.index[key] = {}
         self.index[key]['remote_timestamp'] = timestamp
+
+    def reload_ignore_files(self):
+        self.ignore_files = ['.index']
+        ignore_path = os.path.join(self.path, '.syncignore')
+        if os.path.exists(ignore_path):
+            with open(ignore_path, 'r') as fp:
+                ignore_list = fp.read().split('\n')
+            self.ignore_files.extend(ignore_list)
