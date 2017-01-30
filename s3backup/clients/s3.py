@@ -102,6 +102,9 @@ class S3SyncClient(SyncClient):
         except (ClientError):
             return {}
 
+    def reload_index(self):
+        self.index = self.load_index()
+
     def flush_index(self, compressed=True):
         data = json.dumps(self.index).encode('utf-8')
         if compressed:
