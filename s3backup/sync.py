@@ -167,7 +167,7 @@ def get_sync_actions(client_1, client_2):
             action_1.remote_timestamp == action_2.remote_timestamp
         ):
             deferred_calls[key] = DeferredFunction(
-                delete_client, client_2, key, action_1.local_timestamp
+                delete_client, client_2, key, action_1.remote_timestamp
             )
 
         elif (
@@ -176,7 +176,7 @@ def get_sync_actions(client_1, client_2):
             action_1.remote_timestamp == action_2.remote_timestamp
         ):
             deferred_calls[key] = DeferredFunction(
-                delete_client, client_1, key, action_2.local_timestamp
+                delete_client, client_1, key, action_2.remote_timestamp
             )
 
         # TODO: Check DELETE timestamp. if it is older than you should be able to safely ignore it
