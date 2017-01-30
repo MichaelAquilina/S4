@@ -39,14 +39,12 @@ def to_timestamp(dt):
 
 
 class S3SyncClient(SyncClient):
-    def __init__(self, client, bucket, prefix, ignore_files=None):
+    def __init__(self, client, bucket, prefix):
         self.client = client
         self.bucket = bucket
         self.prefix = prefix
         self.index = self.load_index()
-        self.ignore_files = ['.index']
-        if ignore_files is not None:
-            self.ignore_files.extend(ignore_files)
+        self.reload_ignore_files()
 
     def __repr__(self):
         return 'S3SyncClient<{}, {}>'.format(self.bucket, self.prefix)
@@ -182,3 +180,15 @@ class S3SyncClient(SyncClient):
 
     def get_all_index_local_timestamps(self):
         return {key: value['local_timestamp'] for key, value in self.index.items()}
+
+    def reload_ignore_files(self):
+        self.ignore_files = ['.index']
+        try:
+            response = self.client.get_object(
+                Bucket=self.bucket,
+                Key=os.path.join(self.prefix, '.syncindex')
+            )
+            ignore_list = response['Body'].read().split('\n')
+            self.ignore_files.extend(ignore_list)
+        except ClientError:
+            pass
