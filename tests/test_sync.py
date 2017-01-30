@@ -157,7 +157,7 @@ class TestGetSyncActions(object):
                 sync.update_client, self.client_1, self.client_2, 'maltese.txt', 8000
             ),
             'chemistry.txt': sync.DeferredFunction(
-                sync.delete_client, self.client_2, 'chemistry.txt', None
+                sync.delete_client, self.client_2, 'chemistry.txt', 9431
             ),
             'history.txt': sync.DeferredFunction(
                 sync.create_client, self.client_2, self.client_1, 'history.txt', 5000
