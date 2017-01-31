@@ -271,6 +271,12 @@ def assert_local_keys(clients, expected_keys):
         assert sorted(client.get_local_keys()) == sorted(expected_keys)
 
 
+def assert_existence(clients, keys, exists):
+    for client in clients:
+        for key in keys:
+            assert (client.get(key) is not None) == exists
+
+
 class TestIntegrations(object):
     def setup_method(self):
         self.clients = []
@@ -353,39 +359,37 @@ class TestIntegrations(object):
         ]
         assert_local_keys(clients, expected_keys)
 
-    def test_fresh_sync(self):
-        self.create_local_client()
-        self.create_local_client()
+    def test_fresh_sync(self, local_client, s3_client):
+        set_local_contents(local_client, 'foo', timestamp=1000)
+        set_local_contents(local_client, 'bar', timestamp=2000)
+        set_s3_contents(s3_client, 'baz', timestamp=3000, data='what is up?')
 
-        set_local_contents(self.clients[0], 'foo', timestamp=1000)
-        set_local_contents(self.clients[0], 'bar', timestamp=2000)
-        set_local_contents(self.clients[1], 'baz', timestamp=3000, data='what is up?')
+        sync.sync(local_client, s3_client)
 
-        self.sync_clients()
+        clients = [local_client, s3_client]
+        assert_local_keys(clients, ['foo', 'bar', 'baz'])
+        assert_remote_timestamp(clients, 'foo', 1000)
+        assert_remote_timestamp(clients, 'bar', 2000)
+        assert_remote_timestamp(clients, 'baz', 3000)
+        assert_existence(clients, ['foo', 'bar', 'baz'], True)
+        assert_contents(clients, 'baz', b'what is up?')
 
-        self.assert_local_keys(['foo', 'bar', 'baz'])
-        self.assert_remote_timestamp('foo', 1000)
-        self.assert_remote_timestamp('bar', 2000)
-        self.assert_remote_timestamp('baz', 3000)
-        self.assert_file_existence(['foo', 'bar', 'baz'], True)
-        self.assert_contents('baz', b'what is up?')
+        delete_local(local_client, 'foo')
+        set_local_contents(local_client, 'test', timestamp=5000)
+        set_s3_contents(s3_client, 'hello', timestamp=6000)
+        set_s3_contents(s3_client, 'baz', timestamp=8000, data='just syncing some stuff')
 
-        delete_local(self.clients[0], 'foo')
-        set_local_contents(self.clients[0], 'test', timestamp=5000)
-        set_local_contents(self.clients[1], 'hello', timestamp=6000)
-        set_local_contents(self.clients[1], 'baz', timestamp=8000, data='just syncing some stuff')
+        sync.sync(local_client, s3_client)
 
-        self.sync_clients()
+        assert_existence(clients, ['foo'], False)
+        assert_local_keys(clients, ['test', 'bar', 'baz', 'hello'])
+        assert_remote_timestamp(clients, 'bar', 2000)
+        assert_remote_timestamp(clients, 'test', 5000)
+        assert_remote_timestamp(clients, 'hello', 6000)
+        assert_remote_timestamp(clients, 'baz', 8000)
+        assert_contents(clients, 'baz', b'just syncing some stuff')
 
-        self.assert_file_existence(['foo'], False)
-        self.assert_local_keys(['test', 'bar', 'baz', 'hello'])
-        self.assert_remote_timestamp('bar', 2000)
-        self.assert_remote_timestamp('test', 5000)
-        self.assert_remote_timestamp('hello', 6000)
-        self.assert_remote_timestamp('baz', 8000)
-        self.assert_contents('baz', b'just syncing some stuff')
-
-        self.sync_clients()
+        sync.sync(local_client, s3_client)
 
     def test_three_way_sync(self):
         self.create_local_client()
