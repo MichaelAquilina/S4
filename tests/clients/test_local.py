@@ -7,20 +7,7 @@ import shutil
 import tempfile
 
 from s3backup.clients import local, SyncState, SyncObject
-
-
-def touch(path, mtime=None):
-    if mtime is None:
-        times = None
-    else:
-        times = (mtime, mtime)
-
-    parent = os.path.dirname(path)
-    if not os.path.exists(parent):
-        os.makedirs(parent)
-
-    with open(path, 'w'):
-        os.utime(path, times)
+from utils import set_local_contents, write_local
 
 
 class TestTraverse(object):
@@ -37,13 +24,8 @@ class TestTraverse(object):
         assert list(local.traverse(self.target_folder)) == []
 
     def test_correct_output(self):
-        touch(os.path.join(self.target_folder, 'baz', 'zoo'))
-        touch(os.path.join(self.target_folder, 'foo'))
-        touch(os.path.join(self.target_folder, 'bar.md'))
-        touch(os.path.join(self.target_folder, 'baz', 'bar'))
-        touch(os.path.join(self.target_folder, '.index'))
-        touch(os.path.join(self.target_folder, 'garbage~'))
-        touch(os.path.join(self.target_folder, 'saw/.index'))
+        for item in ['baz/zoo', 'foo', 'bar.md', 'baz/bar', '.index', 'garbage~', 'saw/.index']:
+            write_local(os.path.join(self.target_folder, item))
 
         actual_output = list(local.traverse(
             self.target_folder,
@@ -107,7 +89,7 @@ class TestLocalSyncClient(object):
 
     def test_delete_existing(self, local_client):
         target_file = os.path.join(local_client.path, 'foo')
-        touch(os.path.join(local_client.path, 'foo'), 222222)
+        set_local_contents(local_client, 'foo', 222222)
 
         assert os.path.exists(target_file) is True
         assert local_client.delete('foo') is True
@@ -137,9 +119,9 @@ class TestLocalSyncClient(object):
 
     def test_get_local_keys(self, local_client):
         set_index(local_client, {})  # .index file should not come up in results
-        touch(os.path.join(local_client.path, '.bashrc'))
-        touch(os.path.join(local_client.path, 'foo'))
-        touch(os.path.join(local_client.path, 'bar'))
+        set_local_contents(local_client, '.bashrc')
+        set_local_contents(local_client, 'foo')
+        set_local_contents(local_client, 'bar')
 
         actual_output = local_client.get_local_keys()
         expected_output = ['foo', 'bar', '.bashrc']
@@ -163,9 +145,9 @@ class TestLocalSyncClient(object):
         assert sorted(list(actual_output)) == sorted(expected_output)
 
     def test_all_keys(self, local_client):
-        touch(os.path.join(local_client.path, '.index'))
-        touch(os.path.join(local_client.path, 'foo'))
-        touch(os.path.join(local_client.path, 'bar/boo.md'))
+        set_local_contents(local_client, '.index')
+        set_local_contents(local_client, 'foo')
+        set_local_contents(local_client, 'bar/boo.md')
         data = {
             'foo': {
                 'local_timestamp': 4000,
@@ -183,8 +165,8 @@ class TestLocalSyncClient(object):
         assert sorted(actual_output) == sorted(expected_output)
 
     def test_update_index_empty(self, local_client):
-        touch(os.path.join(local_client.path, 'foo'), 13371337)
-        touch(os.path.join(local_client.path, 'bar'), 50032003)
+        set_local_contents(local_client, 'foo', 13371337)
+        set_local_contents(local_client, 'bar', 50032003)
 
         local_client.update_index()
         # remote timestamp should not be included since it does not exist
@@ -201,8 +183,8 @@ class TestLocalSyncClient(object):
         assert local_client.index == expected_output
 
     def test_update_index_non_empty(self, local_client):
-        touch(os.path.join(local_client.path, 'foo'), 13371337)
-        touch(os.path.join(local_client.path, 'bar'), 50032003)
+        set_local_contents(local_client, 'foo', 13371337)
+        set_local_contents(local_client, 'bar', 50032003)
 
         set_index(local_client, {
             'foo': {
@@ -237,14 +219,14 @@ class TestLocalSyncClient(object):
         assert local_client.index == expected_output
 
     def test_get_real_local_timestamp(self, local_client):
-        touch(os.path.join(local_client.path, 'atcg'), 2323230)
+        set_local_contents(local_client, 'atcg', 2323230)
 
         assert local_client.get_real_local_timestamp('atcg') == 2323230
         assert local_client.get_real_local_timestamp('dontexist') is None
 
     def test_get_all_real_local_timestamps(self, local_client):
-        touch(os.path.join(local_client.path, 'red'), 2323230)
-        touch(os.path.join(local_client.path, 'blue'), 80808008)
+        set_local_contents(local_client, 'red', 2323230)
+        set_local_contents(local_client, 'blue', 80808008)
 
         expected_output = {
             'red': 2323230,
