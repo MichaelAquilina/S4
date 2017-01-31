@@ -12,34 +12,10 @@ import freezegun
 
 from moto import mock_s3
 
-import pytest
-
 from s3backup import sync
 from s3backup.clients import SyncState
 from s3backup.clients.local import LocalSyncClient
 from s3backup.clients.s3 import S3SyncClient
-
-
-@pytest.yield_fixture
-def local_client():
-    folder = tempfile.mkdtemp()
-    yield LocalSyncClient(folder)
-    shutil.rmtree(folder)
-
-
-@pytest.yield_fixture
-def s3_client():
-    mock = mock_s3()
-    mock.start()
-    boto_client = boto3.client(
-        's3',
-        aws_access_key_id='',
-        aws_secret_access_key='',
-        aws_session_token='',
-    )
-    boto_client.create_bucket(Bucket='testbucket')
-    yield S3SyncClient(boto_client, 'testbucket', 'foo')
-    mock.stop()
 
 
 def get_pairs(list_of_things):
