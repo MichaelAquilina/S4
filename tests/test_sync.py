@@ -3,32 +3,11 @@
 import datetime
 import json
 import os
-import shutil
-import tempfile
-
-import boto3
 
 import freezegun
 
-from moto import mock_s3
-
 from s3backup import sync
 from s3backup.clients import SyncState
-from s3backup.clients.local import LocalSyncClient
-from s3backup.clients.s3 import S3SyncClient
-
-
-def get_pairs(list_of_things):
-    for i in range(len(list_of_things)):
-        yield list_of_things[i], list_of_things[(i + 1) % len(list_of_things)]
-
-
-class TestGetPairs(object):
-    def test_empty(self):
-        assert list(get_pairs([])) == []
-
-    def test_correct_output(self):
-        assert list(get_pairs(['a', 'b', 'c'])) == [('a', 'b'), ('b', 'c'), ('c', 'a')]
 
 
 def set_local_contents(client, key, timestamp=None, data=''):
@@ -278,51 +257,6 @@ def assert_existence(clients, keys, exists):
 
 
 class TestIntegrations(object):
-    def setup_method(self):
-        self.clients = []
-        self.folders = []
-
-    def teardown_method(self):
-        for folder in self.folders:
-            shutil.rmtree(folder)
-
-    def create_local_client(self):
-        folder = tempfile.mkdtemp()
-        client = LocalSyncClient(folder)
-        self.folders.append(folder)
-        self.clients.append(client)
-        return client, folder
-
-    def create_s3_client(self, s3_client, bucket, prefix):
-        client = S3SyncClient(s3_client, bucket, prefix)
-        self.clients.append(client)
-        return client
-
-    def sync_clients(self):
-        for client_1, client_2 in get_pairs(self.clients):
-            sync.sync(client_1, client_2)
-
-    def assert_file_existence(self, keys, exists):
-        for folder in self.folders:
-            for key in keys:
-                assert os.path.exists(os.path.join(folder, key)) is exists
-
-    def assert_contents(self, key, data=None, timestamp=None):
-        for client in self.clients:
-            sync_object = client.get(key)
-            if data is not None:
-                assert sync_object.fp.read() == data
-            if timestamp is not None:
-                assert sync_object.timestamp == timestamp
-
-    def assert_remote_timestamp(self, key, expected_timestamp):
-        for client in self.clients:
-            assert client.get_remote_timestamp(key) == expected_timestamp
-
-    def assert_local_keys(self, expected_keys):
-        for client in self.clients:
-            assert sorted(client.get_local_keys()) == sorted(expected_keys)
-
     def test_local_with_s3(self, local_client, s3_client):
         set_s3_contents(s3_client, 'colors/cream', 9999, '#ddeeff')
 
@@ -391,39 +325,47 @@ class TestIntegrations(object):
 
         sync.sync(local_client, s3_client)
 
-    def test_three_way_sync(self):
-        self.create_local_client()
-        self.create_local_client()
-        self.create_local_client()
+    def test_three_way_sync(self, local_client, s3_client, local_client_2):
+        set_local_contents(local_client, 'foo', timestamp=1000)
+        set_s3_contents(s3_client, 'bar', timestamp=2000, data='red')
+        set_local_contents(local_client_2, 'baz', timestamp=3000)
 
-        set_local_contents(self.clients[0], 'foo', timestamp=1000)
-        set_local_contents(self.clients[1], 'bar', timestamp=2000, data='red')
-        set_local_contents(self.clients[2], 'baz', timestamp=3000)
+        sync.sync(local_client, s3_client)
+        sync.sync(local_client_2, s3_client)
+        sync.sync(local_client, local_client_2)
 
-        self.sync_clients()
+        clients = [local_client, s3_client, local_client_2]
 
-        self.assert_local_keys(['foo', 'bar', 'baz'])
-        self.assert_contents('bar', b'red')
-        self.assert_remote_timestamp('foo', 1000)
-        self.assert_remote_timestamp('bar', 2000)
-        self.assert_remote_timestamp('baz', 3000)
+        assert_local_keys(clients, ['foo', 'bar', 'baz'])
+        assert_contents(clients, 'bar', b'red')
+        assert_remote_timestamp(clients, 'foo', 1000)
+        assert_remote_timestamp(clients, 'bar', 2000)
+        assert_remote_timestamp(clients, 'baz', 3000)
 
-        set_local_contents(self.clients[1], 'bar', timestamp=8000, data='green')
-        self.sync_clients()
+        set_s3_contents(s3_client, 'bar', timestamp=8000, data='green')
 
-        self.assert_local_keys(['foo', 'bar', 'baz'])
-        self.assert_contents('bar', b'green')
-        self.assert_remote_timestamp('foo', 1000)
-        self.assert_remote_timestamp('bar', 8000)
-        self.assert_remote_timestamp('baz', 3000)
+        sync.sync(local_client, s3_client)
+        sync.sync(local_client_2, s3_client)
+        sync.sync(local_client, local_client_2)
 
-        delete_local(self.clients[2], 'foo')
-        self.sync_clients()
+        assert_local_keys(clients, ['foo', 'bar', 'baz'])
+        assert_contents(clients, 'bar', b'green')
+        assert_remote_timestamp(clients, 'foo', 1000)
+        assert_remote_timestamp(clients, 'bar', 8000)
+        assert_remote_timestamp(clients, 'baz', 3000)
 
-        self.assert_file_existence(['foo'], False)
-        self.assert_local_keys(['bar', 'baz'])
+        delete_local(local_client_2, 'foo')
 
-        self.sync_clients()
+        sync.sync(local_client, s3_client)
+        sync.sync(local_client_2, s3_client)
+        sync.sync(local_client, local_client_2)
+
+        assert_existence(clients, ['foo'], False)
+        assert_local_keys(clients, ['bar', 'baz'])
+
+        sync.sync(local_client, s3_client)
+        sync.sync(local_client_2, s3_client)
+        sync.sync(local_client, local_client_2)
 
 
 class TestMove(object):
