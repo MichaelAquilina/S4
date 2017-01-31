@@ -25,6 +25,13 @@ def local_client():
 
 
 @pytest.yield_fixture
+def local_client_2():
+    folder = tempfile.mkdtemp()
+    yield LocalSyncClient(folder)
+    shutil.rmtree(folder)
+
+
+@pytest.yield_fixture
 def s3_client():
     mock = moto.mock_s3()
     mock.start()
