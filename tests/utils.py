@@ -5,33 +5,30 @@ import os
 import freezegun
 
 
-def touch_local(client, key, timestamp=None, data=''):
-    if timestamp is None:
-        times = None
-    else:
-        times = (timestamp, timestamp)
-
-    target_path = os.path.join(client.path, key)
-    parent = os.path.dirname(target_path)
+def write_local(path, data=''):
+    parent = os.path.dirname(path)
     if not os.path.exists(parent):
         os.makedirs(parent)
-
-    with open(target_path, 'w') as fp:
+    with open(path, 'w') as fp:
         fp.write(data)
 
-    with open(target_path, 'w'):
-        os.utime(client.path, times)
+
+def set_local_contents(client, key, timestamp=None, data=''):
+    path = os.path.join(client.path, key)
+    write_local(path, data)
+    if timestamp is not None:
+        os.utime(path, (timestamp, timestamp))
 
 
-def touch_s3(client, key, timestamp=None, data=''):
+def set_s3_contents(s3_client, key, timestamp=None, data=''):
     if timestamp is None:
-        last_modified = datetime.datetime.utcnow()
+        freeze_time = datetime.datetime.utcnow()
     else:
-        last_modified = datetime.datetime.utcfromtimestamp(timestamp)
+        freeze_time = datetime.datetime.utcfromtimestamp(timestamp)
 
-    with freezegun.freeze_time(last_modified):
-        client.client.put_object(
-            Bucket=client.bucket,
-            Key=os.path.join(client.prefix, key),
+    with freezegun.freeze_time(freeze_time):
+        s3_client.client.put_object(
+            Bucket=s3_client.bucket,
+            Key=os.path.join(s3_client.prefix, key),
             Body=data,
         )

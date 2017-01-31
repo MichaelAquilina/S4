@@ -1,24 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import datetime
 import json
 import os
 
-import freezegun
-
 from s3backup import sync
 from s3backup.clients import SyncState
-
-
-def set_local_contents(client, key, timestamp=None, data=''):
-    path = os.path.join(client.path, key)
-    parent = os.path.dirname(path)
-    if not os.path.exists(parent):
-        os.makedirs(parent)
-    with open(path, 'w') as fp:
-        fp.write(data)
-    if timestamp is not None:
-        os.utime(path, (timestamp, timestamp))
+from utils import set_s3_contents, set_local_contents
 
 
 def get_local_contents(local_client, key):
@@ -35,20 +22,6 @@ def set_local_index(local_client, data):
 
 def delete_local(client, key):
     os.remove(os.path.join(client.path, key))
-
-
-def set_s3_contents(s3_client, key, timestamp=None, data=''):
-    if timestamp is None:
-        freeze_time = datetime.datetime.utcnow()
-    else:
-        freeze_time = datetime.datetime.utcfromtimestamp(timestamp)
-
-    with freezegun.freeze_time(freeze_time):
-        s3_client.client.put_object(
-            Bucket=s3_client.bucket,
-            Key=os.path.join(s3_client.prefix, key),
-            Body=data,
-        )
 
 
 def set_s3_index(s3_client, data):
