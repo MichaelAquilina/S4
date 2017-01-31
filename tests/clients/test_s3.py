@@ -2,6 +2,7 @@
 import datetime
 import json
 import io
+import os
 
 import boto3
 
@@ -13,16 +14,16 @@ from moto import mock_s3
 
 import pytest
 
-from s3backup.clients import s3, SyncState, SyncObject
+from s3backup.clients import s3, SyncObject
 
 
-def touch(client, bucket, key, timestamp=None):
+def touch(client, key, timestamp=None):
     if timestamp is None:
         last_modified = datetime.datetime.utcnow()
     else:
         last_modified = datetime.datetime.utcfromtimestamp(timestamp)
     with freezegun.freeze_time(last_modified):
-        client.put_object(Bucket=bucket, Key=key)
+        client.client.put_object(Bucket=client.bucket, Key=key)
 
 
 class TestParseS3URI(object):
@@ -40,16 +41,15 @@ class TestParseS3URI(object):
 
 
 class TestS3SyncClient(object):
-    @mock_s3
     def test_repr(self):
-        s3_client = boto3.client(
+        boto_client = boto3.client(
             's3',
             aws_access_key_id='',
             aws_secret_access_key='',
             aws_session_token='',
         )
 
-        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
+        client = s3.S3SyncClient(boto_client, 'testbucket', 'foo/bar')
         assert repr(client) == 'S3SyncClient<testbucket, foo/bar>'
 
     @mock_s3
@@ -64,226 +64,167 @@ class TestS3SyncClient(object):
         client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
         assert client.index_path() == 'foo/bar/.index'
 
-    @mock_s3
-    def test_put(self):
+    def test_put(self, s3_client):
         # given
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id='',
-            aws_secret_access_key='',
-            aws_session_token='',
-        )
-        s3_client.create_bucket(Bucket='testbucket')
-
-        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
         data = b'munchkin'
 
         # when
         input_object = SyncObject(io.BytesIO(data), len(data), 4000)
-        client.put('something/boardgame.rst', input_object)
+        s3_client.put('something/boardgame.rst', input_object)
 
         # then
-        resp = s3_client.get_object(Bucket='testbucket', Key='foo/bar/something/boardgame.rst')
-        assert resp['Body'].read() == data
-        assert client.get_remote_timestamp('something/boardgame.rst') == 4000
-
-    @mock_s3
-    def test_get(self):
-        # given
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id='',
-            aws_secret_access_key='',
-            aws_session_token='',
+        resp = s3_client.client.get_object(
+            Bucket=s3_client.bucket,
+            Key=os.path.join(s3_client.prefix, 'something/boardgame.rst'),
         )
-        s3_client.create_bucket(Bucket='testbucket')
+        assert resp['Body'].read() == data
+        assert s3_client.get_remote_timestamp('something/boardgame.rst') == 4000
 
+    def test_get(self, s3_client):
+        # given
         data = b'#000000'
         frozen_time = datetime.datetime(2016, 10, 23, 10, 30, tzinfo=datetime.timezone.utc)
         with freezegun.freeze_time(frozen_time):
-            s3_client.put_object(Bucket='testbucket', Key='foo/bar/black.color', Body=data)
+            s3_client.client.put_object(
+                Bucket=s3_client.bucket,
+                Key=os.path.join(s3_client.prefix, 'black.color'),
+                Body=data,
+            )
 
         # when
-        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
-        output_object = client.get('black.color')
+        output_object = s3_client.get('black.color')
 
         # then
         assert output_object.fp.read() == data
         assert output_object.total_size == len(data)
         assert output_object.timestamp == s3.to_timestamp(frozen_time)
 
-    @mock_s3
-    def test_put_get(self):
-        # given
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id='',
-            aws_secret_access_key='',
-            aws_session_token='',
-        )
-        s3_client.create_bucket(Bucket='testbucket')
+    def test_get_non_existant(self, s3_client):
+        assert s3_client.get('idontexist.md') is None
 
+    def test_put_get(self, s3_client):
+        # given
         data = b'woooooooooshhh'
         input_object = SyncObject(io.BytesIO(data), len(data), 4000)
         frozen_time = datetime.datetime(2016, 10, 23, 10, 30, tzinfo=datetime.timezone.utc)
 
         # when
-        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
         with freezegun.freeze_time(frozen_time):
-            client.put('something/woosh.gif', input_object)
+            s3_client.put('something/woosh.gif', input_object)
 
         # then
-        output_object = client.get('something/woosh.gif')
+        output_object = s3_client.get('something/woosh.gif')
         assert output_object.fp.read() == data
         assert output_object.timestamp == s3.to_timestamp(frozen_time)
 
-    @mock_s3
-    def test_delete(self):
+    def test_delete(self, s3_client):
         # given
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id='',
-            aws_secret_access_key='',
-            aws_session_token='',
+        s3_client.client.put_object(
+            Bucket=s3_client.bucket,
+            Key=os.path.join(s3_client.prefix, 'war.png'),
+            Body='bang',
         )
-        s3_client.create_bucket(Bucket='testbucket')
-        s3_client.put_object(Bucket='testbucket', Key='foo/bar/war.png', Body='bang')
-
-        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
 
         # when
-        assert client.delete('war.png') is True
+        assert s3_client.delete('war.png') is True
 
         # then
+        assert s3_client.get('war.png') is None
         with pytest.raises(ClientError) as exc:
-            s3_client.head_object(Bucket='testbucket', Key='foo/bar/war.png')
+            s3_client.client.head_object(
+                Bucket=s3_client.bucket,
+                Key=os.path.join(s3_client.prefix, 'war.png')
+            )
         assert exc.value.response['Error']['Code'] == '404'
 
-    @mock_s3
-    def test_delete_non_existant(self):
+    def test_delete_non_existant(self, s3_client):
+        assert s3_client.delete('idontexist.png') is False
+
+    def test_get_local_keys(self, s3_client):
         # given
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id='',
-            aws_secret_access_key='',
-            aws_session_token='',
-        )
-        s3_client.create_bucket(Bucket='testbucket')
+        touch(s3_client, os.path.join(s3_client.prefix, 'war.png'))
+        touch(s3_client, os.path.join(s3_client.prefix, 'this/is/fine'))
+        touch(s3_client, os.path.join(s3_client.prefix, '.index'))
+        touch(s3_client, 'iamarandomprefix/ishouldnotshow.txt')
 
         # when
-        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
-
-        # then
-        assert client.delete('idontexist.png') is False
-
-    @mock_s3
-    def test_get_local_keys(self):
-        # given
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id='',
-            aws_secret_access_key='',
-            aws_session_token='',
-        )
-        s3_client.create_bucket(Bucket='testbucket')
-        touch(s3_client, 'testbucket', 'foo/bar/war.png')
-        touch(s3_client, 'testbucket', 'foo/bar/this/is/fine')
-        touch(s3_client, 'testbucket', 'foo/bar/.index')
-        touch(s3_client, 'testbucket', 'foo/ishouldnotshow.txt')
-
-        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
-
-        # when
-        actual_output = client.get_local_keys()
+        actual_output = s3_client.get_local_keys()
 
         # then
         expected_output = ['war.png', 'this/is/fine']
         assert sorted(actual_output) == sorted(expected_output)
 
-    @mock_s3
-    def test_get_index_timestamps(self):
+    def test_get_index_timestamps(self, s3_client):
         # given
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id='',
-            aws_secret_access_key='',
-            aws_session_token='',
+        s3_client.client.put_object(
+            Bucket=s3_client.bucket,
+            Key=os.path.join(s3_client.prefix, '.index'),
+            Body=json.dumps({
+                'hello': {
+                    'remote_timestamp': 1234,
+                    'local_timestamp': 1200,
+                },
+                'world': {
+                    'remote_timestamp': 5000,
+                }
+            })
         )
-        s3_client.create_bucket(Bucket='testbucket')
-        s3_client.put_object(Bucket='testbucket', Key='foo/bar/.index', Body=json.dumps({
-            'hello': {
-                'remote_timestamp': 1234,
-                'local_timestamp': 1200,
-            },
-            'world': {
-                'remote_timestamp': 5000,
-            }
-        }))
-
-        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
+        s3_client.reload_index()
 
         # then
-        assert client.get_remote_timestamp('hello') == 1234
-        assert client.get_index_local_timestamp('hello') == 1200
+        assert s3_client.get_remote_timestamp('hello') == 1234
+        assert s3_client.get_index_local_timestamp('hello') == 1200
 
-        assert client.get_remote_timestamp('world') == 5000
-        assert client.get_index_local_timestamp('world') is None
+        assert s3_client.get_remote_timestamp('world') == 5000
+        assert s3_client.get_index_local_timestamp('world') is None
 
-    @mock_s3
-    def test_get_all_index_timestamps(self):
+    def test_get_all_index_timestamps(self, s3_client):
         # given
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id='',
-            aws_secret_access_key='',
-            aws_session_token='',
+        s3_client.client.put_object(
+            Bucket=s3_client.bucket,
+            Key=os.path.join(s3_client.prefix, '.index'),
+            Body=json.dumps({
+                'hello': {
+                    'local_timestamp': 1200,
+                },
+                'world': {
+                    'local_timestamp': 4000,
+                }
+            })
         )
-        s3_client.create_bucket(Bucket='testbucket')
-        s3_client.put_object(Bucket='testbucket', Key='foo/bar/.index', Body=json.dumps({
-            'hello': {
-                'local_timestamp': 1200,
-            },
-            'world': {
-                'local_timestamp': 4000,
-            }
-        }))
-
-        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
+        s3_client.reload_index()
 
         # then
         expected_output = {
             'hello': 1200,
             'world': 4000,
         }
-        actual_output = client.get_all_index_local_timestamps()
+        actual_output = s3_client.get_all_index_local_timestamps()
         assert actual_output == expected_output
 
-    @mock_s3
-    def test_update_index(self):
+    def test_update_index(self, s3_client):
         # given
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id='',
-            aws_secret_access_key='',
-            aws_session_token='',
+        s3_client.client.put_object(
+            Bucket=s3_client.bucket,
+            Key=os.path.join(s3_client.prefix, '.index'),
+            Body=json.dumps({
+                'red': {
+                    'remote_timestamp': 1234,
+                    'local_timestamp': 1200,
+                },
+                'green': {
+                    'remote_timestamp': 5000,
+                }
+            })
         )
-        s3_client.create_bucket(Bucket='testbucket')
-        s3_client.put_object(Bucket='testbucket', Key='foo/bar/.index', Body=json.dumps({
-            'red': {
-                'remote_timestamp': 1234,
-                'local_timestamp': 1200,
-            },
-            'green': {
-                'remote_timestamp': 5000,
-            }
-        }))
-        touch(s3_client, 'testbucket', 'foo/bar/red', 5001)
-        touch(s3_client, 'testbucket', 'foo/bar/yellow', 1000)
-        touch(s3_client, 'testbucket', 'foo/bar/orange', 2000)
+        s3_client.reload_index()
+
+        touch(s3_client, os.path.join(s3_client.prefix, 'red'), 5001)
+        touch(s3_client, os.path.join(s3_client.prefix, 'yellow'), 1000)
+        touch(s3_client, os.path.join(s3_client.prefix, 'orange'), 2000)
 
         # when
-        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
-        client.update_index()
+        s3_client.update_index()
 
         # then
         expected_index = {
@@ -304,42 +245,23 @@ class TestS3SyncClient(object):
                 'local_timestamp': 2000,
             },
         }
-        assert client.index == expected_index
+        assert s3_client.index == expected_index
 
-    @mock_s3
-    def test_get_real_local_timestamp(self):
+    def test_get_real_local_timestamp(self, s3_client):
         # given
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id='',
-            aws_secret_access_key='',
-            aws_session_token='',
-        )
-        s3_client.create_bucket(Bucket='testbucket')
-        touch(s3_client, 'testbucket', 'foo/bar/orange', 2000)
-
-        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
+        touch(s3_client, os.path.join(s3_client.prefix, 'orange'), 2000)
 
         # then
-        assert client.get_real_local_timestamp('orange') == 2000
-        assert client.get_real_local_timestamp('idontexist') is None
+        assert s3_client.get_real_local_timestamp('orange') == 2000
+        assert s3_client.get_real_local_timestamp('idontexist') is None
 
-    @mock_s3
-    def test_get_all_real_local_timestamps(self):
+    def test_get_all_real_local_timestamps(self, s3_client):
         # given
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id='',
-            aws_secret_access_key='',
-            aws_session_token='',
-        )
-        s3_client.create_bucket(Bucket='testbucket')
-        touch(s3_client, 'testbucket', 'food/chocolate/oranges', 2600)
-        touch(s3_client, 'testbucket', 'food/gummy/bears', 2400)
-        touch(s3_client, 'testbucket', 'food/carrot_cake', 2000)
-        touch(s3_client, 'testbucket', 'food/.index', 2043)
-
-        client = s3.S3SyncClient(s3_client, 'testbucket', 'food')
+        touch(s3_client, os.path.join(s3_client.prefix, 'chocolate/oranges'), 2600)
+        touch(s3_client, os.path.join(s3_client.prefix, 'gummy/bears'), 2400)
+        touch(s3_client, os.path.join(s3_client.prefix, 'carrot_cake'), 2000)
+        touch(s3_client, os.path.join(s3_client.prefix, '.index'), 2043)
+        s3_client.reload_index()
 
         # then
         expected_output = {
@@ -347,32 +269,28 @@ class TestS3SyncClient(object):
             'gummy/bears': 2400,
             'carrot_cake': 2000,
         }
-        actual_output = client.get_all_real_local_timestamps()
+        actual_output = s3_client.get_all_real_local_timestamps()
         assert actual_output == expected_output
 
-    @mock_s3
-    def test_set_index_timestamps(self):
+    def test_set_index_timestamps(self, s3_client):
         # given
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id='',
-            aws_secret_access_key='',
-            aws_session_token='',
+        s3_client.client.put_object(
+            Bucket=s3_client.bucket,
+            Key=os.path.join(s3_client.prefix, '.index'),
+            Body=json.dumps({
+                'red': {
+                    'remote_timestamp': 1234,
+                    'local_timestamp': 1200,
+                },
+            })
         )
-        s3_client.create_bucket(Bucket='testbucket')
-        s3_client.put_object(Bucket='testbucket', Key='foo/bar/.index', Body=json.dumps({
-            'red': {
-                'remote_timestamp': 1234,
-                'local_timestamp': 1200,
-            },
-        }))
+        s3_client.reload_index()
 
         # when
-        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
-        client.set_index_local_timestamp('red', 3000)
-        client.set_remote_timestamp('red', 4000)
-        client.set_index_local_timestamp('green', 5000)
-        client.set_remote_timestamp('yellow', 6000)
+        s3_client.set_index_local_timestamp('red', 3000)
+        s3_client.set_remote_timestamp('red', 4000)
+        s3_client.set_index_local_timestamp('green', 5000)
+        s3_client.set_remote_timestamp('yellow', 6000)
 
         # then
         expected_index = {
@@ -387,4 +305,4 @@ class TestS3SyncClient(object):
                 'remote_timestamp': 6000,
             },
         }
-        assert client.index == expected_index
+        assert s3_client.index == expected_index
