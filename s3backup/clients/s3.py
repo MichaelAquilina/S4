@@ -65,11 +65,18 @@ class S3SyncClient(SyncClient):
         self.set_remote_timestamp(key, sync_object.timestamp)
 
     def get(self, key):
-        resp = self.client.get_object(
-            Bucket=self.bucket,
-            Key=os.path.join(self.prefix, key),
-        )
-        return SyncObject(resp['Body'], resp['ContentLength'], to_timestamp(resp['LastModified']))
+        try:
+            resp = self.client.get_object(
+                Bucket=self.bucket,
+                Key=os.path.join(self.prefix, key),
+            )
+            return SyncObject(
+                resp['Body'],
+                resp['ContentLength'],
+                to_timestamp(resp['LastModified']),
+            )
+        except ClientError:
+            return None
 
     def delete(self, key):
         resp = self.client.delete_objects(
