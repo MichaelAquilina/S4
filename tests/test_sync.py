@@ -252,6 +252,25 @@ class TestGetSyncActions(object):
         assert unhandled_events == {}
 
 
+def assert_contents(clients, key, data=None, timestamp=None):
+    for client in clients:
+        sync_object = client.get(key)
+        if data is not None:
+            assert sync_object.fp.read() == data
+        if timestamp is not None:
+            assert sync_object.timestamp == timestamp
+
+
+def assert_remote_timestamp(clients, key, expected_timestamp):
+    for client in clients:
+        assert client.get_remote_timestamp(key) == expected_timestamp
+
+
+def assert_local_keys(clients, expected_keys):
+    for client in clients:
+        assert sorted(client.get_local_keys()) == sorted(expected_keys)
+
+
 class TestIntegrations(object):
     def setup_method(self):
         self.clients = []
@@ -298,51 +317,41 @@ class TestIntegrations(object):
         for client in self.clients:
             assert sorted(client.get_local_keys()) == sorted(expected_keys)
 
-    @mock_s3
-    def test_local_with_s3(self):
-        boto_client = boto3.client(
-            's3',
-            aws_access_key_id='',
-            aws_secret_access_key='',
-            aws_session_token='',
-        )
-        boto_client.create_bucket(Bucket='testbucket')
-        s3_client = self.create_s3_client(boto_client, 'testbucket', 'asgard')
-
+    def test_local_with_s3(self, local_client, s3_client):
         set_s3_contents(s3_client, 'colors/cream', 9999, '#ddeeff')
 
-        local_client, _ = self.create_local_client()
         set_local_contents(local_client, 'colors/red', 5000, '#ff0000')
         set_local_contents(local_client, 'colors/green', 3000, '#00ff00')
         set_local_contents(local_client, 'colors/blue', 2000, '#0000ff')
 
-        self.sync_clients()
+        sync.sync(local_client, s3_client)
 
+        clients = [local_client, s3_client]
         expected_keys = [
             'colors/red',
             'colors/green',
             'colors/blue',
             'colors/cream'
         ]
-        self.assert_local_keys(expected_keys)
-        self.assert_contents('colors/red', b'#ff0000')
-        self.assert_contents('colors/green', b'#00ff00')
-        self.assert_contents('colors/blue', b'#0000ff')
-        self.assert_contents('colors/cream', b'#ddeeff')
-        self.assert_remote_timestamp('colors/red', 5000)
-        self.assert_remote_timestamp('colors/green', 3000)
-        self.assert_remote_timestamp('colors/blue', 2000)
-        self.assert_remote_timestamp('colors/cream', 9999)
+        assert_local_keys(clients, expected_keys)
+        assert_contents(clients, 'colors/red', b'#ff0000')
+        assert_contents(clients, 'colors/green', b'#00ff00')
+        assert_contents(clients, 'colors/blue', b'#0000ff')
+        assert_contents(clients, 'colors/cream', b'#ddeeff')
+        assert_remote_timestamp(clients, 'colors/red', 5000)
+        assert_remote_timestamp(clients, 'colors/green', 3000)
+        assert_remote_timestamp(clients, 'colors/blue', 2000)
+        assert_remote_timestamp(clients, 'colors/cream', 9999)
 
         delete_local(local_client, 'colors/red')
 
-        self.sync_clients()
+        sync.sync(local_client, s3_client)
         expected_keys = [
             'colors/green',
             'colors/blue',
             'colors/cream'
         ]
-        self.assert_local_keys(expected_keys)
+        assert_local_keys(clients, expected_keys)
 
     def test_fresh_sync(self):
         self.create_local_client()
