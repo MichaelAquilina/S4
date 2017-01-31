@@ -318,6 +318,7 @@ class TestIntegrations(object):
         assert_existence(clients, ['foo'], False)
         assert_local_keys(clients, ['test', 'bar', 'baz', 'hello'])
         assert_remote_timestamp(clients, 'bar', 2000)
+        assert_remote_timestamp(clients, 'foo', 1000)
         assert_remote_timestamp(clients, 'test', 5000)
         assert_remote_timestamp(clients, 'hello', 6000)
         assert_remote_timestamp(clients, 'baz', 8000)
@@ -362,6 +363,7 @@ class TestIntegrations(object):
 
         assert_existence(clients, ['foo'], False)
         assert_local_keys(clients, ['bar', 'baz'])
+        assert_remote_timestamp(clients, 'foo', 1000)
 
         sync.sync(local_client, s3_client)
         sync.sync(local_client_2, s3_client)
