@@ -18,7 +18,6 @@ from s3backup.clients import s3, SyncObject
 from utils import set_s3_contents, set_s3_index, write_s3
 
 
-
 class TestParseS3URI(object):
     def test_empty(self):
         assert s3.parse_s3_uri('') is None
