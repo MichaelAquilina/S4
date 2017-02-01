@@ -15,7 +15,7 @@ from moto import mock_s3
 import pytest
 
 from s3backup.clients import s3, SyncObject
-from utils import set_s3_contents, write_s3
+from utils import set_s3_contents, set_s3_index, write_s3
 
 
 
@@ -153,20 +153,15 @@ class TestS3SyncClient(object):
 
     def test_get_index_timestamps(self, s3_client):
         # given
-        s3_client.boto.put_object(
-            Bucket=s3_client.bucket,
-            Key=os.path.join(s3_client.prefix, '.index'),
-            Body=json.dumps({
-                'hello': {
-                    'remote_timestamp': 1234,
-                    'local_timestamp': 1200,
-                },
-                'world': {
-                    'remote_timestamp': 5000,
-                }
-            })
-        )
-        s3_client.reload_index()
+        set_s3_index(s3_client, {
+            'hello': {
+                'remote_timestamp': 1234,
+                'local_timestamp': 1200,
+            },
+            'world': {
+                'remote_timestamp': 5000,
+            }
+        })
 
         # then
         assert s3_client.get_remote_timestamp('hello') == 1234
@@ -177,19 +172,14 @@ class TestS3SyncClient(object):
 
     def test_get_all_index_timestamps(self, s3_client):
         # given
-        s3_client.boto.put_object(
-            Bucket=s3_client.bucket,
-            Key=os.path.join(s3_client.prefix, '.index'),
-            Body=json.dumps({
-                'hello': {
-                    'local_timestamp': 1200,
-                },
-                'world': {
-                    'local_timestamp': 4000,
-                }
-            })
-        )
-        s3_client.reload_index()
+        set_s3_index(s3_client, {
+            'hello': {
+                'local_timestamp': 1200,
+            },
+            'world': {
+                'local_timestamp': 4000,
+            }
+        })
 
         # then
         expected_output = {
@@ -201,20 +191,15 @@ class TestS3SyncClient(object):
 
     def test_update_index(self, s3_client):
         # given
-        s3_client.boto.put_object(
-            Bucket=s3_client.bucket,
-            Key=os.path.join(s3_client.prefix, '.index'),
-            Body=json.dumps({
-                'red': {
-                    'remote_timestamp': 1234,
-                    'local_timestamp': 1200,
-                },
-                'green': {
-                    'remote_timestamp': 5000,
-                }
-            })
-        )
-        s3_client.reload_index()
+        set_s3_index(s3_client, {
+            'red': {
+                'remote_timestamp': 1234,
+                'local_timestamp': 1200,
+            },
+            'green': {
+                'remote_timestamp': 5000,
+            }
+        })
 
         set_s3_contents(s3_client, 'red', timestamp=5001)
         set_s3_contents(s3_client, 'yellow', timestamp=1000)
@@ -271,17 +256,12 @@ class TestS3SyncClient(object):
 
     def test_set_index_timestamps(self, s3_client):
         # given
-        s3_client.boto.put_object(
-            Bucket=s3_client.bucket,
-            Key=os.path.join(s3_client.prefix, '.index'),
-            Body=json.dumps({
-                'red': {
-                    'remote_timestamp': 1234,
-                    'local_timestamp': 1200,
-                },
-            })
-        )
-        s3_client.reload_index()
+        set_s3_index(s3_client, {
+            'red': {
+                'remote_timestamp': 1234,
+                'local_timestamp': 1200,
+            },
+        })
 
         # when
         s3_client.set_index_local_timestamp('red', 3000)
