@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import io
-import json
 import os
 import shutil
 import tempfile
 
-from s3backup.clients import local, SyncState, SyncObject
-from utils import set_local_contents, write_local, set_local_index
+from s3backup.clients import local, SyncObject
+import utils
 
 
 class TestTraverse(object):
@@ -25,7 +24,7 @@ class TestTraverse(object):
 
     def test_correct_output(self):
         for item in ['baz/zoo', 'foo', 'bar.md', 'baz/bar', '.index', 'garbage~', 'saw/.index']:
-            write_local(os.path.join(self.target_folder, item))
+            utils.write_local(os.path.join(self.target_folder, item))
 
         actual_output = list(local.traverse(
             self.target_folder,
@@ -34,15 +33,6 @@ class TestTraverse(object):
 
         expected_output = ['bar.md', 'baz/bar', 'baz/zoo', 'foo']
         assert sorted(actual_output) == sorted(expected_output)
-
-
-def get_file_data(client, key):
-    with open(os.path.join(client.path, key), 'rb') as fp:
-        return fp.read()
-
-def set_file_data(client, key, data):
-    with open(os.path.join(client.path, key), 'wb') as fp:
-        fp.write(data)
 
 
 class TestLocalSyncClient(object):
@@ -54,10 +44,10 @@ class TestLocalSyncClient(object):
         )
 
         assert local_client.index['hello_world.txt']['remote_timestamp'] == 20000
-        assert get_file_data(local_client, 'hello_world.txt') == data
+        assert utils.get_local_contents(local_client, 'hello_world.txt') == data
 
     def test_put_existing(self, local_client):
-        set_local_index(local_client, {
+        utils.set_local_index(local_client, {
             'doge.txt': {'local_timestamp': 1111111}
         })
 
@@ -70,11 +60,11 @@ class TestLocalSyncClient(object):
         assert local_client.index['doge.txt']['remote_timestamp'] == 20000
         assert local_client.index['doge.txt']['local_timestamp'] == 1111111
 
-        assert get_file_data(local_client, 'doge.txt') == data
+        assert utils.get_local_contents(local_client, 'doge.txt') == data
 
     def test_get_existing(self, local_client):
         data = b'blue green yellow'
-        set_file_data(local_client, 'whatup.md', data)
+        utils.set_local_contents(local_client, 'whatup.md', data=data.decode('utf8'))
         sync_object = local_client.get('whatup.md')
         assert sync_object.fp.read() == data
         assert sync_object.total_size == len(data)
@@ -84,7 +74,7 @@ class TestLocalSyncClient(object):
 
     def test_delete_existing(self, local_client):
         target_file = os.path.join(local_client.path, 'foo')
-        set_local_contents(local_client, 'foo', 222222)
+        utils.set_local_contents(local_client, 'foo', 222222)
 
         assert os.path.exists(target_file) is True
         assert local_client.delete('foo') is True
@@ -108,15 +98,15 @@ class TestLocalSyncClient(object):
                 'remote_timestamp': 5000,
             },
         }
-        set_local_index(local_client, data)
+        utils.set_local_index(local_client, data)
 
         assert local_client.index == data
 
     def test_get_local_keys(self, local_client):
-        set_local_index(local_client, {})  # .index file should not come up in results
-        set_local_contents(local_client, '.bashrc')
-        set_local_contents(local_client, 'foo')
-        set_local_contents(local_client, 'bar')
+        utils.set_local_index(local_client, {})  # .index file should not come up in results
+        utils.set_local_contents(local_client, '.bashrc')
+        utils.set_local_contents(local_client, 'foo')
+        utils.set_local_contents(local_client, 'bar')
 
         actual_output = local_client.get_local_keys()
         expected_output = ['foo', 'bar', '.bashrc']
@@ -133,16 +123,16 @@ class TestLocalSyncClient(object):
                 'remote_timestamp': 5000,
             },
         }
-        set_local_index(local_client, data)
+        utils.set_local_index(local_client, data)
 
         actual_output = local_client.get_index_keys()
         expected_output = ['foo', 'bar/baz.txt']
         assert sorted(list(actual_output)) == sorted(expected_output)
 
     def test_all_keys(self, local_client):
-        set_local_contents(local_client, '.index')
-        set_local_contents(local_client, 'foo')
-        set_local_contents(local_client, 'bar/boo.md')
+        utils.set_local_contents(local_client, '.index')
+        utils.set_local_contents(local_client, 'foo')
+        utils.set_local_contents(local_client, 'bar/boo.md')
         data = {
             'foo': {
                 'local_timestamp': 4000,
@@ -153,15 +143,15 @@ class TestLocalSyncClient(object):
                 'remote_timestamp': 5000,
             },
         }
-        set_local_index(local_client, data)
+        utils.set_local_index(local_client, data)
 
         actual_output = local_client.get_all_keys()
         expected_output = ['foo', 'bar/boo.md', 'bar/baz.txt']
         assert sorted(actual_output) == sorted(expected_output)
 
     def test_update_index_empty(self, local_client):
-        set_local_contents(local_client, 'foo', 13371337)
-        set_local_contents(local_client, 'bar', 50032003)
+        utils.set_local_contents(local_client, 'foo', 13371337)
+        utils.set_local_contents(local_client, 'bar', 50032003)
 
         local_client.update_index()
         # remote timestamp should not be included since it does not exist
@@ -178,10 +168,10 @@ class TestLocalSyncClient(object):
         assert local_client.index == expected_output
 
     def test_update_index_non_empty(self, local_client):
-        set_local_contents(local_client, 'foo', 13371337)
-        set_local_contents(local_client, 'bar', 50032003)
+        utils.set_local_contents(local_client, 'foo', 13371337)
+        utils.set_local_contents(local_client, 'bar', 50032003)
 
-        set_local_index(local_client, {
+        utils.set_local_index(local_client, {
             'foo': {
                 'local_timestamp': 4000,
                 'remote_timestamp': 4000,
@@ -214,14 +204,14 @@ class TestLocalSyncClient(object):
         assert local_client.index == expected_output
 
     def test_get_real_local_timestamp(self, local_client):
-        set_local_contents(local_client, 'atcg', 2323230)
+        utils.set_local_contents(local_client, 'atcg', 2323230)
 
         assert local_client.get_real_local_timestamp('atcg') == 2323230
         assert local_client.get_real_local_timestamp('dontexist') is None
 
     def test_get_all_real_local_timestamps(self, local_client):
-        set_local_contents(local_client, 'red', 2323230)
-        set_local_contents(local_client, 'blue', 80808008)
+        utils.set_local_contents(local_client, 'red', 2323230)
+        utils.set_local_contents(local_client, 'blue', 80808008)
 
         expected_output = {
             'red': 2323230,
@@ -231,7 +221,7 @@ class TestLocalSyncClient(object):
         assert actual_output == expected_output
 
     def test_get_index_local_timestamp(self, local_client):
-        set_local_index(local_client, {
+        utils.set_local_index(local_client, {
             'foo': {
                 'local_timestamp': 4000,
                 'remote_timestamp': 32000,
@@ -249,7 +239,7 @@ class TestLocalSyncClient(object):
         assert local_client.get_remote_timestamp('bar') is None
 
     def test_get_all_index_local_timestamps(self, local_client):
-        set_local_index(local_client, {
+        utils.set_local_index(local_client, {
             'frap': {
                 'local_timestamp': 4000,
             },
@@ -266,7 +256,7 @@ class TestLocalSyncClient(object):
         assert actual_output == expected_output
 
     def test_get_all_remote_timestamps(self, local_client):
-        set_local_index(local_client, {
+        utils.set_local_index(local_client, {
             'frap': {
                 'remote_timestamp': 4000,
             },

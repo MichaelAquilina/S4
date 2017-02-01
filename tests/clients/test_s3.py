@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import datetime
-import json
 import io
 import os
 
@@ -15,7 +14,7 @@ from moto import mock_s3
 import pytest
 
 from s3backup.clients import s3, SyncObject
-from utils import set_s3_contents, set_s3_index, write_s3
+import utils
 
 
 class TestParseS3URI(object):
@@ -134,10 +133,10 @@ class TestS3SyncClient(object):
 
     def test_get_local_keys(self, s3_client):
         # given
-        set_s3_contents(s3_client, 'war.png')
-        set_s3_contents(s3_client, 'this/is/fine')
-        set_s3_contents(s3_client, '.index')
-        write_s3(
+        utils.set_s3_contents(s3_client, 'war.png')
+        utils.set_s3_contents(s3_client, 'this/is/fine')
+        utils.set_s3_contents(s3_client, '.index')
+        utils.write_s3(
             s3_client.boto,
             s3_client.bucket,
             os.path.join('iamsomethingelse', 'ishouldnotshow.txt'),
@@ -152,7 +151,7 @@ class TestS3SyncClient(object):
 
     def test_get_index_timestamps(self, s3_client):
         # given
-        set_s3_index(s3_client, {
+        utils.set_s3_index(s3_client, {
             'hello': {
                 'remote_timestamp': 1234,
                 'local_timestamp': 1200,
@@ -171,7 +170,7 @@ class TestS3SyncClient(object):
 
     def test_get_all_index_timestamps(self, s3_client):
         # given
-        set_s3_index(s3_client, {
+        utils.set_s3_index(s3_client, {
             'hello': {
                 'local_timestamp': 1200,
             },
@@ -190,7 +189,7 @@ class TestS3SyncClient(object):
 
     def test_update_index(self, s3_client):
         # given
-        set_s3_index(s3_client, {
+        utils.set_s3_index(s3_client, {
             'red': {
                 'remote_timestamp': 1234,
                 'local_timestamp': 1200,
@@ -200,9 +199,9 @@ class TestS3SyncClient(object):
             }
         })
 
-        set_s3_contents(s3_client, 'red', timestamp=5001)
-        set_s3_contents(s3_client, 'yellow', timestamp=1000)
-        set_s3_contents(s3_client, 'orange', timestamp=2000)
+        utils.set_s3_contents(s3_client, 'red', timestamp=5001)
+        utils.set_s3_contents(s3_client, 'yellow', timestamp=1000)
+        utils.set_s3_contents(s3_client, 'orange', timestamp=2000)
 
         # when
         s3_client.update_index()
@@ -230,7 +229,7 @@ class TestS3SyncClient(object):
 
     def test_get_real_local_timestamp(self, s3_client):
         # given
-        set_s3_contents(s3_client, 'orange', timestamp=2000)
+        utils.set_s3_contents(s3_client, 'orange', timestamp=2000)
 
         # then
         assert s3_client.get_real_local_timestamp('orange') == 2000
@@ -238,10 +237,10 @@ class TestS3SyncClient(object):
 
     def test_get_all_real_local_timestamps(self, s3_client):
         # given
-        set_s3_contents(s3_client, 'chocolate/oranges', timestamp=2600)
-        set_s3_contents(s3_client, 'gummy/bears', timestamp=2400)
-        set_s3_contents(s3_client, 'carrot_cake', timestamp=2000)
-        set_s3_contents(s3_client, '.index', timestamp=2043)
+        utils.set_s3_contents(s3_client, 'chocolate/oranges', timestamp=2600)
+        utils.set_s3_contents(s3_client, 'gummy/bears', timestamp=2400)
+        utils.set_s3_contents(s3_client, 'carrot_cake', timestamp=2000)
+        utils.set_s3_contents(s3_client, '.index', timestamp=2043)
         s3_client.reload_index()
 
         # then
@@ -255,7 +254,7 @@ class TestS3SyncClient(object):
 
     def test_set_index_timestamps(self, s3_client):
         # given
-        set_s3_index(s3_client, {
+        utils.set_s3_index(s3_client, {
             'red': {
                 'remote_timestamp': 1234,
                 'local_timestamp': 1200,
