@@ -5,7 +5,7 @@ import os
 
 from s3backup import sync
 from s3backup.clients import SyncState
-from utils import set_s3_contents, set_local_contents
+from utils import set_s3_contents, set_local_contents, set_local_index, set_s3_index
 
 
 def get_local_contents(local_client, key):
@@ -15,21 +15,8 @@ def get_local_contents(local_client, key):
     return data
 
 
-def set_local_index(local_client, data):
-    with open(os.path.join(local_client.path, '.index'), 'w') as fp:
-        json.dump(data, fp)
-
-
 def delete_local(client, key):
     os.remove(os.path.join(client.path, key))
-
-
-def set_s3_index(s3_client, data):
-    s3_client.boto.put_object(
-        Bucket=s3_client.bucket,
-        Key=os.path.join(s3_client.prefix, '.index'),
-        Body=json.dumps(data),
-    )
 
 
 class TestGetActions(object):
@@ -82,8 +69,6 @@ class TestGetSyncActions(object):
         set_local_contents(local_client, 'maltese.txt', timestamp=7000)
         set_s3_contents(s3_client, 'maltese.txt', timestamp=8000)
 
-        local_client.reload_index()
-        s3_client.reload_index()
         deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
         expected_unhandled_events = {
             'english.txt': (
@@ -128,8 +113,6 @@ class TestGetSyncActions(object):
         set_local_contents(local_client, 'german.txt', timestamp=4000)
         set_s3_contents(s3_client, 'german.txt', timestamp=6000)
 
-        local_client.reload_index()
-        s3_client.reload_index()
         deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
         expected_deferred_calls = {
             'german.txt': sync.DeferredFunction(
@@ -154,8 +137,6 @@ class TestGetSyncActions(object):
         set_local_contents(local_client, 'biology.txt', timestamp=4500)
         set_s3_contents(s3_client, 'biology.txt', timestamp=6000)
 
-        local_client.reload_index()
-        s3_client.reload_index()
         deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
         expected_unhandled_events = {
             'biology.txt': (
@@ -180,8 +161,6 @@ class TestGetSyncActions(object):
         })
         set_s3_contents(s3_client, 'chemistry.txt', timestamp=6000)
 
-        local_client.reload_index()
-        s3_client.reload_index()
         deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
         expected_unhandled_events = {
             'chemistry.txt': (
@@ -198,7 +177,6 @@ class TestGetSyncActions(object):
                 'remote_timestamp': 4550,
             }
         })
-        local_client.reload_index()
         deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
         assert deferred_calls == {}
         assert unhandled_events == {}
