@@ -1,22 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import json
-import os
-
 from s3backup import sync
 from s3backup.clients import SyncState
-from utils import set_s3_contents, set_local_contents, set_local_index, set_s3_index
-
-
-def get_local_contents(local_client, key):
-    path = os.path.join(local_client.path, key)
-    with open(path, 'r') as fp:
-        data = fp.read()
-    return data
-
-
-def delete_local(client, key):
-    os.remove(os.path.join(client.path, key))
+import utils
 
 
 class TestGetActions(object):
@@ -30,7 +16,7 @@ class TestGetSyncActions(object):
         assert sync.get_sync_actions(local_client, s3_client) == ({}, {})
 
     def test_correct_output(self, local_client, s3_client):
-        set_local_index(local_client, {
+        utils.set_local_index(local_client, {
             'chemistry.txt': {
                 'local_timestamp': 9431,
                 'remote_timestamp': 9431,
@@ -44,7 +30,7 @@ class TestGetSyncActions(object):
                 'remote_timestamp': 6000,
             },
         })
-        set_s3_index(s3_client, {
+        utils.set_s3_index(s3_client, {
             'chemistry.txt': {
                 'local_timestamp': 10000,
                 'remote_timestamp': 9431,
@@ -59,15 +45,15 @@ class TestGetSyncActions(object):
             },
         })
 
-        set_local_contents(local_client, 'history.txt', timestamp=5000)
-        set_s3_contents(s3_client, 'art.txt', timestamp=200000)
-        set_local_contents(local_client, 'english.txt', timestamp=90000)
-        set_s3_contents(s3_client, 'english.txt', timestamp=93000)
-        set_s3_contents(s3_client, 'chemistry.txt', timestamp=10000)
-        set_local_contents(local_client, 'physics.txt', timestamp=11000)
-        set_s3_contents(s3_client, 'physics.txt', timestamp=13000)
-        set_local_contents(local_client, 'maltese.txt', timestamp=7000)
-        set_s3_contents(s3_client, 'maltese.txt', timestamp=8000)
+        utils.set_local_contents(local_client, 'history.txt', timestamp=5000)
+        utils.set_s3_contents(s3_client, 'art.txt', timestamp=200000)
+        utils.set_local_contents(local_client, 'english.txt', timestamp=90000)
+        utils.set_s3_contents(s3_client, 'english.txt', timestamp=93000)
+        utils.set_s3_contents(s3_client, 'chemistry.txt', timestamp=10000)
+        utils.set_local_contents(local_client, 'physics.txt', timestamp=11000)
+        utils.set_s3_contents(s3_client, 'physics.txt', timestamp=13000)
+        utils.set_local_contents(local_client, 'maltese.txt', timestamp=7000)
+        utils.set_s3_contents(s3_client, 'maltese.txt', timestamp=8000)
 
         deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
         expected_unhandled_events = {
@@ -98,20 +84,20 @@ class TestGetSyncActions(object):
         assert deferred_calls == expected_deferred_calls
 
     def test_nochanges_but_different_remote_timestamps(self, local_client, s3_client):
-        set_local_index(local_client, {
+        utils.set_local_index(local_client, {
             'german.txt': {
                 'local_timestamp': 4000,
                 'remote_timestamp': 4000,
             }
         })
-        set_s3_index(s3_client, {
+        utils.set_s3_index(s3_client, {
             'german.txt': {
                 'local_timestamp': 6000,
                 'remote_timestamp': 6000,
             }
         })
-        set_local_contents(local_client, 'german.txt', timestamp=4000)
-        set_s3_contents(s3_client, 'german.txt', timestamp=6000)
+        utils.set_local_contents(local_client, 'german.txt', timestamp=4000)
+        utils.set_s3_contents(s3_client, 'german.txt', timestamp=6000)
 
         deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
         expected_deferred_calls = {
@@ -122,20 +108,20 @@ class TestGetSyncActions(object):
         assert unhandled_events == {}
 
     def test_updated_but_different_remote_timestamp(self, local_client, s3_client):
-        set_local_index(local_client, {
+        utils.set_local_index(local_client, {
             'biology.txt': {
                 'local_timestamp': 4000,
                 'remote_timestamp': 3000,
             }
         })
-        set_s3_index(s3_client, {
+        utils.set_s3_index(s3_client, {
             'biology.txt': {
                 'local_timestamp': 6000,
                 'remote_timestamp': 6000,
             }
         })
-        set_local_contents(local_client, 'biology.txt', timestamp=4500)
-        set_s3_contents(s3_client, 'biology.txt', timestamp=6000)
+        utils.set_local_contents(local_client, 'biology.txt', timestamp=4500)
+        utils.set_s3_contents(s3_client, 'biology.txt', timestamp=6000)
 
         deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
         expected_unhandled_events = {
@@ -147,19 +133,19 @@ class TestGetSyncActions(object):
         assert unhandled_events == expected_unhandled_events
 
     def test_deleted_but_different_remote_timestamp(self, local_client, s3_client):
-        set_local_index(local_client, {
+        utils.set_local_index(local_client, {
             'chemistry.txt': {
                 'local_timestamp': 4000,
                 'remote_timestamp': 3000,
             }
         })
-        set_s3_index(s3_client, {
+        utils.set_s3_index(s3_client, {
             'chemistry.txt': {
                 'local_timestamp': 6000,
                 'remote_timestamp': 6000,
             }
         })
-        set_s3_contents(s3_client, 'chemistry.txt', timestamp=6000)
+        utils.set_s3_contents(s3_client, 'chemistry.txt', timestamp=6000)
 
         deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
         expected_unhandled_events = {
@@ -171,7 +157,7 @@ class TestGetSyncActions(object):
         assert unhandled_events == expected_unhandled_events
 
     def test_deleted_doesnotexist(self, local_client, s3_client):
-        set_local_index(local_client, {
+        utils.set_local_index(local_client, {
             'physics.txt': {
                 'local_timestamp': 5000,
                 'remote_timestamp': 4550,
@@ -209,11 +195,11 @@ def assert_existence(clients, keys, exists):
 
 class TestIntegrations(object):
     def test_local_with_s3(self, local_client, s3_client):
-        set_s3_contents(s3_client, 'colors/cream', 9999, '#ddeeff')
+        utils.set_s3_contents(s3_client, 'colors/cream', 9999, '#ddeeff')
 
-        set_local_contents(local_client, 'colors/red', 5000, '#ff0000')
-        set_local_contents(local_client, 'colors/green', 3000, '#00ff00')
-        set_local_contents(local_client, 'colors/blue', 2000, '#0000ff')
+        utils.set_local_contents(local_client, 'colors/red', 5000, '#ff0000')
+        utils.set_local_contents(local_client, 'colors/green', 3000, '#00ff00')
+        utils.set_local_contents(local_client, 'colors/blue', 2000, '#0000ff')
 
         sync.sync(local_client, s3_client)
 
@@ -234,7 +220,7 @@ class TestIntegrations(object):
         assert_remote_timestamp(clients, 'colors/blue', 2000)
         assert_remote_timestamp(clients, 'colors/cream', 9999)
 
-        delete_local(local_client, 'colors/red')
+        utils.delete_local(local_client, 'colors/red')
 
         sync.sync(local_client, s3_client)
         expected_keys = [
@@ -245,9 +231,9 @@ class TestIntegrations(object):
         assert_local_keys(clients, expected_keys)
 
     def test_fresh_sync(self, local_client, s3_client):
-        set_local_contents(local_client, 'foo', timestamp=1000)
-        set_local_contents(local_client, 'bar', timestamp=2000)
-        set_s3_contents(s3_client, 'baz', timestamp=3000, data='what is up?')
+        utils.set_local_contents(local_client, 'foo', timestamp=1000)
+        utils.set_local_contents(local_client, 'bar', timestamp=2000)
+        utils.set_s3_contents(s3_client, 'baz', timestamp=3000, data='what is up?')
 
         sync.sync(local_client, s3_client)
 
@@ -259,10 +245,10 @@ class TestIntegrations(object):
         assert_existence(clients, ['foo', 'bar', 'baz'], True)
         assert_contents(clients, 'baz', b'what is up?')
 
-        delete_local(local_client, 'foo')
-        set_local_contents(local_client, 'test', timestamp=5000)
-        set_s3_contents(s3_client, 'hello', timestamp=6000)
-        set_s3_contents(s3_client, 'baz', timestamp=8000, data='just syncing some stuff')
+        utils.delete_local(local_client, 'foo')
+        utils.set_local_contents(local_client, 'test', timestamp=5000)
+        utils.set_s3_contents(s3_client, 'hello', timestamp=6000)
+        utils.set_s3_contents(s3_client, 'baz', timestamp=8000, data='just syncing some stuff')
 
         sync.sync(local_client, s3_client)
 
@@ -278,9 +264,9 @@ class TestIntegrations(object):
         sync.sync(local_client, s3_client)
 
     def test_three_way_sync(self, local_client, s3_client, local_client_2):
-        set_local_contents(local_client, 'foo', timestamp=1000)
-        set_s3_contents(s3_client, 'bar', timestamp=2000, data='red')
-        set_local_contents(local_client_2, 'baz', timestamp=3000)
+        utils.set_local_contents(local_client, 'foo', timestamp=1000)
+        utils.set_s3_contents(s3_client, 'bar', timestamp=2000, data='red')
+        utils.set_local_contents(local_client_2, 'baz', timestamp=3000)
 
         sync.sync(local_client, s3_client)
         sync.sync(local_client_2, s3_client)
@@ -294,7 +280,7 @@ class TestIntegrations(object):
         assert_remote_timestamp(clients, 'bar', 2000)
         assert_remote_timestamp(clients, 'baz', 3000)
 
-        set_s3_contents(s3_client, 'bar', timestamp=8000, data='green')
+        utils.set_s3_contents(s3_client, 'bar', timestamp=8000, data='green')
 
         sync.sync(local_client, s3_client)
         sync.sync(local_client_2, s3_client)
@@ -306,7 +292,7 @@ class TestIntegrations(object):
         assert_remote_timestamp(clients, 'bar', 8000)
         assert_remote_timestamp(clients, 'baz', 3000)
 
-        delete_local(local_client_2, 'foo')
+        utils.delete_local(local_client_2, 'foo')
 
         sync.sync(local_client, s3_client)
         sync.sync(local_client_2, s3_client)
@@ -323,7 +309,7 @@ class TestIntegrations(object):
 
 class TestMove(object):
     def test_correct_behaviour(self, local_client, s3_client):
-        set_s3_contents(s3_client, 'art.txt', data='swirly abstract objects')
+        utils.set_s3_contents(s3_client, 'art.txt', data='swirly abstract objects')
         sync.move(
             to_client=local_client,
             from_client=s3_client,
@@ -331,5 +317,5 @@ class TestMove(object):
             timestamp=6000,
         )
 
-        assert get_local_contents(local_client, 'art.txt') == 'swirly abstract objects'
+        assert utils.get_local_contents(local_client, 'art.txt') == b'swirly abstract objects'
         assert local_client.get_remote_timestamp('art.txt') == 6000
