@@ -7,7 +7,7 @@ import shutil
 import tempfile
 
 from s3backup.clients import local, SyncState, SyncObject
-from utils import set_local_contents, write_local
+from utils import set_local_contents, write_local, set_local_index
 
 
 class TestTraverse(object):
@@ -44,11 +44,6 @@ def set_file_data(client, key, data):
     with open(os.path.join(client.path, key), 'wb') as fp:
         fp.write(data)
 
-def set_index(client, data):
-    with open(client.index_path(), 'w') as fp:
-        json.dump(data, fp)
-    client.reload_index()
-
 
 class TestLocalSyncClient(object):
     def test_put_new(self, local_client):
@@ -62,7 +57,7 @@ class TestLocalSyncClient(object):
         assert get_file_data(local_client, 'hello_world.txt') == data
 
     def test_put_existing(self, local_client):
-        set_index(local_client, {
+        set_local_index(local_client, {
             'doge.txt': {'local_timestamp': 1111111}
         })
 
@@ -113,12 +108,12 @@ class TestLocalSyncClient(object):
                 'remote_timestamp': 5000,
             },
         }
-        set_index(local_client, data)
+        set_local_index(local_client, data)
 
         assert local_client.index == data
 
     def test_get_local_keys(self, local_client):
-        set_index(local_client, {})  # .index file should not come up in results
+        set_local_index(local_client, {})  # .index file should not come up in results
         set_local_contents(local_client, '.bashrc')
         set_local_contents(local_client, 'foo')
         set_local_contents(local_client, 'bar')
@@ -138,7 +133,7 @@ class TestLocalSyncClient(object):
                 'remote_timestamp': 5000,
             },
         }
-        set_index(local_client, data)
+        set_local_index(local_client, data)
 
         actual_output = local_client.get_index_keys()
         expected_output = ['foo', 'bar/baz.txt']
@@ -158,7 +153,7 @@ class TestLocalSyncClient(object):
                 'remote_timestamp': 5000,
             },
         }
-        set_index(local_client, data)
+        set_local_index(local_client, data)
 
         actual_output = local_client.get_all_keys()
         expected_output = ['foo', 'bar/boo.md', 'bar/baz.txt']
@@ -186,7 +181,7 @@ class TestLocalSyncClient(object):
         set_local_contents(local_client, 'foo', 13371337)
         set_local_contents(local_client, 'bar', 50032003)
 
-        set_index(local_client, {
+        set_local_index(local_client, {
             'foo': {
                 'local_timestamp': 4000,
                 'remote_timestamp': 4000,
@@ -236,7 +231,7 @@ class TestLocalSyncClient(object):
         assert actual_output == expected_output
 
     def test_get_index_local_timestamp(self, local_client):
-        set_index(local_client, {
+        set_local_index(local_client, {
             'foo': {
                 'local_timestamp': 4000,
                 'remote_timestamp': 32000,
@@ -254,7 +249,7 @@ class TestLocalSyncClient(object):
         assert local_client.get_remote_timestamp('bar') is None
 
     def test_get_all_index_local_timestamps(self, local_client):
-        set_index(local_client, {
+        set_local_index(local_client, {
             'frap': {
                 'local_timestamp': 4000,
             },
@@ -271,7 +266,7 @@ class TestLocalSyncClient(object):
         assert actual_output == expected_output
 
     def test_get_all_remote_timestamps(self, local_client):
-        set_index(local_client, {
+        set_local_index(local_client, {
             'frap': {
                 'remote_timestamp': 4000,
             },
