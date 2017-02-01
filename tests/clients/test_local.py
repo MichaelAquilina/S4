@@ -271,3 +271,36 @@ class TestLocalSyncClient(object):
         }
         actual_output = local_client.get_all_remote_timestamps()
         assert actual_output == expected_output
+
+    def test_ignore_files(self, local_client):
+        utils.set_local_contents(local_client, '.syncignore', timestamp=3200, data=(
+            '*.zip\n'
+            'foo*\n'
+        ))
+        local_client.reload_ignore_files()
+
+        utils.set_local_index(local_client, {
+            'pony.tar': {
+                'local_timestamp': 4000,
+                'remote_timestamp': 3000,
+            }
+        })
+
+        utils.set_local_contents(local_client, 'test.zip')
+        utils.set_local_contents(local_client, 'foobar')
+        utils.set_local_contents(local_client, 'foo')
+        utils.set_local_contents(local_client, 'pony.tar', timestamp=8000)
+
+        local_client.update_index()
+
+        expected_index = {
+            '.syncignore': {
+                'local_timestamp': 3200,
+                'remote_timestamp': None,
+            },
+            'pony.tar': {
+                'local_timestamp': 8000,
+                'remote_timestamp': 3000,
+            }
+        }
+        assert local_client.index == expected_index
