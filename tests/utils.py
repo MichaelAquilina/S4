@@ -14,6 +14,11 @@ def write_local(path, data=''):
         fp.write(data)
 
 
+def get_local_contents(client, key):
+    with open(os.path.join(client.path, key), 'rb') as fp:
+        return fp.read()
+
+
 def set_local_contents(client, key, timestamp=None, data=''):
     path = os.path.join(client.path, key)
     write_local(path, data)
