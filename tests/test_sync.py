@@ -25,7 +25,7 @@ def delete_local(client, key):
 
 
 def set_s3_index(s3_client, data):
-    s3_client.client.put_object(
+    s3_client.boto.put_object(
         Bucket=s3_client.bucket,
         Key=os.path.join(s3_client.prefix, '.index'),
         Body=json.dumps(data),

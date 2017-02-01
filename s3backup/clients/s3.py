@@ -39,8 +39,8 @@ def to_timestamp(dt):
 
 
 class S3SyncClient(SyncClient):
-    def __init__(self, client, bucket, prefix):
-        self.client = client
+    def __init__(self, boto, bucket, prefix):
+        self.boto = boto
         self.bucket = bucket
         self.prefix = prefix
         self.index = self.load_index()
@@ -56,7 +56,7 @@ class S3SyncClient(SyncClient):
         return os.path.join(self.prefix, '.index')
 
     def put(self, key, sync_object, callback=None):
-        self.client.upload_fileobj(
+        self.boto.upload_fileobj(
             Bucket=self.bucket,
             Key=os.path.join(self.prefix, key),
             Fileobj=sync_object.fp,
@@ -66,7 +66,7 @@ class S3SyncClient(SyncClient):
 
     def get(self, key):
         try:
-            resp = self.client.get_object(
+            resp = self.boto.get_object(
                 Bucket=self.bucket,
                 Key=os.path.join(self.prefix, key),
             )
@@ -79,7 +79,7 @@ class S3SyncClient(SyncClient):
             return None
 
     def delete(self, key):
-        resp = self.client.delete_objects(
+        resp = self.boto.delete_objects(
             Bucket=self.bucket,
             Delete={
                 'Objects': [{'Key': os.path.join(self.prefix, key)}]
@@ -89,7 +89,7 @@ class S3SyncClient(SyncClient):
 
     def load_index(self):
         try:
-            resp = self.client.get_object(
+            resp = self.boto.get_object(
                 Bucket=self.bucket,
                 Key=self.index_path(),
             )
@@ -120,7 +120,7 @@ class S3SyncClient(SyncClient):
         else:
             logger.debug('Using plain text encoding for writing index')
 
-        self.client.put_object(
+        self.boto.put_object(
             Bucket=self.bucket,
             Key=self.index_path(),
             Body=data,
@@ -128,7 +128,7 @@ class S3SyncClient(SyncClient):
 
     def get_local_keys(self):
         results = []
-        resp = self.client.list_objects_v2(
+        resp = self.boto.list_objects_v2(
             Bucket=self.bucket,
             Prefix=self.prefix,
         )
@@ -146,7 +146,7 @@ class S3SyncClient(SyncClient):
 
     def get_real_local_timestamp(self, key):
         try:
-            response = self.client.head_object(
+            response = self.boto.head_object(
                 Bucket=self.bucket,
                 Key=os.path.join(self.prefix, key),
             )
@@ -175,7 +175,7 @@ class S3SyncClient(SyncClient):
 
     def get_all_real_local_timestamps(self):
         result = {}
-        resp = self.client.list_objects_v2(
+        resp = self.boto.list_objects_v2(
             Bucket=self.bucket,
             Prefix=self.prefix,
         )
@@ -194,7 +194,7 @@ class S3SyncClient(SyncClient):
     def reload_ignore_files(self):
         self.ignore_files = ['.index']
         try:
-            response = self.client.get_object(
+            response = self.boto.get_object(
                 Bucket=self.bucket,
                 Key=os.path.join(self.prefix, '.syncindex')
             )

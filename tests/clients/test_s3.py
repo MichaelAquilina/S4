@@ -27,7 +27,7 @@ def touch(client, key, prefix=None, timestamp=None):
         last_modified = datetime.datetime.utcfromtimestamp(timestamp)
 
     with freezegun.freeze_time(last_modified):
-        client.client.put_object(
+        client.boto.put_object(
             Bucket=client.bucket,
             Key=os.path.join(prefix, key)
         )
@@ -80,7 +80,7 @@ class TestS3SyncClient(object):
         s3_client.put('something/boardgame.rst', input_object)
 
         # then
-        resp = s3_client.client.get_object(
+        resp = s3_client.boto.get_object(
             Bucket=s3_client.bucket,
             Key=os.path.join(s3_client.prefix, 'something/boardgame.rst'),
         )
@@ -92,7 +92,7 @@ class TestS3SyncClient(object):
         data = b'#000000'
         frozen_time = datetime.datetime(2016, 10, 23, 10, 30, tzinfo=datetime.timezone.utc)
         with freezegun.freeze_time(frozen_time):
-            s3_client.client.put_object(
+            s3_client.boto.put_object(
                 Bucket=s3_client.bucket,
                 Key=os.path.join(s3_client.prefix, 'black.color'),
                 Body=data,
@@ -126,7 +126,7 @@ class TestS3SyncClient(object):
 
     def test_delete(self, s3_client):
         # given
-        s3_client.client.put_object(
+        s3_client.boto.put_object(
             Bucket=s3_client.bucket,
             Key=os.path.join(s3_client.prefix, 'war.png'),
             Body='bang',
@@ -138,7 +138,7 @@ class TestS3SyncClient(object):
         # then
         assert s3_client.get('war.png') is None
         with pytest.raises(ClientError) as exc:
-            s3_client.client.head_object(
+            s3_client.boto.head_object(
                 Bucket=s3_client.bucket,
                 Key=os.path.join(s3_client.prefix, 'war.png')
             )
@@ -163,7 +163,7 @@ class TestS3SyncClient(object):
 
     def test_get_index_timestamps(self, s3_client):
         # given
-        s3_client.client.put_object(
+        s3_client.boto.put_object(
             Bucket=s3_client.bucket,
             Key=os.path.join(s3_client.prefix, '.index'),
             Body=json.dumps({
@@ -187,7 +187,7 @@ class TestS3SyncClient(object):
 
     def test_get_all_index_timestamps(self, s3_client):
         # given
-        s3_client.client.put_object(
+        s3_client.boto.put_object(
             Bucket=s3_client.bucket,
             Key=os.path.join(s3_client.prefix, '.index'),
             Body=json.dumps({
@@ -211,7 +211,7 @@ class TestS3SyncClient(object):
 
     def test_update_index(self, s3_client):
         # given
-        s3_client.client.put_object(
+        s3_client.boto.put_object(
             Bucket=s3_client.bucket,
             Key=os.path.join(s3_client.prefix, '.index'),
             Body=json.dumps({
@@ -281,7 +281,7 @@ class TestS3SyncClient(object):
 
     def test_set_index_timestamps(self, s3_client):
         # given
-        s3_client.client.put_object(
+        s3_client.boto.put_object(
             Bucket=s3_client.bucket,
             Key=os.path.join(s3_client.prefix, '.index'),
             Body=json.dumps({
