@@ -26,6 +26,10 @@ def set_local_contents(client, key, timestamp=None, data=''):
         os.utime(path, (timestamp, timestamp))
 
 
+def delete_local(client, key):
+    os.remove(os.path.join(client.path, key))
+
+
 def set_local_index(client, data):
     with open(client.index_path(), 'w') as fp:
         json.dump(data, fp)
