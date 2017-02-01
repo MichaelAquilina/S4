@@ -196,9 +196,11 @@ class S3SyncClient(SyncClient):
         try:
             response = self.boto.get_object(
                 Bucket=self.bucket,
-                Key=os.path.join(self.prefix, '.syncindex')
+                Key=os.path.join(self.prefix, '.syncignore')
             )
-            ignore_list = response['Body'].read().split('\n')
+            data = response['Body'].read()
+            data = data.decode('utf8')
+            ignore_list = data.split('\n')
             self.ignore_files.extend(ignore_list)
         except ClientError:
             pass

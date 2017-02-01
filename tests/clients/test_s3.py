@@ -281,3 +281,38 @@ class TestS3SyncClient(object):
             },
         }
         assert s3_client.index == expected_index
+
+    def test_ignore_files(self, s3_client):
+        utils.set_s3_contents(
+            s3_client, '.syncignore', timestamp=4000, data=(
+                '*~\n'
+                'trashdirectory\n'
+                '*py[oc]\n'
+            )
+        )
+        s3_client.reload_ignore_files()
+
+        utils.set_s3_contents(s3_client, '.zshrc~')
+        utils.set_s3_contents(s3_client, 'trashdirectory')
+        utils.set_s3_contents(s3_client, 'foo/mobile.py', timestamp=1290)
+        utils.set_s3_contents(s3_client, 'foo/mobile.pyc')
+        utils.set_s3_contents(s3_client, 'foo/mobile.pyo')
+        utils.set_s3_contents(s3_client, '.zshrc', timestamp=9999)
+
+        s3_client.update_index()
+
+        expected_index = {
+            '.syncignore': {
+                'local_timestamp': 4000,
+                'remote_timestamp': None,
+            },
+            '.zshrc': {
+                'local_timestamp': 9999,
+                'remote_timestamp': None,
+            },
+            'foo/mobile.py': {
+                'local_timestamp': 1290,
+                'remote_timestamp': None,
+            }
+        }
+        assert s3_client.index == expected_index
