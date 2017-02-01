@@ -27,7 +27,7 @@ def set_s3_contents(s3_client, key, timestamp=None, data=''):
         freeze_time = datetime.datetime.utcfromtimestamp(timestamp)
 
     with freezegun.freeze_time(freeze_time):
-        s3_client.client.put_object(
+        s3_client.boto.put_object(
             Bucket=s3_client.bucket,
             Key=os.path.join(s3_client.prefix, key),
             Body=data,
