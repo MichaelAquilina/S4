@@ -220,7 +220,7 @@ class TestLocalSyncClient(object):
         actual_output = local_client.get_all_real_local_timestamps()
         assert actual_output == expected_output
 
-    def test_get_index_local_timestamp(self, local_client):
+    def test_get_index_timestamps(self, local_client):
         utils.set_local_index(local_client, {
             'foo': {
                 'local_timestamp': 4000,
