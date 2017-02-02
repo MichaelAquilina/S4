@@ -13,6 +13,15 @@ class TestSyncState(object):
             datetime.datetime.utcfromtimestamp(53434)
         )
 
+    def test_equality_with_self(self):
+        action = SyncState(SyncState.UPDATED, 1000, 53434)
+        assert action == action
+
+    def test_non_equality(self):
+        assert SyncState(SyncState.UPDATED, 10, 30) != SyncState(SyncState.DELETED, 10, 30)
+        assert SyncState(SyncState.DELETED, 20, 20) != SyncState(SyncState.DELETED, 40, 20)
+        assert SyncState(SyncState.CONFLICT, 20, 20) != SyncState(SyncState.CONFLICT, 20, 40)
+
 
 class TestSyncObject(object):
     def test_repr(self):
