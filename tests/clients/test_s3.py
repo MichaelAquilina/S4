@@ -149,6 +149,19 @@ class TestS3SyncClient(object):
         expected_output = ['war.png', 'this/is/fine']
         assert sorted(actual_output) == sorted(expected_output)
 
+    def test_get_index_keys(self, s3_client):
+        utils.set_s3_index(s3_client, {
+            'cow': {
+                'local_timestamp': 4000,
+                'remote_timestamp': 3000,
+            },
+            'chicken': {
+                'local_timestamp': 4000,
+                'remote_timestamp': 3000,
+            }
+        })
+        assert sorted(s3_client.get_index_keys()) == sorted(['cow', 'chicken'])
+
     def test_get_index_timestamps(self, s3_client):
         # given
         utils.set_s3_index(s3_client, {
