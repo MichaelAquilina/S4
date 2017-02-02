@@ -5,6 +5,35 @@ from s3backup.clients import SyncState
 import utils
 
 
+class TestDeferredFunction(object):
+    def test_call(self):
+        def foo(a, b):
+            return a + ' ' + b
+
+        deferred_function = sync.DeferredFunction(foo, 'red', b='green')
+        assert deferred_function() == 'red green'
+
+    def test_equality_with_self(self):
+        deferred_function = sync.DeferredFunction(lambda x: x**2, 2)
+        assert deferred_function == deferred_function
+
+    def test_non_equality(self):
+        def foo(a, b, c):
+            return a + b * c
+
+        def bar(a, b, c):
+            return a + b + c
+        assert sync.DeferredFunction(bar, 4, 4, 5) != sync.DeferredFunction(bar, 4, 4, 10)
+        assert sync.DeferredFunction(foo, 4, 4, 5) != sync.DeferredFunction(bar, 4, 4, 5)
+
+    def test_repr(self):
+        def baz(a):
+            return 1
+        deferred_function = sync.DeferredFunction(baz, 'testing')
+        expected_repr = "DeferredFunction<func={}, args=('testing',), kwargs={{}}>".format(baz)
+        assert repr(deferred_function) == expected_repr
+
+
 class TestGetActions(object):
     def test_empty_clients(self, s3_client, local_client):
         actual_output = list(sync.get_actions(s3_client, local_client))
