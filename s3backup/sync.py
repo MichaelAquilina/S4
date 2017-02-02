@@ -17,7 +17,7 @@ class DeferredFunction(object):
         self.kwargs = kwargs
 
     def __call__(self):
-        self.func(*self.args, **self.kwargs)
+        return self.func(*self.args, **self.kwargs)
 
     def __eq__(self, other):
         if not isinstance(other, DeferredFunction):
