@@ -65,7 +65,6 @@ def sync(client_1, client_2, conflicts=None):
                     logger.info('Ignoring sync conflict for %s', key)
                     continue
 
-
     except KeyboardInterrupt:
         logger.warning('Session interrupted by Keyboard Interrupt. Aborting....')
         return
