@@ -54,19 +54,16 @@ def sync(client_1, client_2, conflicts=None):
                     )
                     choice = input('Choice (default=skip): ')
                     logger.info('')
-                    if choice == '1':
-                        deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
-                    elif choice == '2':
-                        deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
-                    else:
-                        continue
-                elif conflicts == 'ignore':
-                    logger.info('Ignoring conflicted sync for %s', key)
-                    continue
-                elif conflicts == 'local':
+                else:
+                    choice = conflicts
+
+                if choice == '1':
                     deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
-                elif conflicts == 's3':
+                elif choice == '2':
                     deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
+                else:
+                    logger.info('Ignoring sync conflict for %s', key)
+                    continue
 
 
     except KeyboardInterrupt:
