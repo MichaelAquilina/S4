@@ -32,7 +32,7 @@ class DeferredFunction(object):
         )
 
 
-def sync(client_1, client_2, conflicts=None):
+def sync(client_1, client_2, conflict_choice=None):
     try:
         deferred_calls, unhandled_events = get_sync_actions(client_1, client_2)
 
@@ -42,7 +42,7 @@ def sync(client_1, client_2, conflicts=None):
             logger.debug('%s', unhandled_events)
 
             for key, (action_1, action_2) in unhandled_events.items():
-                if conflicts is None:
+                if conflict_choice is None:
                     logger.info(
                         '\nConflict for "%s". Which version would you like to keep?\n'
                         '   (1) %s%s updated at %s (%s)\n'
@@ -55,7 +55,7 @@ def sync(client_1, client_2, conflicts=None):
                     choice = input('Choice (default=skip): ')
                     logger.info('')
                 else:
-                    choice = conflicts
+                    choice = conflict_choice
 
                 if choice == '1':
                     deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)

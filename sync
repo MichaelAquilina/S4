@@ -67,7 +67,7 @@ def main():
             client_2 = get_client(target_2)
 
             logger.info('Syncing %s with %s', target_1, target_2)
-            sync.sync(client_1, client_2, conflicts=args.conflicts)
+            sync.sync(client_1, client_2, conflict_choice=args.conflicts)
     except KeyboardInterrupt:
         logger.warning('Quitting due to Keyboard Interrupt...')
 
