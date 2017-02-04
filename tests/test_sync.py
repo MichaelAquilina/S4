@@ -349,6 +349,9 @@ class TestIntegrations(object):
         assert_existence(clients, ['foo', 'bar'], True)
         assert_contents(clients, 'bar', b'usador')
 
+        assert local_client.get_real_local_timestamp('foo') == 2000
+        assert s3_client.get_real_local_timestamp('foo') == 3000
+
 
 class TestMove(object):
     def test_correct_behaviour(self, local_client, s3_client):
