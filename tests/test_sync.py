@@ -335,6 +335,20 @@ class TestIntegrations(object):
         sync.sync(local_client_2, s3_client)
         sync.sync(local_client, local_client_2)
 
+    def test_ignore_conflicts(self, local_client, s3_client):
+        utils.set_local_contents(local_client, 'foo', timestamp=2000)
+        utils.set_s3_contents(s3_client, 'foo', timestamp=3000)
+        utils.set_s3_contents(s3_client, 'bar', timestamp=5600, data='usador')
+
+        sync.sync(local_client, s3_client, conflict_choice='ignore')
+
+        clients = [local_client, s3_client]
+        assert_local_keys(clients, ['foo', 'bar'])
+        assert_remote_timestamp(clients, 'foo', None)
+        assert_remote_timestamp(clients, 'bar', 5600)
+        assert_existence(clients, ['foo', 'bar'], True)
+        assert_contents(clients, 'bar', b'usador')
+
 
 class TestMove(object):
     def test_correct_behaviour(self, local_client, s3_client):
