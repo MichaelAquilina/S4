@@ -349,8 +349,25 @@ class TestIntegrations(object):
         assert_existence(clients, ['foo', 'bar'], True)
         assert_contents(clients, 'bar', b'usador')
 
+        # Check that none of the files have been modified due to ignore flag
         assert local_client.get_real_local_timestamp('foo') == 2000
         assert s3_client.get_real_local_timestamp('foo') == 3000
+
+    def test_conflict_choose_first_client(self, local_client, s3_client):
+        utils.set_local_contents(local_client, 'foo', timestamp=2000, data='abc')
+        utils.set_s3_contents(s3_client, 'foo', timestamp=3000, data='123')
+        utils.set_s3_contents(s3_client, 'bar', timestamp=5600)
+
+        sync.sync(local_client, s3_client, conflict_choice='1')
+
+        clients = [local_client, s3_client]
+        assert_local_keys(clients, ['foo', 'bar'])
+        # Chooses first client
+        assert_remote_timestamp(clients, 'foo', 2000)
+        assert_contents(clients, 'foo', b'abc')
+
+        assert_remote_timestamp(clients, 'bar', 5600)
+        assert_existence(clients, ['foo', 'bar'], True)
 
 
 class TestMove(object):
