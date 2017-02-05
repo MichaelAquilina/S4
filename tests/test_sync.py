@@ -369,6 +369,22 @@ class TestIntegrations(object):
         assert_remote_timestamp(clients, 'bar', 5600)
         assert_existence(clients, ['foo', 'bar'], True)
 
+    def test_conflict_choose_second_client(self, local_client, s3_client):
+        utils.set_local_contents(local_client, 'foo', timestamp=2000, data='abc')
+        utils.set_s3_contents(s3_client, 'foo', timestamp=3000, data='123')
+        utils.set_s3_contents(s3_client, 'bar', timestamp=5600)
+
+        sync.sync(local_client, s3_client, conflict_choice='2')
+
+        clients = [local_client, s3_client]
+        assert_local_keys(clients, ['foo', 'bar'])
+        # Chooses second client
+        assert_remote_timestamp(clients, 'foo', 3000)
+        assert_contents(clients, 'foo', b'123')
+
+        assert_remote_timestamp(clients, 'bar', 5600)
+        assert_existence(clients, ['foo', 'bar'], True)
+
 
 class TestMove(object):
     def test_correct_behaviour(self, local_client, s3_client):
