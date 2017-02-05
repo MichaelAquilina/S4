@@ -26,6 +26,7 @@ def get_client(target):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--log-level', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'])
+    parser.add_argument('--conflicts', default=None, choices=['1', '2', 'ignore'])
 
     args = parser.parse_args()
 
@@ -66,7 +67,7 @@ def main():
             client_2 = get_client(target_2)
 
             logger.info('Syncing %s with %s', target_1, target_2)
-            sync.sync(client_1, client_2)
+            sync.sync(client_1, client_2, conflict_choice=args.conflicts)
     except KeyboardInterrupt:
         logger.warning('Quitting due to Keyboard Interrupt...')
 
