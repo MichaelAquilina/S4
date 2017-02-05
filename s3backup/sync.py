@@ -32,7 +32,7 @@ class DeferredFunction(object):
         )
 
 
-def sync(client_1, client_2):
+def sync(client_1, client_2, conflict_choice=None):
     try:
         deferred_calls, unhandled_events = get_sync_actions(client_1, client_2)
 
@@ -40,24 +40,31 @@ def sync(client_1, client_2):
         logger.debug('There are %s automatically deferred calls', len(deferred_calls))
         if len(unhandled_events) > 0:
             logger.debug('%s', unhandled_events)
+
             for key, (action_1, action_2) in unhandled_events.items():
-                logger.info(
-                    '\nConflict for "%s". Which version would you like to keep?\n'
-                    '   (1) %s%s updated at %s (%s)\n'
-                    '   (2) %s%s updated at %s (%s)\n'
-                    '   (3) Skip this file',
-                    key,
-                    client_1.get_uri(), key, action_1.get_remote_datetime(), action_1.action,
-                    client_2.get_uri(), key, action_2.get_remote_datetime(), action_2.action,
-                )
-                choice = input('Choice (default=skip): ')
-                logger.info('')
+                if conflict_choice is None:
+                    logger.info(
+                        '\nConflict for "%s". Which version would you like to keep?\n'
+                        '   (1) %s%s updated at %s (%s)\n'
+                        '   (2) %s%s updated at %s (%s)\n'
+                        '   (3) Skip this file',
+                        key,
+                        client_1.get_uri(), key, action_1.get_remote_datetime(), action_1.action,
+                        client_2.get_uri(), key, action_2.get_remote_datetime(), action_2.action,
+                    )
+                    choice = input('Choice (default=skip): ')
+                    logger.info('')
+                else:
+                    choice = conflict_choice
+
                 if choice == '1':
                     deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
                 elif choice == '2':
                     deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
                 else:
+                    logger.info('Ignoring sync conflict for %s', key)
                     continue
+
     except KeyboardInterrupt:
         logger.warning('Session interrupted by Keyboard Interrupt. Aborting....')
         return
