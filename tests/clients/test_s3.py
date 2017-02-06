@@ -301,6 +301,7 @@ class TestS3SyncClient(object):
                 '*~\n'
                 'trashdirectory\n'
                 '*py[oc]\n'
+                '.git\n'
             )
         )
         s3_client.reload_ignore_files()
@@ -310,6 +311,7 @@ class TestS3SyncClient(object):
         utils.set_s3_contents(s3_client, 'foo/mobile.py', timestamp=1290)
         utils.set_s3_contents(s3_client, 'foo/mobile.pyc')
         utils.set_s3_contents(s3_client, 'foo/mobile.pyo')
+        utils.set_s3_contents(s3_client, 'foo/.git/7f04e3b69963e5d51b479b30591ab1c2b6a3e7')
         utils.set_s3_contents(s3_client, '.zshrc', timestamp=9999)
 
         s3_client.update_index()
