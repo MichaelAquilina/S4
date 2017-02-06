@@ -224,11 +224,11 @@ def get_deferred_function(key, action, to_client, from_client):
         raise ValueError('Unknown action provided', action)
 
 
-def get_progress_bar(max_value, desc):
+def get_progress_bar(max_value):
     return tqdm.tqdm(
         total=max_value,
         leave=False,
-        desc=desc,
+        ncols=80,
         unit='B',
         unit_scale=True,
         mininterval=0.2,
@@ -248,7 +248,7 @@ def update_client(to_client, from_client, key, timestamp):
 def move(to_client, from_client, key, timestamp):
     sync_object = from_client.get(key)
 
-    with get_progress_bar(sync_object.total_size, key) as progress_bar:
+    with get_progress_bar(sync_object.total_size) as progress_bar:
         to_client.put(key, sync_object, callback=progress_bar.update)
 
     to_client.set_remote_timestamp(key, timestamp)
