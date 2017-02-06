@@ -209,7 +209,7 @@ def get_actions(client_1, client_2):
     client_1_actions = client_1.get_actions(all_keys)
     client_2_actions = client_2.get_actions(all_keys)
 
-    for key in all_keys:
+    for key in sorted(all_keys):
         yield key, client_1_actions[key], client_2_actions[key]
 
 
