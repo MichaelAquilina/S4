@@ -238,12 +238,18 @@ def get_progress_bar(max_value):
 
 
 def create_client(to_client, from_client, key, timestamp):
-    logger.info(colored.green('Creating %s (%s => %s)'), key, from_client.get_uri(), to_client.get_uri())
+    logger.info(
+        colored.green('Creating %s (%s => %s)'),
+        key, from_client.get_uri(), to_client.get_uri()
+    )
     move(to_client, from_client, key, timestamp)
 
 
 def update_client(to_client, from_client, key, timestamp):
-    logger.info(colored.yellow('Updating %s (%s => %s)'), key, from_client.get_uri(), to_client.get_uri())
+    logger.info(
+        colored.yellow('Updating %s (%s => %s)'),
+        key, from_client.get_uri(), to_client.get_uri()
+    )
     move(to_client, from_client, key, timestamp)
 
 
@@ -258,6 +264,9 @@ def move(to_client, from_client, key, timestamp):
 
 
 def delete_client(client, key, remote_timestamp):
-    logger.info(colored.red('Deleting %s on %s'), key, client.get_uri())
+    logger.info(
+        colored.red('Deleting %s on %s'),
+        key, client.get_uri()
+    )
     client.delete(key)
     client.set_remote_timestamp(key, remote_timestamp)
