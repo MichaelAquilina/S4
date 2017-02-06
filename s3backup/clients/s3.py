@@ -137,10 +137,14 @@ class S3SyncClient(SyncClient):
 
         for obj in resp['Contents']:
             key = os.path.relpath(obj['Key'], self.prefix)
-            if not any(fnmatch.fnmatch(key, pattern) for pattern in self.ignore_files):
-                results.append(key)
+            key_parts = key.split('/')
+
+            for part in key_parts:
+                if any(fnmatch.fnmatch(part, pattern) for pattern in self.ignore_files):
+                    logger.debug('Ignoring %s', key)
+                    break
             else:
-                logger.debug('Ignoring %s', key)
+                results.append(key)
 
         return results
 
