@@ -138,19 +138,21 @@ class S3SyncClient(SyncClient):
 
     def get_local_keys(self):
         results = []
-        resp = self.boto.list_objects_v2(
+        paginator = self.boto.get_paginator('list_objects_v2')
+        page_iterator = paginator.paginate(
             Bucket=self.bucket,
             Prefix=self.prefix,
         )
-        if 'Contents' not in resp:
-            return results
+        for page in page_iterator:
+            if 'Contents' not in page:
+                return results
 
-        for obj in resp['Contents']:
-            key = os.path.relpath(obj['Key'], self.prefix)
-            if not is_ignored_key(key, self.ignore_files):
-                results.append(key)
-            else:
-                logger.debug('Ignoring %s', key)
+            for obj in page['Contents']:
+                key = os.path.relpath(obj['Key'], self.prefix)
+                if not is_ignored_key(key, self.ignore_files):
+                    results.append(key)
+                else:
+                    logger.debug('Ignoring %s', key)
 
         return results
 
@@ -185,14 +187,17 @@ class S3SyncClient(SyncClient):
 
     def get_all_real_local_timestamps(self):
         result = {}
-        resp = self.boto.list_objects_v2(
+        paginator = self.boto.get_paginator('list_objects_v2')
+        page_iterator = paginator.paginate(
             Bucket=self.bucket,
             Prefix=self.prefix,
         )
-        for obj in resp.get('Contents', []):
-            key = os.path.relpath(obj['Key'], self.prefix)
-            if not any(fnmatch.fnmatch(key, pattern) for pattern in self.ignore_files):
-                result[key] = to_timestamp(obj['LastModified'])
+        for page in page_iterator:
+            for obj in page.get('Contents', []):
+                key = os.path.relpath(obj['Key'], self.prefix)
+                if not is_ignored_key(key, self.ignore_files):
+                    result[key] = to_timestamp(obj['LastModified'])
+
         return result
 
     def get_all_remote_timestamps(self):
