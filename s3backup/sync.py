@@ -43,7 +43,8 @@ def sync(client_1, client_2, conflict_choice=None):
         if len(unhandled_events) > 0:
             logger.debug('%s', unhandled_events)
 
-            for key, (action_1, action_2) in unhandled_events.items():
+            for key in sorted(unhandled_events.keys()):
+                action_1, action_2 = unhandled_events[key]
                 if conflict_choice is None:
                     logger.info(
                         '\nConflict for "%s". Which version would you like to keep?\n'
@@ -74,7 +75,8 @@ def sync(client_1, client_2, conflict_choice=None):
     # call everything once we know we can handle all of it
     logger.debug('There are %s total deferred calls', len(deferred_calls))
     try:
-        for key, deferred_function in deferred_calls.items():
+        for key in sorted(deferred_calls.keys()):
+            deferred_function = deferred_calls[key]
             try:
                 deferred_function()
                 client_1.update_index_entry(key)
@@ -207,7 +209,7 @@ def get_actions(client_1, client_2):
     client_1_actions = client_1.get_actions(all_keys)
     client_2_actions = client_2.get_actions(all_keys)
 
-    for key in sorted(all_keys):
+    for key in all_keys:
         yield key, client_1_actions[key], client_2_actions[key]
 
 
