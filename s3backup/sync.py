@@ -195,6 +195,8 @@ def get_sync_actions(client_1, client_2):
         else:
             unhandled_events[key] = (action_1, action_2)
 
+        logger.debug('Action=%s', deferred_calls.get(key))
+
     return deferred_calls, unhandled_events
 
 
