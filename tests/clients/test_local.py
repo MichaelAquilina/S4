@@ -23,15 +23,28 @@ class TestTraverse(object):
         assert list(local.traverse(self.target_folder)) == []
 
     def test_correct_output(self):
-        for item in ['baz/zoo', 'foo', 'bar.md', 'baz/bar', '.index', 'garbage~', 'saw/.index']:
+        items = [
+            'baz/zoo',
+            'foo',
+            'bar.md',
+            'baz/bar',
+            '.index',
+            'garbage~',
+            'saw/.index',
+            'SomeProject/.git/2aa58a13dcbca4b13a244dadf5536865ead5e1',
+            'SomeProject/hello.py',
+            'SomeProject/hello.pyo',
+            'SomeProject/hello.pyc',
+        ]
+        for item in items:
             utils.write_local(os.path.join(self.target_folder, item))
 
         actual_output = list(local.traverse(
             self.target_folder,
-            ignore_files={'.index', '.idontexist', '*~'}
+            ignore_files={'.index', '.idontexist', '*~', '.git', '*.py[co]'}
         ))
 
-        expected_output = ['bar.md', 'baz/bar', 'baz/zoo', 'foo']
+        expected_output = ['bar.md', 'baz/bar', 'baz/zoo', 'foo', 'SomeProject/hello.py']
         assert sorted(actual_output) == sorted(expected_output)
 
 

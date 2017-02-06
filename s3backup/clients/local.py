@@ -21,13 +21,15 @@ def traverse(path, ignore_files=None):
         ignore_files = []
 
     for item in os.scandir(path):
+        if any(fnmatch.fnmatch(item.name, pattern) for pattern in ignore_files):
+            logger.debug('Ignoring %s', item)
+            continue
+
         if item.is_dir():
             for result in traverse(item.path, ignore_files):
                 yield os.path.join(item.name, result)
-        elif not any(fnmatch.fnmatch(item.name, pattern) for pattern in ignore_files):
-            yield item.name
         else:
-            logger.debug('Ingoring %s', item)
+            yield item.name
 
 
 class LocalSyncClient(SyncClient):
