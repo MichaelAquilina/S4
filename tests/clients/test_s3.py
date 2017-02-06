@@ -31,6 +31,17 @@ class TestParseS3URI(object):
         assert actual_output.key == 'apples/and/oranges/'
 
 
+class TestIsIgnoredFile(object):
+    def test_empty(self):
+        assert s3.is_ignored_key('foo/bar/baz', []) is False
+
+    def test_subdirectory(self):
+        assert s3.is_ignored_key('foo/.git/baz', ['.git']) is True
+
+    def test_file(self):
+        assert s3.is_ignored_key('foo/ignoreme', ['ignore*']) is True
+
+
 class TestS3SyncClient(object):
     def test_repr(self):
         boto_client = boto3.client(
