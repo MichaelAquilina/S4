@@ -33,6 +33,16 @@ def parse_s3_uri(uri):
     return S3Uri(bucket, key)
 
 
+def is_ignored_key(key, ignore_files):
+    # Check if any subdirectories match the ignore patterns
+    key_parts = key.split('/')
+    for part in key_parts:
+        if any(fnmatch.fnmatch(part, pattern) for pattern in ignore_files):
+            return True
+    else:
+        return False
+
+
 def to_timestamp(dt):
     epoch = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
     return (dt - epoch) / datetime.timedelta(seconds=1)
@@ -137,15 +147,10 @@ class S3SyncClient(SyncClient):
 
         for obj in resp['Contents']:
             key = os.path.relpath(obj['Key'], self.prefix)
-
-            # Check if any subdirectories match the ignore patterns
-            key_parts = key.split('/')
-            for part in key_parts:
-                if any(fnmatch.fnmatch(part, pattern) for pattern in self.ignore_files):
-                    logger.debug('Ignoring %s', key)
-                    break
-            else:
+            if not is_ignored_key(key, self.ignore_files):
                 results.append(key)
+            else:
+                logger.debug('Ignoring %s', key)
 
         return results
 
