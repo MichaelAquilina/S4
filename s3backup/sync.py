@@ -38,8 +38,14 @@ class DeferredFunction(object):
 
 
 def show_diff(client_1, client_2, key):
-    data1 = client_1.get(key).fp.read()
-    data2 = client_2.get(key).fp.read()
+    so1 = client_1.get(key)
+    data1 = so1.fp.read()
+    so1.fp.close()
+
+    so2 = client_2.get(key)
+    data2 = so2.fp.read()
+    so2.fp.close()
+
     _, path1 = tempfile.mkstemp()
     _, path2 = tempfile.mkstemp()
     with open(path1, 'wb') as fp:
