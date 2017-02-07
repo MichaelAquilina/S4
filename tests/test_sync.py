@@ -377,6 +377,35 @@ class TestIntegrations(object):
         assert_remote_timestamp(clients, 'foo', 3000)
         assert_contents(clients, 'foo', b'123')
 
+    def test_previously_deleted_now_created(self, local_client, s3_client):
+        utils.set_s3_index(s3_client, {
+            'foo': {
+                'local_timestamp': None,
+                'remote_timestamp': 4000,
+            }
+        })
+        utils.set_local_index(local_client, {
+            'foo': {
+                'local_timstamp': None,
+                'remote_timestamp': 4000,
+            }
+        })
+        utils.set_local_contents(local_client, 'foo', timestamp=7000)
+
+        # Will create previously deleted file
+        sync.sync(local_client, s3_client)
+
+        clients = [local_client, s3_client]
+        assert_local_keys(clients, ['foo'])
+        assert_remote_timestamp(clients, 'foo', 7000)
+
+        # delete the file again and check that it is successful
+        utils.delete_local(local_client, 'foo')
+
+        sync.sync(local_client, s3_client)
+        assert_local_keys(clients, [])
+        assert_remote_timestamp(clients, 'foo', 7000)
+
 
 class TestRunDeferredCalls(object):
     def test_empty(self, local_client, s3_client):
