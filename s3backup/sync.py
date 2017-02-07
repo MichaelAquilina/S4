@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import subprocess
+import tempfile
 
 from clint.textui import colored
 
@@ -34,6 +36,20 @@ class DeferredFunction(object):
         )
 
 
+def show_diff(client_1, client_2, key):
+    data1 = client_1.get(key).fp.read()
+    data2 = client_2.get(key).fp.read()
+    _, path1 = tempfile.mkstemp()
+    _, path2 = tempfile.mkstemp()
+    with open(path1, 'wb') as fp:
+        fp.write(data1)
+    with open(path2, 'wb') as fp:
+        fp.write(data2)
+
+    # This is a lot faster than the difflib found in python
+    subprocess.call(['diff', '-u', path1, path2])
+
+
 def sync(client_1, client_2, conflict_choice=None):
     try:
         deferred_calls, unhandled_events = get_sync_actions(client_1, client_2)
@@ -56,23 +72,14 @@ def sync(client_1, client_2, conflict_choice=None):
                         client_1.get_uri(), key, action_1.get_remote_datetime(), action_1.action,
                         client_2.get_uri(), key, action_2.get_remote_datetime(), action_2.action,
                     )
+                    while True:
+                        choice = input('Choice (default=skip): ')
+                        logger.info('')
 
-                    import subprocess
-                    import tempfile
-                    data1 = client_1.get(key).fp.read()
-                    data2 = client_2.get(key).fp.read()
-                    _, path1 = tempfile.mkstemp()
-                    _, path2 = tempfile.mkstemp()
-                    with open(path1, 'wb') as fp:
-                        fp.write(data1)
-                    with open(path2, 'wb') as fp:
-                        fp.write(data2)
-
-                    # This is a lot faster than the difflib found in python
-                    subprocess.call(['diff', '-u', path1, path2])
-
-                    choice = input('Choice (default=skip): ')
-                    logger.info('')
+                        if choice == 'd':
+                            show_diff(client_1, client_2, key)
+                        else:
+                            break
                 else:
                     choice = conflict_choice
 
