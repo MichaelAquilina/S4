@@ -72,8 +72,13 @@ def sync(client_1, client_2, conflict_choice=None):
         logger.warning('Session interrupted by Keyboard Interrupt. Aborting....')
         return
 
+    run_deferred_calls(deferred_calls, client_1, client_2)
+
+
+def run_deferred_calls(deferred_calls, client_1, client_2):
     # call everything once we know we can handle all of it
     logger.debug('There are %s total deferred calls', len(deferred_calls))
+    success = []
     try:
         for key in sorted(deferred_calls.keys()):
             deferred_function = deferred_calls[key]
@@ -81,6 +86,7 @@ def sync(client_1, client_2, conflict_choice=None):
                 deferred_function()
                 client_1.update_index_entry(key)
                 client_2.update_index_entry(key)
+                success.append(key)
             except Exception as e:
                 logger.error('An error occurred while trying to update %s: %s', key, e)
     except KeyboardInterrupt:
@@ -92,6 +98,8 @@ def sync(client_1, client_2, conflict_choice=None):
         client_2.flush_index()
     else:
         logger.info('Nothing to update')
+
+    return success
 
 
 def get_sync_actions(client_1, client_2):

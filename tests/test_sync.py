@@ -378,6 +378,27 @@ class TestIntegrations(object):
         assert_contents(clients, 'foo', b'123')
 
 
+class TestRunDeferredCalls(object):
+    def test_empty(self, local_client, s3_client):
+        assert sync.run_deferred_calls({}, local_client, s3_client) == []
+
+    def test_correct_output(self, local_client, s3_client):
+        def failing_function():
+            raise ValueError()
+
+        clients = [local_client, s3_client]
+
+        utils.set_local_contents(local_client, 'foo')
+        utils.set_s3_contents(s3_client, 'baz', timestamp=2000, data='testing')
+        success = sync.run_deferred_calls({
+            'foo': sync.DeferredFunction(sync.delete_client, local_client, 'foo', 1000),
+            'bar': sync.DeferredFunction(failing_function),
+            'baz': sync.DeferredFunction(sync.create_client, local_client, s3_client, 'baz', 2000),
+        }, local_client, s3_client)
+        assert sorted(success) == sorted(['foo', 'baz'])
+        assert_local_keys(clients, ['baz'])
+
+
 class TestMove(object):
     def test_correct_behaviour(self, local_client, s3_client):
         utils.set_s3_contents(s3_client, 'art.txt', data='swirly abstract objects')
