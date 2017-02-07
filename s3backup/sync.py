@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os
 import subprocess
 import tempfile
 
@@ -48,6 +49,8 @@ def show_diff(client_1, client_2, key):
 
     # This is a lot faster than the difflib found in python
     subprocess.call(['diff', '-u', path1, path2])
+    os.remove(path1)
+    os.remove(path2)
 
 
 def sync(client_1, client_2, conflict_choice=None):
