@@ -386,6 +386,9 @@ class TestRunDeferredCalls(object):
         def failing_function():
             raise ValueError()
 
+        def keyboard_interrupt():
+            raise KeyboardInterrupt()
+
         clients = [local_client, s3_client]
 
         utils.set_local_contents(local_client, 'foo')
@@ -393,6 +396,7 @@ class TestRunDeferredCalls(object):
         success = sync.run_deferred_calls({
             'foo': sync.DeferredFunction(sync.delete_client, local_client, 'foo', 1000),
             'bar': sync.DeferredFunction(failing_function),
+            'yap': sync.DeferredFunction(keyboard_interrupt),
             'baz': sync.DeferredFunction(sync.create_client, local_client, s3_client, 'baz', 2000),
         }, local_client, s3_client)
         assert sorted(success) == sorted(['foo', 'baz'])
