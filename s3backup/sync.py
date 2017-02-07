@@ -50,11 +50,27 @@ def sync(client_1, client_2, conflict_choice=None):
                         '\nConflict for "%s". Which version would you like to keep?\n'
                         '   (1) %s%s updated at %s (%s)\n'
                         '   (2) %s%s updated at %s (%s)\n'
-                        '   (3) Skip this file',
+                        '   (d) View diff\n'
+                        '   (X) Skip this file\n',
                         key,
                         client_1.get_uri(), key, action_1.get_remote_datetime(), action_1.action,
                         client_2.get_uri(), key, action_2.get_remote_datetime(), action_2.action,
                     )
+
+                    import subprocess
+                    import tempfile
+                    data1 = client_1.get(key).fp.read()
+                    data2 = client_2.get(key).fp.read()
+                    _, path1 = tempfile.mkstemp()
+                    _, path2 = tempfile.mkstemp()
+                    with open(path1, 'wb') as fp:
+                        fp.write(data1)
+                    with open(path2, 'wb') as fp:
+                        fp.write(data2)
+
+                    # This is a lot faster than the difflib found in python
+                    subprocess.call(['diff', '-u', path1, path2])
+
                     choice = input('Choice (default=skip): ')
                     logger.info('')
                 else:
