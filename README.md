@@ -9,7 +9,7 @@ The intention of this project is to be an open source alternative to typical pro
 Because s3backup interacts with s3 directly, you can expect very fast upload and download speeds as well as very
 cheap costs (See [Amazon S3 Pricing](https://aws.amazon.com/s3/pricing/) for an idea of how much this would cost you).
 
-Please note that because this is under heavy development you should expect incomplete features, lots
+Please note that because this project is under heavy development you should expect incomplete features, lots
 of bugs and many breaking changes between commits.
 
 Setup
