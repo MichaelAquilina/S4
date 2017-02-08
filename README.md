@@ -59,3 +59,10 @@ s3backup keeps track of changes between files with a `.index` file at the root o
 compressed (currently using gzip) to save space and increase performance when loading. Deleting this file will result
 in that folder being treated as if it was never synced before so make sure you *do not* delete it unless you know what
 you are doing.
+
+Ignoring Files
+--------------
+Create a `.syncignore` file in the root of the directory being synced to list patterns of subdirectories and files you
+wish to ignore. The `.syncignore` file uses the exact same pattern that you would expect in `.gitignore`. Each line specifies a GLOB pattern to ignore during sync.
+
+Note that if you add a pattern which matches an item that was previously synced, that item will be deleted from the target you are syncing with next time you run s3backup.
