@@ -206,6 +206,14 @@ class S3SyncClient(SyncClient):
     def get_all_index_local_timestamps(self):
         return {key: value.get('local_timestamp') for key, value in self.index.items()}
 
+    def set_md5_hash(self, key, hex_digest):
+        if key not in self.index:
+            self.index[key] = {}
+        self.index[key]['md5'] = hex_digest
+
+    def get_md5_hash(self, key):
+        return self.index.get(key, {}).get('md5')
+
     def reload_ignore_files(self):
         self.ignore_files = ['.index']
         try:

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import hashlib
 import fnmatch
 import gzip
 import json
@@ -48,6 +49,7 @@ class LocalSyncClient(SyncClient):
         return os.path.join(self.path, '.index')
 
     def put(self, key, sync_object, callback=None):
+        md5 = hashlib.md5()
         path = os.path.join(self.path, key)
 
         parent = os.path.dirname(path)
@@ -60,12 +62,14 @@ class LocalSyncClient(SyncClient):
             while True:
                 data = sync_object.fp.read(BUFFER_SIZE)
                 fp1.write(data)
+                md5.update(data)
                 if callback is not None:
                     callback(len(data))
                 if len(data) < BUFFER_SIZE:
                     break
 
         self.set_remote_timestamp(key, sync_object.timestamp)
+        self.set_md5_hash(key, md5.hex_digest())
 
     def get(self, key):
         path = os.path.join(self.path, key)
@@ -157,6 +161,14 @@ class LocalSyncClient(SyncClient):
         if key not in self.index:
             self.index[key] = {}
         self.index[key]['remote_timestamp'] = timestamp
+
+    def set_md5_hash(self, key, hex_digest):
+        if key not in self.index:
+            self.index[key] = {}
+        self.index[key]['md5'] = hex_digest
+
+    def get_md5_hash(self, key):
+        return self.index.get(key, {}).get('md5')
 
     def reload_ignore_files(self):
         self.ignore_files = ['.index']

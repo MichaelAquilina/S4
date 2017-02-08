@@ -133,6 +133,7 @@ class SyncClient(object):
             index[key] = {
                 'remote_timestamp': self.get_remote_timestamp(key),
                 'local_timestamp': self.get_real_local_timestamp(key),
+                'md5': self.get_md5_hash(key),
             }
         self.index = index
 
@@ -140,6 +141,7 @@ class SyncClient(object):
         self.index[key] = {
             'remote_timestamp': self.get_remote_timestamp(key),
             'local_timestamp': self.get_real_local_timestamp(key),
+            'md5': self.get_md5_hash(key),
         }
 
     def flush_index(self):
