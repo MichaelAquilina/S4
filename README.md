@@ -5,6 +5,10 @@ S3 Backup
 
 WIP synchronisation of local files with S3 for backup.
 
+The intention of this project is to be an open source alternative to typical proprietary sync solutions like Dropbox.
+Because s3backup interacts with s3 directly, you can expect very fast upload and download speeds as well as very
+cheap costs (See [Amazon S3 Pricing](https://aws.amazon.com/s3/pricing/) for an idea of how much this would cost you).
+
 Please note that because this is under heavy development you should expect incomplete features, lots
 of bugs and many breaking changes between commits.
 
