@@ -227,18 +227,22 @@ def get_sync_actions(client_1, client_2):
 
 
 def get_actions(client_1, client_2):
-    keys_1 = client_1.get_all_keys()
-    keys_2 = client_2.get_all_keys()
-    all_keys = set(keys_1) | set(keys_2)
+    client_1_actions = client_1.get_all_actions()
+    client_2_actions = client_2.get_all_actions()
+
+    all_keys = set(client_1_actions) | set(client_2_actions)
     logger.debug(
         '%s keys in total (%s for %s and %s for %s)',
-        len(all_keys), len(keys_1), client_1.get_uri(), len(keys_2), client_2.get_uri()
+        len(all_keys),
+        len(client_1_actions), client_1.get_uri(),
+        len(client_2_actions), client_2.get_uri()
     )
-    client_1_actions = client_1.get_actions(all_keys)
-    client_2_actions = client_2.get_actions(all_keys)
 
+    DOES_NOT_EXIST = SyncState(SyncState.DOESNOTEXIST, None, None)
     for key in sorted(all_keys):
-        yield key, client_1_actions[key], client_2_actions[key]
+        action_1 = client_1_actions.get(key, DOES_NOT_EXIST)
+        action_2 = client_2_actions.get(key, DOES_NOT_EXIST)
+        yield key, action_1, action_2
 
 
 def get_deferred_function(key, action, to_client, from_client):
