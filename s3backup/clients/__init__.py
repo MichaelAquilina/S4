@@ -155,10 +155,12 @@ class SyncClient(object):
         remote_timestamp = self.get_remote_timestamp(key)
         return get_sync_state(index_local_timestamp, real_local_timestamp, remote_timestamp)
 
-    def get_actions(self, keys):
+    def get_all_actions(self):
         real_local_timestamps = self.get_all_real_local_timestamps()
         index_local_timestamps = self.get_all_index_local_timestamps()
         remote_timestamps = self.get_all_remote_timestamps()
+
+        keys = set(real_local_timestamps) | set(index_local_timestamps)
 
         results = {}
         for key in keys:
