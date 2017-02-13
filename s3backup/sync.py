@@ -138,21 +138,21 @@ def get_sync_actions(client_1, client_2):
 
         elif action_1.action == SyncState.NOCHANGES and action_2.action == SyncState.DOESNOTEXIST:
             deferred_calls[key] = DeferredFunction(
-                update_client, client_2, client_1, key, action_1.remote_timestamp
+                create_client, client_2, client_1, key, action_1.remote_timestamp
             )
 
         elif action_2.action == SyncState.NOCHANGES and action_1.action == SyncState.DOESNOTEXIST:
             deferred_calls[key] = DeferredFunction(
-                update_client, client_1, client_2, key, action_2.remote_timestamp
+                create_client, client_1, client_2, key, action_2.remote_timestamp
             )
         elif action_1.action == SyncState.UPDATED and action_2.action == SyncState.DOESNOTEXIST:
             deferred_calls[key] = DeferredFunction(
-                update_client, client_2, client_1, key, action_1.local_timestamp
+                create_client, client_2, client_1, key, action_1.local_timestamp
             )
 
         elif action_2.action == SyncState.UPDATED and action_1.action == SyncState.DOESNOTEXIST:
             deferred_calls[key] = DeferredFunction(
-                update_client, client_2, client_1, key, action_1.local_timestamp
+                create_client, client_2, client_1, key, action_1.local_timestamp
             )
 
         elif (
