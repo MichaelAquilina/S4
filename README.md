@@ -3,10 +3,10 @@ S3 Backup
 
 [![CircleCI](https://circleci.com/gh/MichaelAquilina/s3backup.svg?style=svg)](https://circleci.com/gh/MichaelAquilina/s3backup)
 
-WIP synchronisation of local files with S3 for backup.
+Fast and cheap synchronisation of files using [Amazon S3](https://aws.amazon.com/s3/).
 
 The intention of this project is to be an open source alternative to typical proprietary sync solutions like Dropbox.
-Because s3backup interacts with s3 directly, you can expect very fast upload and download speeds as well as very
+Because s3backup interacts with s3 directly, you can expect _very_ fast upload and download speeds as well as _very_
 cheap costs (See [Amazon S3 Pricing](https://aws.amazon.com/s3/pricing/) for an idea of how much this would cost you).
 
 Please note that because this project is under heavy development you should expect incomplete features, lots
