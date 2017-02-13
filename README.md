@@ -9,6 +9,9 @@ The intention of this project is to be an open source alternative to typical pro
 Because s3backup interacts with s3 directly, you can expect _very_ fast upload and download speeds as well as _very_
 cheap costs (See [Amazon S3 Pricing](https://aws.amazon.com/s3/pricing/) for an idea of how much this would cost you).
 
+You can also take advantage of other cool features that s3 provides like [versioning](http://docs.aws.amazon.com/AmazonS3/latest/dev/Versioning.html). Everytime you sync a version of a new file,
+you will now have the ability to easily rollback to any previous version.
+
 Please note that because this project is under heavy development you should expect incomplete features, lots
 of bugs and many breaking changes between commits.
 
