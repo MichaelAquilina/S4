@@ -38,6 +38,9 @@ class LocalSyncClient(SyncClient):
         self.reload_index()
         self.reload_ignore_files()
 
+    def get_client_name(self):
+        return 'local'
+
     def __repr__(self):
         return 'LocalSyncClient<{}>'.format(self.path)
 
