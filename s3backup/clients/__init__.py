@@ -78,6 +78,9 @@ def get_sync_state(index_local, real_local, remote):
 
 
 class SyncClient(object):
+    def get_client_name(self):
+        raise NotImplemented()
+
     def get_uri(self):
         raise NotImplemented()
 

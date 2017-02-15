@@ -56,6 +56,9 @@ class S3SyncClient(SyncClient):
         self.index = self.load_index()
         self.reload_ignore_files()
 
+    def get_client_name(self):
+        return 's3'
+
     def __repr__(self):
         return 'S3SyncClient<{}, {}>'.format(self.bucket, self.prefix)
 
