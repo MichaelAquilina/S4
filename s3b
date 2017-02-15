@@ -28,8 +28,18 @@ def main():
     parser.add_argument('--log-level', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'])
     parser.add_argument('--conflicts', default=None, choices=['1', '2', 'ignore'])
 
+    subparsers = parser.add_subparsers(dest='command')
+    subparsers.add_parser('sync')
+
     args = parser.parse_args()
 
+    if args.command == 'sync':
+        sync_command(args)
+    else:
+        parser.print_help()
+
+
+def sync_command(args):
     if args.log_level == 'DEBUG':
         log_format = '%(levelname)s:%(module)s:%(lineno)s %(message)s'
     else:
