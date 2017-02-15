@@ -37,7 +37,7 @@ Create a `sync.conf` file in your `~/.config/s3backup` directory with the follow
 }
 ```
 
-Run `./sync` in the project directory to synchronise the local folders you specified with the folders in the bucket.
+Run `./s3b sync` in the project directory to synchronise the local folders you specified with the folders in the bucket.
 
 All files will be automatically synced between the source and target destinations where possible.
 
