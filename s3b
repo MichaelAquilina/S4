@@ -35,7 +35,7 @@ def main():
     subparsers.add_parser('sync')
 
     ls_parser = subparsers.add_parser('ls')
-    ls_parser.add_argument('index', type=int)  # TODO find better reference solution
+    ls_parser.add_argument('path')
 
     args = parser.parse_args()
 
@@ -101,8 +101,16 @@ def sync_command(args, config, logger):
 
 
 def ls_command(args, config, logger):
-    entry = config['directories'][args.index]
-    client_1, client_2 = get_clients(entry)
+    path = os.path.expanduser(args.path)
+    target = None
+    for entry in config['directories']:
+        if path in (entry['source'], entry['target']):
+            target = entry
+
+    if target is None:
+        print('Unknown target specified')
+
+    client_1, client_2 = get_clients(target)
 
     keys = set(client_1.index) | set(client_2.index)
 
