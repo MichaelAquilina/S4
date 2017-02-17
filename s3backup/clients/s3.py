@@ -53,8 +53,8 @@ class S3SyncClient(SyncClient):
         self.boto = boto
         self.bucket = bucket
         self.prefix = prefix
-        self.index = self.load_index()
         self.reload_ignore_files()
+        self.index = self.load_index()
 
     def get_client_name(self):
         return 's3'
@@ -110,15 +110,20 @@ class S3SyncClient(SyncClient):
             content_type = magic.from_buffer(body, mime=True)
             if content_type == 'text/plain':
                 logger.debug('Detected plain text encoding for index')
-                return json.loads(body.decode('utf-8'))
+                data = json.loads(body.decode('utf-8'))
             elif content_type == 'application/zlib':
                 logger.debug('Detected zlib encoding for index')
                 body = zlib.decompress(body)
-                return json.loads(body.decode('utf-8'))
+                data = json.loads(body.decode('utf-8'))
             elif content_type == 'application/x-empty':
-                return {}
+                data = {}
             else:
                 raise ValueError('Unknown content type for index', content_type)
+
+            # Filter out keys which are ignored if they happened to have been stored before
+            data = {k: v for k, v in data.items() if not is_ignored_key(k, self.ignore_files)}
+
+            return data
         except (ClientError):
             return {}
 
