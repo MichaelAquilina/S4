@@ -108,7 +108,8 @@ def ls_command(args, config, logger):
             target = entry
 
     if target is None:
-        print('Unknown target specified')
+        print('Target specified is not a synced directory')
+        return
 
     client_1, client_2 = get_clients(target)
 
