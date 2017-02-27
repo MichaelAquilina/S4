@@ -5,6 +5,8 @@ import gzip
 import json
 import logging
 import os
+import shutil
+import tempfile
 
 import magic
 
@@ -58,15 +60,21 @@ class LocalSyncClient(SyncClient):
             os.makedirs(parent)
 
         BUFFER_SIZE = 4096
+        _, temp_path = tempfile.mkstemp()
 
-        with open(path, 'wb') as fp1:
-            while True:
-                data = sync_object.fp.read(BUFFER_SIZE)
-                fp1.write(data)
-                if callback is not None:
-                    callback(len(data))
-                if len(data) < BUFFER_SIZE:
-                    break
+        try:
+            with open(temp_path, 'wb') as fp1:
+                while True:
+                    data = sync_object.fp.read(BUFFER_SIZE)
+                    fp1.write(data)
+                    if callback is not None:
+                        callback(len(data))
+                    if len(data) < BUFFER_SIZE:
+                        break
+            shutil.move(temp_path, path)
+        except Exception:
+            os.remove(temp_path)
+            raise
 
         self.set_remote_timestamp(key, sync_object.timestamp)
 

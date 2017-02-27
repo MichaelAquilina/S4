@@ -5,6 +5,8 @@ import os
 import shutil
 import tempfile
 
+import pytest
+
 from s3backup.clients import local, SyncObject
 import utils
 
@@ -284,6 +286,17 @@ class TestLocalSyncClient(object):
         }
         actual_output = local_client.get_all_remote_timestamps()
         assert actual_output == expected_output
+
+    def test_interrupted_put(self, local_client):
+        utils.set_local_contents(local_client, 'keychain', data='iamsomedatathatexists')
+
+        sync_object = SyncObject(utils.InterruptedBytesIO(), 900000, 3000)
+
+        with pytest.raises(ValueError):
+            local_client.put('keychain', sync_object)
+
+        result = local_client.get('keychain')
+        assert result.fp.read() == b'iamsomedatathatexists'
 
     def test_ignore_files(self, local_client):
         utils.set_local_contents(local_client, '.syncignore', timestamp=3200, data=(
