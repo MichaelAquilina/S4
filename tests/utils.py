@@ -6,6 +6,25 @@ import os
 import freezegun
 
 
+class InterruptedBytesIO(object):
+    """
+    Test helper class that imitates a BytesIO stream. Will return a stream of 0s for
+    every requested read. When the number of times read was read reaches the parameter
+    value of `interrupt_at`, a ValueError will be raised to simulate an interrupted IO
+    transfer that could have occured
+    """
+    def __init__(self, interrupt_at=1):
+        self.index = 0
+        self.interrupt_at = interrupt_at
+
+    def read(self, size):
+        if self.index == self.interrupt_at:
+            raise ValueError('Interrupted IO')
+        else:
+            self.index += 1
+            return b'0' * size
+
+
 def write_local(path, data=''):
     parent = os.path.dirname(path)
     if not os.path.exists(parent):
