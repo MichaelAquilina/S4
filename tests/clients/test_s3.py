@@ -306,6 +306,17 @@ class TestS3SyncClient(object):
         }
         assert s3_client.index == expected_index
 
+    def test_interrupted_put(self, s3_client):
+        utils.set_s3_contents(s3_client, 'keychain', data='iamsomedatathatexists')
+
+        sync_object = SyncObject(utils.InterruptedBytesIO(), 900000, 3000)
+
+        with pytest.raises(ValueError):
+            s3_client.put('keychain', sync_object)
+
+        result = s3_client.get('keychain')
+        assert result.fp.read() == b'iamsomedatathatexists'
+
     def test_ignore_files(self, s3_client):
         utils.set_s3_contents(
             s3_client, '.syncignore', timestamp=4000, data=(
