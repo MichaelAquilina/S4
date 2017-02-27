@@ -107,7 +107,7 @@ class LocalSyncClient(SyncClient):
         if content_type == 'text/plain':
             logger.debug('Detected plaintext encoding for reading index')
             method = open
-        elif content_type == 'application/gzip':
+        elif content_type in ('application/gzip', 'application/x-gzip'):
             logger.debug('Detected gzip encoding for reading index')
             method = gzip.open
         else:
