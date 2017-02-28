@@ -39,7 +39,9 @@ def main():
     parser.add_argument('--conflicts', default=None, choices=['1', '2', 'ignore'])
 
     subparsers = parser.add_subparsers(dest='command')
-    subparsers.add_parser('sync')
+    sync_parser = subparsers.add_parser('sync')
+    sync_parser.add_argument('targets', nargs='*')
+
     subparsers.add_parser('add')
 
     ls_parser = subparsers.add_parser('ls')
@@ -108,8 +110,14 @@ def get_clients(entry):
 
 
 def sync_command(args, config, logger):
+    if args.targets == []:
+        targets = config['targets'].keys()
+    else:
+        targets = args.targets
+
     try:
-        for name, entry in config['targets'].items():
+        for name in targets:
+            entry = config['targets'][name]
             client_1, client_2 = get_clients(entry)
 
             logger.info('Syncing %s [%s <=> %s]', name, client_1.get_uri(), client_2.get_uri())
