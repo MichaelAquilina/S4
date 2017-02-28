@@ -110,7 +110,7 @@ def get_clients(entry):
 
 
 def sync_command(args, config, logger):
-    if args.targets == []:
+    if not args.targets:
         targets = config['targets'].keys()
     else:
         targets = args.targets
