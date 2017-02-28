@@ -43,7 +43,7 @@ def main():
     subparsers.add_parser('add')
 
     ls_parser = subparsers.add_parser('ls')
-    ls_parser.add_argument('path')
+    ls_parser.add_argument('target')
 
     args = parser.parse_args()
 
@@ -142,16 +142,7 @@ def add_command(args, config, logger):
 
 
 def ls_command(args, config, logger):
-    path = os.path.expanduser(args.path)
-    target = None
-    for entry in config['directories']:
-        if path in (entry['source'], entry['target']):
-            target = entry
-
-    if target is None:
-        print('Target specified is not a synced directory')
-        return
-
+    target = config['directories'][args.target]
     client_1, client_2 = get_clients(target)
 
     keys = set(client_1.index) | set(client_2.index)
