@@ -18,23 +18,15 @@ of bugs and many breaking changes between commits.
 Setup
 -----
 
-First, [configure boto3 to use appropriate aws credentials](https://boto3.readthedocs.io/en/latest/guide/configuration.html).
-
-Create a `sync.conf` file in your `~/.config/s3backup` directory with the following JSON structure:
-
-```json
-{
-  "directories": [
-    {
-      "source": "/home/username/myfolder1",
-      "target": "s3://mybucket/myfolder1"
-    },
-    {
-      "source": "/home/username/myfolder2",
-      "target": "s3://mybucket/myfolder2"
-    }
-  ]
-}
+First, run `./s3b add` to add a new sync local folder and target s3 uri:
+```
+$ ./s3b sync
+local folder: /home/michael/Documents
+s3 uri: s3://mys3bucket/Documents
+AWS Access Key ID: AKIAJD53D9GCGKCD
+AWS Secret Access Key:
+region name: eu-west-2
+Provide a name for this entry [Documents]:
 ```
 
 Run `./s3b sync` in the project directory to synchronise the local folders you specified with the folders in the bucket.
