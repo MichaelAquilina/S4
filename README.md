@@ -20,7 +20,7 @@ Setup
 
 First, run `./s3b add` to add a new sync local folder and target s3 uri:
 ```
-$ ./s3b sync
+$ ./s3b add
 local folder: /home/michael/Documents
 s3 uri: s3://mys3bucket/Documents
 AWS Access Key ID: AKIAJD53D9GCGKCD
@@ -34,7 +34,7 @@ Run `./s3b sync` in the project directory to synchronise the local folders you s
 All files will be automatically synced between the source and target destinations where possible.
 
 ```
-Syncing /home/username/myfolder1/ with s3://mybucket/folder1/
+Syncing myfolder1 [/home/username/myfolder1/ <=> s3://mybucket/folder1/
 Creating foobar.jpg (/home/username/myfolder1/ => s3://mybucket/folder1/)
 Creating boarding-pass.pdf (/home/username/myfolder1/ => s3://mybucket/folder1/)
 Flushing Index to Storage
