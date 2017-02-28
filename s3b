@@ -109,7 +109,7 @@ def get_clients(entry):
 
 def sync_command(args, config, logger):
     try:
-        for name, entry in config['directories'].items():
+        for name, entry in config['targets'].items():
             client_1, client_2 = get_clients(entry)
 
             logger.info('[%s]: Syncing %s with %s', name, client_1.get_uri(), client_2.get_uri())
@@ -133,16 +133,16 @@ def add_command(args, config, logger):
     if not name:
         name = default_name
 
-    if 'directories' not in config:
-        config['directories'] = {}
+    if 'targets' not in config:
+        config['targets'] = {}
 
-    config['directories'][name] = entry
+    config['targets'][name] = entry
 
     set_config(config)
 
 
 def ls_command(args, config, logger):
-    target = config['directories'][args.target]
+    target = config['targets'][args.target]
     client_1, client_2 = get_clients(target)
 
     keys = set(client_1.index) | set(client_2.index)
