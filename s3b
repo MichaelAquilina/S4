@@ -110,13 +110,18 @@ def get_clients(entry):
 
 
 def sync_command(args, config, logger):
+    all_targets = list(config['targets'].keys())
     if not args.targets:
-        targets = config['targets'].keys()
+        targets = all_targets
     else:
         targets = args.targets
 
     try:
         for name in targets:
+            if name not in config['targets']:
+                logger.info('"%s" is an unknown target. Choices are: %s', name, all_targets)
+                continue
+
             entry = config['targets'][name]
             client_1, client_2 = get_clients(entry)
 
