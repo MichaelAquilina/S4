@@ -30,7 +30,7 @@ def get_s3_client(target, aws_access_key_id, aws_secret_access_key, region_name)
 
 
 def get_local_client(target):
-        return local.LocalSyncClient(target)
+    return local.LocalSyncClient(target)
 
 
 def main():
@@ -139,7 +139,11 @@ def sync_command(args, config, logger):
 
 
 def targets_command(args, config, logger):
-    for name, entry in config['targets'].items():
+    if 'targets' not in config:
+        return
+
+    for name in sorted(config['targets']):
+        entry = config['targets'][name]
         logger.info('%s: [%s <=> %s]', name, entry['local_folder'], entry['s3_uri'])
 
 
