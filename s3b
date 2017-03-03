@@ -167,6 +167,11 @@ def add_command(args, config, logger):
 
 
 def edit_command(args, config, logger):
+    if 'targets' not in config or args.name not in config['targets']:
+        logger.info('Target "%s" not found', args.name)
+        logger.info('Use the "add" command to add a new target')
+        return
+
     entry = config['targets'][args.name]
 
     local_folder = entry['local_folder']
