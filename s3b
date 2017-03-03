@@ -139,7 +139,8 @@ def sync_command(args, config, logger):
 
 
 def targets_command(args, config, logger):
-    logger.info(list(config['targets'].keys()))
+    for name, entry in config['targets'].items():
+        logger.info('%s: [%s <=> %s]', name, entry['local_folder'], entry['s3_uri'])
 
 
 def add_command(args, config, logger):
