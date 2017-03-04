@@ -207,9 +207,14 @@ def edit_command(args, config, logger):
 
 
 def ls_command(args, config, logger):
+    if 'targets' not in config:
+        logger.info('You have not added any targets yet')
+        logger.info('Use the "add" command to do this')
+        return
     if args.target not in config['targets']:
-        all_targets = config['targets'].keys()
-        logger.info('"%s" is an unknown target. Choices are: %s', args.target, all_targets)
+        all_targets = sorted(list(config['targets'].keys()))
+        logger.info('"%s" is an unknown target', args.target)
+        logger.info('Choices are: %s', all_targets)
         return
 
     target = config['targets'][args.target]
