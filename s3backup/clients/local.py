@@ -125,8 +125,11 @@ class LocalSyncClient(SyncClient):
             logger.debug('Using plaintext encoding for writing index')
             method = open
 
-        with method(self.index_path(), 'wt') as fp:
+        _, temp_path = tempfile.mkstemp()
+        with method(temp_path, 'wt') as fp:
             json.dump(self.index, fp)
+
+        shutil.move(temp_path, self.index_path())
 
     def get_local_keys(self):
         return list(traverse(self.path, ignore_files=self.ignore_files))
