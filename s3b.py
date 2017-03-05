@@ -45,7 +45,7 @@ def main():
     subparsers.add_parser('targets')
     subparsers.add_parser('add')
     edit_parser = subparsers.add_parser('edit')
-    edit_parser.add_argument('name')
+    edit_parser.add_argument('target')
 
     ls_parser = subparsers.add_parser('ls')
     ls_parser.add_argument('target')
@@ -171,12 +171,18 @@ def add_command(args, config, logger):
 
 
 def edit_command(args, config, logger):
-    if 'targets' not in config or args.name not in config['targets']:
-        logger.info('Target "%s" not found', args.name)
-        logger.info('Use the "add" command to add a new target')
+    if 'targets' not in config:
+        logger.info('You have not added any targets yet')
+        logger.info('Use the "add" command to do this')
         return
 
-    entry = config['targets'][args.name]
+    if args.target not in config['targets']:
+        all_targets = sorted(list(config['targets'].keys()))
+        logger.info('"%s" is an unknown target', args.target)
+        logger.info('Choices are: %s', all_targets)
+        return
+
+    entry = config['targets'][args.target]
 
     local_folder = entry.get('local_folder', '')
     s3_uri = entry.get('s3_uri', '')
@@ -201,7 +207,7 @@ def edit_command(args, config, logger):
     if new_region_name:
         entry['region_name'] = new_region_name
 
-    config['targets'][args.name] = entry
+    config['targets'][args.target] = entry
 
     set_config(config)
 

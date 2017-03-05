@@ -34,6 +34,29 @@ def get_timestamp(year, month, day, hour, minute):
     )
 
 
+class TestEditCommand(object):
+    def test_no_targets(self, logger):
+        s3b.edit_command(None, {}, logger)
+        expected_result = (
+            'You have not added any targets yet\n'
+            'Use the "add" command to do this\n'
+        )
+        assert get_stream_value(logger) == expected_result
+
+    def test_missing_target(self, logger):
+        args = argparse.Namespace(target='idontexist')
+        config = {
+            'targets': {'foo': {}}
+        }
+        s3b.edit_command(args, config, logger)
+
+        expected_result = (
+            '"idontexist" is an unknown target\n'
+            'Choices are: [\'foo\']\n'
+        )
+        assert get_stream_value(logger) == expected_result
+
+
 class TestLsCommand(object):
     def test_empty_config(self, logger):
         args = argparse.Namespace(target='idontexist')
