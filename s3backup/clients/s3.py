@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import collections
-import datetime
 import fnmatch
 import json
 import logging
@@ -11,7 +10,7 @@ from botocore.exceptions import ClientError
 
 import magic
 
-from s3backup.clients import SyncClient, SyncObject
+from s3backup.clients import SyncClient, SyncObject, utils
 
 
 logger = logging.getLogger(__name__)
@@ -41,11 +40,6 @@ def is_ignored_key(key, ignore_files):
             return True
     else:
         return False
-
-
-def to_timestamp(dt):
-    epoch = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
-    return (dt - epoch) / datetime.timedelta(seconds=1)
 
 
 class S3SyncClient(SyncClient):
@@ -86,7 +80,7 @@ class S3SyncClient(SyncClient):
             return SyncObject(
                 resp['Body'],
                 resp['ContentLength'],
-                to_timestamp(resp['LastModified']),
+                utils.to_timestamp(resp['LastModified']),
             )
         except ClientError:
             return None
@@ -165,7 +159,7 @@ class S3SyncClient(SyncClient):
                 Bucket=self.bucket,
                 Key=os.path.join(self.prefix, key),
             )
-            return to_timestamp(response['LastModified'])
+            return utils.to_timestamp(response['LastModified'])
         except ClientError:
             return None
 
@@ -199,7 +193,7 @@ class S3SyncClient(SyncClient):
             for obj in page.get('Contents', []):
                 key = os.path.relpath(obj['Key'], self.prefix)
                 if not is_ignored_key(key, self.ignore_files):
-                    result[key] = to_timestamp(obj['LastModified'])
+                    result[key] = utils.to_timestamp(obj['LastModified'])
 
         return result
 

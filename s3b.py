@@ -237,7 +237,7 @@ def ls_command(args, config, logger):
                 datetime.datetime.utcfromtimestamp(int(ts_2)) if ts_2 is not None else None,
             ))
 
-    print(tabulate(data, headers=['Key', client_1.get_client_name(), client_2.get_client_name()]))
+    logger.info(tabulate(data, headers=['Key', client_1.get_client_name(), client_2.get_client_name()]))
 
 
 if __name__ == '__main__':

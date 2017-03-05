@@ -3,10 +3,15 @@
 import argparse
 import io
 import logging
+from datetime import datetime
 
 import pytest
+import pytz
 
 import s3b
+
+from s3backup.clients.utils import to_timestamp
+import utils
 
 
 @pytest.fixture
@@ -21,6 +26,12 @@ def logger():
 
 def get_stream_value(logger):
     return logger.handlers[0].stream.getvalue()
+
+
+def get_timestamp(year, month, day, hour, minute):
+    return to_timestamp(
+        datetime(year, month, day, hour, minute, tzinfo=pytz.UTC)
+    )
 
 
 class TestLsCommand(object):
@@ -45,6 +56,73 @@ class TestLsCommand(object):
         expected_result = (
             '"idontexist" is an unknown target\n'
             'Choices are: [\'bar\', \'foo\']\n'
+        )
+        assert get_stream_value(logger) == expected_result
+
+    def test_correct_output_empty(self, s3_client, local_client, logger):
+        config = {
+            'targets': {
+                'foo': {
+                    'local_folder': local_client.get_uri(),
+                    's3_uri': s3_client.get_uri(),
+                    'aws_access_key_id': '',
+                    'aws_secret_access_key': '',
+                    'region_name': 'eu-west-2',
+                }
+            }
+        }
+
+        args = argparse.Namespace(target='foo')
+        s3b.ls_command(args, config, logger)
+
+        expected_result = (
+            'Key    local    s3\n'
+            '-----  -------  ----\n'
+        )
+        assert get_stream_value(logger) == expected_result
+
+    def test_correct_output_nonempty(self, s3_client, local_client, logger):
+        config = {
+            'targets': {
+                'foo': {
+                    'local_folder': local_client.get_uri(),
+                    's3_uri': s3_client.get_uri(),
+                    'aws_access_key_id': '',
+                    'aws_secret_access_key': '',
+                    'region_name': 'eu-west-2',
+                }
+            }
+        }
+        utils.set_s3_index(s3_client, {
+            'milk': {
+                'local_timestamp': get_timestamp(1989, 10, 23, 11, 30)
+            },
+            'honey': {
+                'local_timestamp': get_timestamp(2016, 12, 12, 8, 30)
+            },
+        })
+        utils.set_local_index(local_client, {
+            'milk': {
+                'local_timestamp': get_timestamp(2016, 12, 12, 8, 30)
+            },
+            'honey': {
+                'local_timestamp': get_timestamp(2016, 11, 10, 18, 40)
+            },
+            'lemon': {
+                'local_timestamp': get_timestamp(2017, 2, 2, 8, 30)
+            },
+        })
+
+        args = argparse.Namespace(target='foo')
+        s3b.ls_command(args, config, logger)
+
+        expected_result = (
+            'Key    local                s3\n'
+            '-----  -------------------  -------------------\n'
+            'honey  2016-11-10 18:40:00  2016-12-12 08:30:00\n'
+            'lemon  2017-02-02 08:30:00\n'
+            'milk   2016-12-12 08:30:00  1989-10-23 11:30:00\n'
+
         )
         assert get_stream_value(logger) == expected_result
 

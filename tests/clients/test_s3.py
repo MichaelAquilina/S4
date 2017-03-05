@@ -14,6 +14,7 @@ from moto import mock_s3
 import pytest
 
 from s3backup.clients import s3, SyncObject
+from s3backup.clients.utils import to_timestamp
 import utils
 
 
@@ -99,7 +100,7 @@ class TestS3SyncClient(object):
         # then
         assert output_object.fp.read() == data
         assert output_object.total_size == len(data)
-        assert output_object.timestamp == s3.to_timestamp(frozen_time)
+        assert output_object.timestamp == to_timestamp(frozen_time)
 
     def test_get_non_existant(self, s3_client):
         assert s3_client.get('idontexist.md') is None
@@ -117,7 +118,7 @@ class TestS3SyncClient(object):
         # then
         output_object = s3_client.get('something/woosh.gif')
         assert output_object.fp.read() == data
-        assert output_object.timestamp == s3.to_timestamp(frozen_time)
+        assert output_object.timestamp == to_timestamp(frozen_time)
 
     def test_delete(self, s3_client):
         # given
