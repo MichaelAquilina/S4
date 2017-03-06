@@ -10,7 +10,8 @@ from botocore.exceptions import ClientError
 
 import magic
 
-from s3backup.clients import SyncClient, SyncObject, utils
+from s3backup import utils
+from s3backup.clients import SyncClient, SyncObject
 
 
 logger = logging.getLogger(__name__)
