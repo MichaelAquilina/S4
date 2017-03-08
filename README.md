@@ -35,7 +35,7 @@ All files will be automatically synced between the source and target destination
 
 ```
 $ ./s3b sync
-Syncing myfolder1 [/home/username/myfolder1/ <=> s3://mybucket/folder1/
+Syncing myfolder1 [/home/username/myfolder1/ <=> s3://mybucket/folder1/]
 Creating foobar.jpg (/home/username/myfolder1/ => s3://mybucket/folder1/)
 Creating boarding-pass.pdf (/home/username/myfolder1/ => s3://mybucket/folder1/)
 Flushing Index to Storage
