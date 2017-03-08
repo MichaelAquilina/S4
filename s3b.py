@@ -2,7 +2,6 @@
 
 import argparse
 import datetime
-import getpass
 import os
 import json
 import logging
@@ -12,6 +11,7 @@ import boto3
 from tabulate import tabulate
 
 from s3backup import sync
+from s3backup import utils
 from s3backup.clients import local, s3
 
 
@@ -150,14 +150,14 @@ def targets_command(args, config, logger):
 def add_command(args, config, logger):
     entry = {}
 
-    entry['local_folder'] = input('local folder: ')
-    entry['s3_uri'] = input('s3 uri: ')
-    entry['aws_access_key_id'] = input('AWS Access Key ID: ')
-    entry['aws_secret_access_key'] = getpass.getpass('AWS Secret Access Key: ')
-    entry['region_name'] = input('region name: ')
+    entry['local_folder'] = utils.get_input('local folder: ')
+    entry['s3_uri'] = utils.get_input('s3 uri: ')
+    entry['aws_access_key_id'] = utils.get_input('AWS Access Key ID: ')
+    entry['aws_secret_access_key'] = utils.get_input('AWS Secret Access Key: ', secret=True)
+    entry['region_name'] = utils.get_input('region name: ')
 
     default_name = os.path.basename(entry['s3_uri'])
-    name = input('Provide a name for this entry [{}]: '.format(default_name))
+    name = utils.get_input('Provide a name for this entry [{}]: '.format(default_name))
 
     if not name:
         name = default_name
@@ -190,11 +190,11 @@ def edit_command(args, config, logger):
     aws_secret_access_key = entry.get('aws_secret_access_key')
     region_name = entry.get('region_name')
 
-    new_local_folder = input('local folder [{}]: '.format(local_folder))
-    new_s3_uri = input('s3 uri [{}]: '.format(s3_uri))
-    new_aws_access_key_id = input('AWS Access Key ID [{}]: '.format(aws_access_key_id))
-    new_aws_secret_access_key = getpass.getpass('AWS Secret Access Key [{}]: '.format(aws_secret_access_key))
-    new_region_name = input('region name [{}]: '.format(region_name))
+    new_local_folder = utils.get_input('local folder [{}]: '.format(local_folder))
+    new_s3_uri = utils.get_input('s3 uri [{}]: '.format(s3_uri))
+    new_aws_access_key_id = utils.get_input('AWS Access Key ID [{}]: '.format(aws_access_key_id))
+    new_aws_secret_access_key = utils.get_input('AWS Secret Access Key [{}]: '.format(aws_secret_access_key), secret=True)
+    new_region_name = utils.get_input('region name [{}]: '.format(region_name))
 
     if new_local_folder:
         entry['local_folder'] = new_local_folder
