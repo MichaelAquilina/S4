@@ -2,16 +2,41 @@
 
 import argparse
 import io
+import json
 import logging
+import os
+import tempfile
 from datetime import datetime
 
+import mock
 import pytest
 import pytz
 
 import s3b
 
-from s3backup.clients.utils import to_timestamp
+from s3backup.utils import to_timestamp
 import utils
+
+
+class FakeInputStream(object):
+    def __init__(self, results):
+        self.results = results
+        self.index = 0
+
+    def __call__(self, *args, **kwargs):
+        output = self.results[self.index]
+        self.index += 1
+        return output
+
+
+@pytest.yield_fixture
+def config_file():
+    _, temp_path = tempfile.mkstemp()
+    mocker = mock.patch('s3b.CONFIG_FILE_PATH', temp_path)
+    mocker.start()
+    yield temp_path
+    mocker.stop()
+    os.remove(temp_path)
 
 
 @pytest.fixture
@@ -55,6 +80,40 @@ class TestEditCommand(object):
             'Choices are: [\'foo\']\n'
         )
         assert get_stream_value(logger) == expected_result
+
+
+@mock.patch('s3backup.utils.get_input')
+@mock.patch('getpass.getpass')
+class TestAddCommand(object):
+    def test_correct_behaviour(self, get_input, getpass, logger, config_file):
+        fake_stream = FakeInputStream([
+            '/home/user/Documents',
+            's3://mybucket/Documents',
+            'aaaaaaaaaaaaaaaaaaaaaaaa',
+            'bbbbbbbbbbbbbbbbbbbbbbbb',
+            'eu-west-2',
+            '',
+        ])
+        getpass.side_effect = fake_stream
+        get_input.side_effect = fake_stream
+
+        s3b.add_command(None, {}, logger)
+
+        with open(config_file, 'r') as fp:
+            new_config = json.load(fp)
+
+        expected_config = {
+            'targets': {
+                'Documents': {
+                    'local_folder': '/home/user/Documents',
+                    's3_uri': 's3://mybucket/Documents',
+                    'aws_access_key_id': 'aaaaaaaaaaaaaaaaaaaaaaaa',
+                    'aws_secret_access_key': 'bbbbbbbbbbbbbbbbbbbbbbbb',
+                    'region_name': 'eu-west-2'
+                }
+            }
+        }
+        assert new_config == expected_config
 
 
 class TestLsCommand(object):
