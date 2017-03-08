@@ -59,8 +59,9 @@ def get_timestamp(year, month, day, hour, minute):
     )
 
 
+@mock.patch('s3backup.utils.get_input')
 class TestEditCommand(object):
-    def test_no_targets(self, logger):
+    def test_no_targets(self, get_input, logger):
         s3b.edit_command(None, {}, logger)
         expected_result = (
             'You have not added any targets yet\n'
@@ -68,7 +69,7 @@ class TestEditCommand(object):
         )
         assert get_stream_value(logger) == expected_result
 
-    def test_missing_target(self, logger):
+    def test_missing_target(self, get_input, logger):
         args = argparse.Namespace(target='idontexist')
         config = {
             'targets': {'foo': {}}
@@ -80,6 +81,42 @@ class TestEditCommand(object):
             'Choices are: [\'foo\']\n'
         )
         assert get_stream_value(logger) == expected_result
+
+    def test_correct_output(self, get_input, logger, config_file):
+        fake_stream = FakeInputStream([
+            '/home/user/Documents',
+            '',
+            '',
+            'bbbbbbbbbbbbbbbbbbbbbbbb',
+            'eu-west-2',
+        ])
+        get_input.side_effect = fake_stream
+
+        args = argparse.Namespace(target='foo')
+        config = {
+            'targets': {'foo': {
+                'local_folder': '/home/mark/documents',
+                's3_uri': 's3://buckets/mybackup',
+                'aws_access_key_id': '23123123123313',
+                'aws_secret_access_key': 'edwdadwadwadwdd',
+                'region_name': 'eu-west-1',
+            }}
+        }
+        s3b.edit_command(args, config, logger)
+
+        with open(config_file, 'r') as fp:
+            config = json.load(fp)
+
+        expected_config = {
+            'targets': {'foo': {
+                'local_folder': '/home/user/Documents',
+                's3_uri': 's3://buckets/mybackup',
+                'aws_access_key_id': '23123123123313',
+                'aws_secret_access_key': 'bbbbbbbbbbbbbbbbbbbbbbbb',
+                'region_name': 'eu-west-2',
+            }}
+        }
+        assert expected_config == config
 
 
 @mock.patch('s3backup.utils.get_input')
