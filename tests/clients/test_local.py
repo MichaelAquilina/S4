@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import gzip
 import io
+import json
 import os
 import shutil
 import tempfile
@@ -297,6 +299,26 @@ class TestLocalSyncClient(object):
 
         result = local_client.get('keychain')
         assert result.fp.read() == b'iamsomedatathatexists'
+
+    @pytest.mark.parametrize(['compressed', 'method'], [
+        (True, gzip.open),
+        (False, open),
+    ])
+    def test_flush_index(self, compressed, method, local_client):
+        target_index = {
+            'foo': {
+                'local_timestamp': 4000,
+                'remote_timestamp': 6000,
+            }
+        }
+
+        local_client.index = target_index
+        local_client.flush_index(compressed=compressed)
+
+        with method(local_client.index_path(), 'rt') as fp:
+            index = json.load(fp)
+
+        assert index == target_index
 
     def test_ignore_files(self, local_client):
         utils.set_local_contents(local_client, '.syncignore', timestamp=3200, data=(
