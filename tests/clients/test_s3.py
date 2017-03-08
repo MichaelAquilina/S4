@@ -14,7 +14,7 @@ from moto import mock_s3
 import pytest
 
 from s3backup.clients import s3, SyncObject
-from s3backup.clients.utils import to_timestamp
+from s3backup.utils import to_timestamp
 import utils
 
 
