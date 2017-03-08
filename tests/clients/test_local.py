@@ -7,6 +7,7 @@ import os
 import shutil
 import tempfile
 
+import mock
 import pytest
 
 from s3backup.clients import local, SyncObject
@@ -316,6 +317,28 @@ class TestLocalSyncClient(object):
         local_client.flush_index(compressed=compressed)
 
         with method(local_client.index_path(), 'rt') as fp:
+            index = json.load(fp)
+
+        assert index == target_index
+
+    def test_interrupted_flush_index(self, local_client):
+        target_index = {
+            'red': {
+                'local_timestamp': 4000,
+                'remote_timestamp': 4000,
+            }
+        }
+
+        utils.set_local_index(local_client, target_index)
+
+        local_client.index = {'invalid_data': []}
+
+        with mock.patch('json.dump') as json_dump:
+            json_dump.side_effect = ValueError('something went wrong')
+            with pytest.raises(ValueError):
+                local_client.flush_index(compressed=False)
+
+        with open(local_client.index_path(), 'rt') as fp:
             index = json.load(fp)
 
         assert index == target_index
