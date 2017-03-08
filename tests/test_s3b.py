@@ -83,9 +83,8 @@ class TestEditCommand(object):
 
 
 @mock.patch('s3backup.utils.get_input')
-@mock.patch('getpass.getpass')
 class TestAddCommand(object):
-    def test_correct_behaviour(self, get_input, getpass, logger, config_file):
+    def test_correct_behaviour(self, get_input, logger, config_file):
         fake_stream = FakeInputStream([
             '/home/user/Documents',
             's3://mybucket/Documents',
@@ -94,7 +93,6 @@ class TestAddCommand(object):
             'eu-west-2',
             '',
         ])
-        getpass.side_effect = fake_stream
         get_input.side_effect = fake_stream
 
         s3b.add_command(None, {}, logger)
