@@ -113,6 +113,35 @@ class TestAddCommand(object):
         }
         assert new_config == expected_config
 
+    def test_custom_target_name(self, get_input, logger, config_file):
+        fake_stream = FakeInputStream([
+            '/home/user/Music',
+            's3://mybucket/Musiccccc',
+            '1234567890',
+            'abcdefghij',
+            'us-west-1',
+            'Tunes',
+        ])
+        get_input.side_effect = fake_stream
+
+        s3b.add_command(None, {}, logger)
+
+        with open(config_file, 'r') as fp:
+            new_config = json.load(fp)
+
+        expected_config = {
+            'targets': {
+                'Tunes': {
+                    'local_folder': '/home/user/Music',
+                    's3_uri': 's3://mybucket/Musiccccc',
+                    'aws_access_key_id': '1234567890',
+                    'aws_secret_access_key': 'abcdefghij',
+                    'region_name': 'us-west-1'
+                }
+            }
+        }
+        assert new_config == expected_config
+
 
 class TestLsCommand(object):
     def test_empty_config(self, logger):
