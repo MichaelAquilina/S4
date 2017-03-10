@@ -193,7 +193,10 @@ def edit_command(args, config, logger):
     new_local_folder = utils.get_input('local folder [{}]: '.format(local_folder))
     new_s3_uri = utils.get_input('s3 uri [{}]: '.format(s3_uri))
     new_aws_access_key_id = utils.get_input('AWS Access Key ID [{}]: '.format(aws_access_key_id))
-    new_aws_secret_access_key = utils.get_input('AWS Secret Access Key [{}]: '.format(aws_secret_access_key), secret=True)
+
+    secret_key_prompt = 'AWS Secret Access Key [{}]: '.format(aws_secret_access_key)
+    new_aws_secret_access_key = utils.get_input(secret_key_prompt, secret=True)
+
     new_region_name = utils.get_input('region name [{}]: '.format(region_name))
 
     if new_local_folder:
