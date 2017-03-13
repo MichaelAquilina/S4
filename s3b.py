@@ -15,7 +15,8 @@ from s3backup import utils
 from s3backup.clients import local, s3
 
 
-CONFIG_FILE_PATH = os.path.expanduser('~/.config/s3backup/sync.conf')
+CONFIG_FOLDER_PATH = os.path.expanduser('~/.config/s3backup')
+CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, 'sync.conf')
 
 
 def get_s3_client(target, aws_access_key_id, aws_secret_access_key, region_name):
@@ -94,6 +95,9 @@ def get_config():
 
 
 def set_config(config):
+    if not os.path.exists(CONFIG_FOLDER_PATH):
+        os.makedirs(CONFIG_FOLDER_PATH)
+
     with open(CONFIG_FILE_PATH, 'w') as fp:
         json.dump(config, fp, indent=4)
 
