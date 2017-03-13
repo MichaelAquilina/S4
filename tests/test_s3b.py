@@ -300,3 +300,45 @@ class TestTargetsCommand(object):
             'Studies: [/media/backup/Studies <=> s3://something/something/Studies]\n'
         )
         assert get_stream_value(logger) == expected_result
+
+
+class TestRemoveCommand(object):
+    def test_empty(self, logger, config_file):
+        args = argparse.Namespace(target='foo')
+        s3b.remove_command(args, {}, logger)
+
+        expected_output = (
+            'You have not added any targets yet\n'
+        )
+        assert get_stream_value(logger) == expected_output
+
+    def test_missing(self, logger, config_file):
+        args = argparse.Namespace(target='foo')
+        s3b.remove_command(args, {
+            'targets': {
+                'bar': {}
+            }
+        }, logger)
+
+        expected_output = (
+            '"foo" is an unknown target\n'
+            'Choices are: [\'bar\']\n'
+        )
+        assert get_stream_value(logger) == expected_output
+
+    def test_remove_target(self, logger, config_file):
+        args = argparse.Namespace(target='foo')
+        s3b.remove_command(args, {
+            'targets': {
+                'bar': {},
+                'foo': {},
+            }
+        }, logger)
+
+        assert get_stream_value(logger) == ''
+
+        with open(config_file, 'rt') as fp:
+            new_config = json.load(fp)
+
+        expected_config = {'targets': {'bar': {}}}
+        assert new_config == expected_config
