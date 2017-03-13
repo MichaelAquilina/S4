@@ -60,7 +60,7 @@ class LocalSyncClient(SyncClient):
             os.makedirs(parent)
 
         BUFFER_SIZE = 4096
-        _, temp_path = tempfile.mkstemp()
+        fd, temp_path = tempfile.mkstemp()
 
         try:
             with open(temp_path, 'wb') as fp1:
@@ -75,6 +75,8 @@ class LocalSyncClient(SyncClient):
         except Exception:
             os.remove(temp_path)
             raise
+        finally:
+            os.close(fd)
 
         self.set_remote_timestamp(key, sync_object.timestamp)
 
@@ -125,9 +127,11 @@ class LocalSyncClient(SyncClient):
             logger.debug('Using plaintext encoding for writing index')
             method = open
 
-        _, temp_path = tempfile.mkstemp()
+        fd, temp_path = tempfile.mkstemp()
         with method(temp_path, 'wt') as fp:
             json.dump(self.index, fp)
+
+        os.close(fd)
 
         shutil.move(temp_path, self.index_path())
 
