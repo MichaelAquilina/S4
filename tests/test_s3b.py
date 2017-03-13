@@ -31,11 +31,12 @@ class FakeInputStream(object):
 
 @pytest.yield_fixture
 def config_file():
-    _, temp_path = tempfile.mkstemp()
+    fd, temp_path = tempfile.mkstemp()
     mocker = mock.patch('s3b.CONFIG_FILE_PATH', temp_path)
     mocker.start()
     yield temp_path
     mocker.stop()
+    os.close(fd)
     os.remove(temp_path)
 
 
