@@ -51,6 +51,9 @@ def main():
     ls_parser = subparsers.add_parser('ls')
     ls_parser.add_argument('target')
 
+    remove_parser = subparsers.add_parser('rm')
+    remove_parser.add_argument('target')
+
     args = parser.parse_args()
 
     if args.log_level == 'DEBUG':
@@ -81,6 +84,8 @@ def main():
         edit_command(args, config, logger)
     elif args.command == 'ls':
         ls_command(args, config, logger)
+    elif args.command == 'rm':
+        remove_command(args, config, logger)
     else:
         parser.print_help()
 
@@ -251,6 +256,20 @@ def ls_command(args, config, logger):
             ))
 
     logger.info(tabulate(data, headers=['Key', client_1.get_client_name(), client_2.get_client_name()]))
+
+
+def remove_command(args, config, logger):
+    if 'targets' not in config:
+        logger.info('You have not added any targets yet')
+        return
+    if args.target not in config['targets']:
+        all_targets = sorted(list(config['targets'].keys()))
+        logger.info('"%s" is an unknown target', args.target)
+        logger.info('Choices are: %s', all_targets)
+        return
+
+    del config['targets'][args.target]
+    set_config(config)
 
 
 if __name__ == '__main__':
