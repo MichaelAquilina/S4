@@ -37,11 +37,11 @@ def get_local_client(target):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--log-level', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'])
-    parser.add_argument('--conflicts', default=None, choices=['1', '2', 'ignore'])
 
     subparsers = parser.add_subparsers(dest='command')
     sync_parser = subparsers.add_parser('sync')
     sync_parser.add_argument('targets', nargs='*')
+    sync_parser.add_argument('--conflicts', default=None, choices=['1', '2', 'ignore'])
 
     subparsers.add_parser('targets')
     subparsers.add_parser('add')
