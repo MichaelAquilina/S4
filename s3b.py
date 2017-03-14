@@ -74,20 +74,23 @@ def main():
 
     config = get_config()
 
-    if args.command == 'sync':
-        sync_command(args, config, logger)
-    elif args.command == 'targets':
-        targets_command(args, config, logger)
-    elif args.command == 'add':
-        add_command(args, config, logger)
-    elif args.command == 'edit':
-        edit_command(args, config, logger)
-    elif args.command == 'ls':
-        ls_command(args, config, logger)
-    elif args.command == 'rm':
-        remove_command(args, config, logger)
-    else:
-        parser.print_help()
+    try:
+        if args.command == 'sync':
+            sync_command(args, config, logger)
+        elif args.command == 'targets':
+            targets_command(args, config, logger)
+        elif args.command == 'add':
+            add_command(args, config, logger)
+        elif args.command == 'edit':
+            edit_command(args, config, logger)
+        elif args.command == 'ls':
+            ls_command(args, config, logger)
+        elif args.command == 'rm':
+            remove_command(args, config, logger)
+        else:
+            parser.print_help()
+    except KeyboardInterrupt:
+        pass
 
 
 def get_config():
