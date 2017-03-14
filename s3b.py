@@ -136,7 +136,7 @@ def sync_command(args, config, logger):
         targets = args.targets
 
     try:
-        for name in targets:
+        for name in sorted(targets):
             if name not in config['targets']:
                 logger.info('"%s" is an unknown target. Choices are: %s', name, all_targets)
                 continue
