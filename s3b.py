@@ -50,6 +50,8 @@ def main():
 
     ls_parser = subparsers.add_parser('ls')
     ls_parser.add_argument('target')
+    ls_parser.add_argument('--sort-by', choices=['key', 'local', 's3'], default='key')
+    ls_parser.add_argument('--descending', action='store_true')
 
     remove_parser = subparsers.add_parser('rm')
     remove_parser.add_argument('target')
@@ -241,6 +243,9 @@ def ls_command(args, config, logger):
     target = config['targets'][args.target]
     client_1, client_2 = get_clients(target)
 
+    sort_by = args.sort_by.lower()
+    descending = args.descending
+
     keys = set(client_1.index) | set(client_2.index)
 
     data = []
@@ -258,7 +263,10 @@ def ls_command(args, config, logger):
                 datetime.datetime.utcfromtimestamp(int(ts_2)) if ts_2 is not None else None,
             ))
 
-    logger.info(tabulate(data, headers=['Key', client_1.get_client_name(), client_2.get_client_name()]))
+    headers = ['key', 'local', 's3']
+    data = sorted(data, reverse=descending, key=lambda x: x[headers.index(sort_by)])
+
+    logger.info(tabulate(data, headers=headers))
 
 
 def remove_command(args, config, logger):
