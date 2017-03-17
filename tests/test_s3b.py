@@ -219,11 +219,11 @@ class TestLsCommand(object):
             }
         }
 
-        args = argparse.Namespace(target='foo')
+        args = argparse.Namespace(target='foo', sort_by='key', descending=False)
         s3b.ls_command(args, config, logger)
 
         expected_result = (
-            'Key    local    s3\n'
+            'key    local    s3\n'
             '-----  -------  ----\n'
         )
         assert get_stream_value(logger) == expected_result
@@ -260,11 +260,11 @@ class TestLsCommand(object):
             },
         })
 
-        args = argparse.Namespace(target='foo')
+        args = argparse.Namespace(target='foo', sort_by='key', descending=False)
         s3b.ls_command(args, config, logger)
 
         expected_result = (
-            'Key    local                s3\n'
+            'key    local                s3\n'
             '-----  -------------------  -------------------\n'
             'honey  2016-11-10 18:40:00  2016-12-12 08:30:00\n'
             'lemon  2017-02-02 08:30:00\n'
