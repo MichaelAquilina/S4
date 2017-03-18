@@ -50,8 +50,8 @@ def main():
 
     ls_parser = subparsers.add_parser('ls')
     ls_parser.add_argument('target')
-    ls_parser.add_argument('--sort-by', choices=['key', 'local', 's3'], default='key')
-    ls_parser.add_argument('--descending', action='store_true')
+    ls_parser.add_argument('--sort-by', '-s', choices=['key', 'local', 's3'], default='key')
+    ls_parser.add_argument('--descending', '-d', action='store_true')
 
     remove_parser = subparsers.add_parser('rm')
     remove_parser.add_argument('target')
