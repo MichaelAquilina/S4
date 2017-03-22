@@ -61,12 +61,12 @@ def show_diff(client_1, client_2, key):
     # This is a lot faster than the difflib found in python
     with open(path3, 'wb') as fp:
         subprocess.call([
-            '/usr/bin/diff', '-u',
+            'diff', '-u',
             '--label', client_1.get_uri(key), path1,
             '--label', client_2.get_uri(key), path2,
         ], stdout=fp)
 
-    subprocess.call(['/usr/bin/less', path3])
+    subprocess.call(['less', path3])
 
     os.close(fd1)
     os.close(fd2)
