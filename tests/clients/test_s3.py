@@ -65,6 +65,19 @@ class TestS3SyncClient(object):
         )
 
         client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
+        assert client.get_uri() == 's3://testbucket/foo/bar/'
+        assert client.get_uri('apples.txt') == 's3://testbucket/foo/bar/apples.txt'
+
+    @mock_s3
+    def test_index_path(self):
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id='',
+            aws_secret_access_key='',
+            aws_session_token='',
+        )
+
+        client = s3.S3SyncClient(s3_client, 'testbucket', 'foo/bar')
         assert client.index_path() == 'foo/bar/.index'
 
     def test_put(self, s3_client):

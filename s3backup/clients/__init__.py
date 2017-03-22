@@ -81,7 +81,7 @@ class SyncClient(object):
     def get_client_name(self):
         raise NotImplemented()
 
-    def get_uri(self):
+    def get_uri(self, key=''):
         raise NotImplemented()
 
     def put(self, key, sync_object):
