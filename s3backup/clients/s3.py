@@ -58,7 +58,7 @@ class S3SyncClient(SyncClient):
         return 'S3SyncClient<{}, {}>'.format(self.bucket, self.prefix)
 
     def get_uri(self, key=''):
-        return 's3://{}/{}{}'.format(self.bucket, self.prefix, key)
+        return 's3://{}/{}'.format(self.bucket, os.path.join(self.prefix, key))
 
     def index_path(self):
         return os.path.join(self.prefix, '.index')
