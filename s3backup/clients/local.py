@@ -47,7 +47,7 @@ class LocalSyncClient(SyncClient):
         return 'LocalSyncClient<{}>'.format(self.path)
 
     def get_uri(self, key=''):
-        return '{}{}'.format(self.path, key)
+        return os.path.join(self.path, key)
 
     def index_path(self):
         return os.path.join(self.path, '.index')

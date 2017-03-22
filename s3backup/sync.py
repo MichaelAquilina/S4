@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import io
 import logging
 import os
 import subprocess
@@ -46,8 +45,6 @@ def show_diff(client_1, client_2, key):
     so2 = client_2.get(key)
     data2 = so2.fp.read()
     so2.fp.close()
-
-    stream = io.BytesIO()
 
     fd1, path1 = tempfile.mkstemp()
     fd2, path2 = tempfile.mkstemp()

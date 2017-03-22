@@ -64,6 +64,11 @@ class TestLocalSyncClient(object):
         assert local_client.index['hello_world.txt']['remote_timestamp'] == 20000
         assert utils.get_local_contents(local_client, 'hello_world.txt') == data
 
+    def test_get_uri(self):
+        client = local.LocalSyncClient('/home/michael')
+        assert client.get_uri() == '/home/michael/'
+        assert client.get_uri('banana.txt') == '/home/michael/banana.txt'
+
     def test_put_existing(self, local_client):
         utils.set_local_index(local_client, {
             'doge.txt': {'local_timestamp': 1111111}
