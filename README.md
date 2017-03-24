@@ -73,10 +73,14 @@ Choice (default=skip):
 
 If you do not wish to fix the issue, you can simply skip the file for now.
 
-s3backup keeps track of changes between files with a `.index` file at the root of each folder you are syncing. This is
-compressed (currently using gzip) to save space and increase performance when loading. Deleting this file will result
-in that folder being treated as if it was never synced before so make sure you *do not* delete it unless you know what
-you are doing.
+How S3Backup Works
+------------------
+S3backup keeps track of changes between files with a `.index` file at the root of each folder you are syncing. This contains
+the keys of each file being synchronised along with the timstamps found locally and remotely in JSON format.
+
+This is compressed (currently using gzip) to save space and increase performance when loading.
+
+NOTE: Deleting this file will result in that folder being treated as if it was never synced before so make sure you *do not* delete it unless you know what you are doing.
 
 Ignoring Files
 --------------
