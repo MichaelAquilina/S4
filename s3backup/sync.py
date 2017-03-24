@@ -90,7 +90,7 @@ def sync(client_1, client_2, conflict_choice=None):
                         '\nConflict for "%s". Which version would you like to keep?\n'
                         '   (1) %s%s updated at %s (%s)\n'
                         '   (2) %s%s updated at %s (%s)\n'
-                        '   (d) View diff\n'
+                        '   (d) View difference (requires the diff command)\n'
                         '   (X) Skip this file\n',
                         key,
                         client_1.get_uri(), key, action_1.get_remote_datetime(), action_1.action,

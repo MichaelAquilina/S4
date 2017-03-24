@@ -15,10 +15,16 @@ you will now have the ability to easily rollback to any previous version.
 Please note that because this project is under heavy development you should expect incomplete features, lots
 of bugs and many breaking changes between commits.
 
-Setup
------
+Installation and Setup
+----------------------
+Install the the necessary requirements using pip:
+
+```
+$ pip install -r requirements.txt
+```
 
 First, run `./s3b add` to add a new sync local folder and target s3 uri:
+
 ```
 $ ./s3b add
 local folder: /home/username/myfolder1
@@ -29,9 +35,9 @@ region name: eu-west-2
 Provide a name for this entry [myfolder1]:
 ```
 
+Synchronising
+-------------
 Run `./s3b sync` in the project directory to synchronise the local folders you specified with the folders in the bucket.
-
-All files will be automatically synced between the source and target destinations where possible.
 
 ```
 $ ./s3b sync
@@ -41,15 +47,27 @@ Creating boarding-pass.pdf (/home/username/myfolder1/ => s3://mybucket/folder1/)
 Flushing Index to Storage
 ```
 
+All files will be automatically synced between the source and target destinations where possible.
+
+You may specify a specific folder to synchronise by the name you provided during `add`.
+
+```
+$ ./s3b sync foo
+```
+
+Handling Conflicts
+------------------
 In the case where s3backup cannot decide on a reasonable action by itself, it will ask you to intervene:
 
 ```
 Syncing /home/username/myfolder1/ with s3://mybucket/folder1/
 
 Conflict for "test.txt". Which version would you like to keep?
-   (1) /home/username/myfolder1/test.txt CREATED at 2017-01-23 12:26:24
-   (2) s3://mybucket/folder1/test.txt CREATED at 2017-01-23 12:26:30
+   (1) /home/username/myfolder1/test.txt updated at 2017-01-23 12:26:24 (CREATED)
+   (2) s3://mybucket/folder1/test.txt updated at 2017-01-23 12:26:30 (CREATED)
+   (d) View difference (requires diff command)
    (3) Skip this file
+
 Choice (default=skip):
 ```
 
