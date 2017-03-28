@@ -74,52 +74,67 @@ def show_diff(client_1, client_2, key):
     os.remove(path3)
 
 
-def sync(client_1, client_2, conflict_choice=None):
-    try:
-        deferred_calls, unhandled_events = get_sync_actions(client_1, client_2)
+class SyncWorker(object):
+    def __init__(self, client_1, client_2):
+        self.client_1 = client_1
+        self.client_2 = client_2
 
-        logger.debug('There are %s unhandled events for the user to solve', len(unhandled_events))
-        logger.debug('There are %s automatically deferred calls', len(deferred_calls))
-        if len(unhandled_events) > 0:
-            logger.debug('%s', unhandled_events)
+    def sync(self, conflict_choice=None):
+        try:
+            deferred_calls, unhandled_events = get_sync_actions(self.client_1, self.client_2)
 
-            for key in sorted(unhandled_events.keys()):
-                action_1, action_2 = unhandled_events[key]
-                if conflict_choice is None:
-                    logger.info(
-                        '\nConflict for "%s". Which version would you like to keep?\n'
-                        '   (1) %s%s updated at %s (%s)\n'
-                        '   (2) %s%s updated at %s (%s)\n'
-                        '   (d) View difference (requires the diff command)\n'
-                        '   (X) Skip this file\n',
-                        key,
-                        client_1.get_uri(), key, action_1.get_remote_datetime(), action_1.action,
-                        client_2.get_uri(), key, action_2.get_remote_datetime(), action_2.action,
-                    )
-                    while True:
-                        choice = input('Choice (default=skip): ')
-                        logger.info('')
+            logger.debug(
+                'There are %s unhandled events for the user to solve', len(unhandled_events)
+            )
+            logger.debug(
+                'There are %s automatically deferred calls', len(deferred_calls)
+            )
+            if len(unhandled_events) > 0:
+                logger.debug('%s', unhandled_events)
 
-                        if choice == 'd':
-                            show_diff(client_1, client_2, key)
-                        else:
-                            break
-                else:
-                    choice = conflict_choice
+                for key in sorted(unhandled_events.keys()):
+                    action_1, action_2 = unhandled_events[key]
+                    if conflict_choice is None:
+                        logger.info(
+                            '\nConflict for "%s". Which version would you like to keep?\n'
+                            '   (1) %s%s updated at %s (%s)\n'
+                            '   (2) %s%s updated at %s (%s)\n'
+                            '   (d) View difference (requires the diff command)\n'
+                            '   (X) Skip this file\n',
+                            key,
+                            self.client_1.get_uri(),
+                            key, action_1.get_remote_datetime(), action_1.action,
+                            self.client_2.get_uri(),
+                            key, action_2.get_remote_datetime(), action_2.action,
+                        )
+                        while True:
+                            choice = input('Choice (default=skip): ')
+                            logger.info('')
 
-                if choice == '1':
-                    deferred_calls[key] = get_deferred_function(key, action_1, client_2, client_1)
-                elif choice == '2':
-                    deferred_calls[key] = get_deferred_function(key, action_2, client_1, client_2)
-                else:
-                    logger.info('Ignoring sync conflict for %s', key)
-                    continue
+                            if choice == 'd':
+                                show_diff(self.client_1, self.client_2, key)
+                            else:
+                                break
+                    else:
+                        choice = conflict_choice
 
-    except KeyboardInterrupt:
-        logger.warning('Session interrupted by Keyboard Interrupt. Aborting....')
-        return
+                    if choice == '1':
+                        deferred_calls[key] = get_deferred_function(
+                            key, action_1, self.client_2, self.client_1
+                        )
+                    elif choice == '2':
+                        deferred_calls[key] = get_deferred_function(
+                            key, action_2, self.client_1, self.client_2
+                        )
+                    else:
+                        logger.info('Ignoring sync conflict for %s', key)
+                        continue
 
-    run_deferred_calls(deferred_calls, client_1, client_2)
+        except KeyboardInterrupt:
+            logger.warning('Session interrupted by Keyboard Interrupt. Aborting....')
+            return
+
+        run_deferred_calls(deferred_calls, self.client_1, self.client_2)
 
 
 def run_deferred_calls(deferred_calls, client_1, client_2):

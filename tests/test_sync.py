@@ -230,7 +230,8 @@ class TestIntegrations(object):
         utils.set_local_contents(local_client, 'colors/green', 3000, '#00ff00')
         utils.set_local_contents(local_client, 'colors/blue', 2000, '#0000ff')
 
-        sync.sync(local_client, s3_client)
+        worker = sync.SyncWorker(local_client, s3_client)
+        worker.sync()
 
         clients = [local_client, s3_client]
         expected_keys = [
@@ -251,7 +252,7 @@ class TestIntegrations(object):
 
         utils.delete_local(local_client, 'colors/red')
 
-        sync.sync(local_client, s3_client)
+        worker.sync()
         expected_keys = [
             'colors/green',
             'colors/blue',
@@ -264,7 +265,8 @@ class TestIntegrations(object):
         utils.set_local_contents(local_client, 'bar', timestamp=2000)
         utils.set_s3_contents(s3_client, 'baz', timestamp=3000, data='what is up?')
 
-        sync.sync(local_client, s3_client)
+        worker = sync.SyncWorker(local_client, s3_client)
+        worker.sync()
 
         clients = [local_client, s3_client]
         assert_local_keys(clients, ['foo', 'bar', 'baz'])
@@ -279,7 +281,7 @@ class TestIntegrations(object):
         utils.set_s3_contents(s3_client, 'hello', timestamp=6000)
         utils.set_s3_contents(s3_client, 'baz', timestamp=8000, data='just syncing some stuff')
 
-        sync.sync(local_client, s3_client)
+        worker.sync()
 
         assert_existence(clients, ['foo'], False)
         assert_local_keys(clients, ['test', 'bar', 'baz', 'hello'])
@@ -290,16 +292,20 @@ class TestIntegrations(object):
         assert_remote_timestamp(clients, 'baz', 8000)
         assert_contents(clients, 'baz', b'just syncing some stuff')
 
-        sync.sync(local_client, s3_client)
+        worker.sync()
 
     def test_three_way_sync(self, local_client, s3_client, local_client_2):
         utils.set_local_contents(local_client, 'foo', timestamp=1000)
         utils.set_s3_contents(s3_client, 'bar', timestamp=2000, data='red')
         utils.set_local_contents(local_client_2, 'baz', timestamp=3000)
 
-        sync.sync(local_client, s3_client)
-        sync.sync(local_client_2, s3_client)
-        sync.sync(local_client, local_client_2)
+        worker_1 = sync.SyncWorker(local_client, s3_client)
+        worker_2 = sync.SyncWorker(local_client_2, s3_client)
+        worker_3 = sync.SyncWorker(local_client, local_client_2)
+
+        worker_1.sync()
+        worker_2.sync()
+        worker_3.sync()
 
         clients = [local_client, s3_client, local_client_2]
 
@@ -311,9 +317,9 @@ class TestIntegrations(object):
 
         utils.set_s3_contents(s3_client, 'bar', timestamp=8000, data='green')
 
-        sync.sync(local_client, s3_client)
-        sync.sync(local_client_2, s3_client)
-        sync.sync(local_client, local_client_2)
+        worker_1.sync()
+        worker_2.sync()
+        worker_3.sync()
 
         assert_local_keys(clients, ['foo', 'bar', 'baz'])
         assert_contents(clients, 'bar', b'green')
@@ -323,24 +329,25 @@ class TestIntegrations(object):
 
         utils.delete_local(local_client_2, 'foo')
 
-        sync.sync(local_client, s3_client)
-        sync.sync(local_client_2, s3_client)
-        sync.sync(local_client, local_client_2)
+        worker_1.sync()
+        worker_2.sync()
+        worker_3.sync()
 
         assert_existence(clients, ['foo'], False)
         assert_local_keys(clients, ['bar', 'baz'])
         assert_remote_timestamp(clients, 'foo', 1000)
 
-        sync.sync(local_client, s3_client)
-        sync.sync(local_client_2, s3_client)
-        sync.sync(local_client, local_client_2)
+        worker_1.sync()
+        worker_2.sync()
+        worker_3.sync()
 
     def test_ignore_conflicts(self, local_client, s3_client):
         utils.set_local_contents(local_client, 'foo', timestamp=2000)
         utils.set_s3_contents(s3_client, 'foo', timestamp=3000)
         utils.set_s3_contents(s3_client, 'bar', timestamp=5600, data='usador')
 
-        sync.sync(local_client, s3_client, conflict_choice='ignore')
+        worker = sync.SyncWorker(local_client, s3_client)
+        worker.sync(conflict_choice='ignore')
 
         clients = [local_client, s3_client]
         assert_local_keys(clients, ['foo', 'bar'])
@@ -357,7 +364,8 @@ class TestIntegrations(object):
         utils.set_local_contents(local_client, 'foo', timestamp=2000, data='abc')
         utils.set_s3_contents(s3_client, 'foo', timestamp=3000)
 
-        sync.sync(local_client, s3_client, conflict_choice='1')
+        worker = sync.SyncWorker(local_client, s3_client)
+        worker.sync(conflict_choice='1')
 
         clients = [local_client, s3_client]
         assert_local_keys(clients, ['foo'])
@@ -369,7 +377,8 @@ class TestIntegrations(object):
         utils.set_local_contents(local_client, 'foo', timestamp=2000)
         utils.set_s3_contents(s3_client, 'foo', timestamp=3000, data='123')
 
-        sync.sync(local_client, s3_client, conflict_choice='2')
+        worker = sync.SyncWorker(local_client, s3_client)
+        worker.sync(conflict_choice='2')
 
         clients = [local_client, s3_client]
         assert_local_keys(clients, ['foo'])
@@ -393,7 +402,8 @@ class TestIntegrations(object):
         utils.set_local_contents(local_client, 'foo', timestamp=7000)
 
         # Will create previously deleted file
-        sync.sync(local_client, s3_client)
+        worker = sync.SyncWorker(local_client, s3_client)
+        worker.sync()
 
         clients = [local_client, s3_client]
         assert_local_keys(clients, ['foo'])
@@ -402,7 +412,7 @@ class TestIntegrations(object):
         # delete the file again and check that it is successful
         utils.delete_local(local_client, 'foo')
 
-        sync.sync(local_client, s3_client)
+        worker.sync()
         assert_local_keys(clients, [])
         assert_remote_timestamp(clients, 'foo', 7000)
 
