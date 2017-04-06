@@ -78,24 +78,25 @@ class SyncWorker(object):
     def __init__(self, client_1, client_2):
         self.client_1 = client_1
         self.client_2 = client_2
+        self.logger = logging.getLogger(str(self))
 
     def sync(self, conflict_choice=None):
         try:
             deferred_calls, unhandled_events = self.get_sync_states()
 
-            logger.debug(
+            self.logger.debug(
                 'There are %s unhandled events for the user to solve', len(unhandled_events)
             )
-            logger.debug(
+            self.logger.debug(
                 'There are %s automatically deferred calls', len(deferred_calls)
             )
             if len(unhandled_events) > 0:
-                logger.debug('%s', unhandled_events)
+                self.logger.debug('%s', unhandled_events)
 
                 for key in sorted(unhandled_events.keys()):
                     action_1, action_2 = unhandled_events[key]
                     if conflict_choice is None:
-                        logger.info(
+                        self.logger.info(
                             '\nConflict for "%s". Which version would you like to keep?\n'
                             '   (1) %s%s updated at %s (%s)\n'
                             '   (2) %s%s updated at %s (%s)\n'
@@ -109,7 +110,7 @@ class SyncWorker(object):
                         )
                         while True:
                             choice = input('Choice (default=skip): ')
-                            logger.info('')
+                            self.logger.info('')
 
                             if choice == 'd':
                                 show_diff(self.client_1, self.client_2, key)
@@ -131,7 +132,7 @@ class SyncWorker(object):
                         continue
 
         except KeyboardInterrupt:
-            logger.warning('Session interrupted by Keyboard Interrupt. Aborting....')
+            self.logger.warning('Session interrupted by Keyboard Interrupt. Aborting....')
             return
 
         run_deferred_calls(deferred_calls, self.client_1, self.client_2)
@@ -145,9 +146,9 @@ class SyncWorker(object):
         # the automated solution has not yet been implemented)
         unhandled_events = {}
 
-        logger.debug('Generating deferred calls based on client states')
+        self.logger.debug('Generating deferred calls based on client states')
         for key, state_1, state_2 in get_states(self.client_1, self.client_2):
-            logger.debug('%s: %s %s', key, state_1, state_2)
+            self.logger.debug('%s: %s %s', key, state_1, state_2)
             if state_1.state == SyncState.NOCHANGES and state_2.state == SyncState.NOCHANGES:
                 if state_1.remote_timestamp == state_2.remote_timestamp:
                     continue
@@ -253,7 +254,7 @@ class SyncWorker(object):
             else:
                 unhandled_events[key] = (state_1, state_2)
 
-            logger.debug('Action=%s', deferred_calls.get(key))
+            self.logger.debug('Action=%s', deferred_calls.get(key))
 
         return deferred_calls, unhandled_events
 
