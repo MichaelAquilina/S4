@@ -34,15 +34,15 @@ class TestDeferredFunction(object):
         assert repr(deferred_function) == expected_repr
 
 
-class TestGetActions(object):
+class TestGetStates(object):
     def test_empty_clients(self, s3_client, local_client):
-        actual_output = list(sync.get_actions(s3_client, local_client))
+        actual_output = list(sync.get_states(s3_client, local_client))
         assert actual_output == []
 
 
-class TestGetSyncActions(object):
+class TestGetSyncStates(object):
     def test_empty(self, local_client, s3_client):
-        assert sync.SyncWorker(local_client, s3_client).get_sync_actions() == ({}, {})
+        assert sync.SyncWorker(local_client, s3_client).get_sync_states() == ({}, {})
 
     def test_correct_output(self, local_client, s3_client):
         utils.set_local_index(local_client, {
@@ -84,7 +84,8 @@ class TestGetSyncActions(object):
         utils.set_local_contents(local_client, 'maltese.txt', timestamp=7000)
         utils.set_s3_contents(s3_client, 'maltese.txt', timestamp=8000)
 
-        deferred_calls, unhandled_events = sync.SyncWorker(local_client, s3_client).get_sync_actions()
+        worker = sync.SyncWorker(local_client, s3_client)
+        deferred_calls, unhandled_events = worker.get_sync_states()
         expected_unhandled_events = {
             'english.txt': (
                 SyncState(SyncState.CREATED, 90000, None),
@@ -128,7 +129,8 @@ class TestGetSyncActions(object):
         utils.set_local_contents(local_client, 'german.txt', timestamp=4000)
         utils.set_s3_contents(s3_client, 'german.txt', timestamp=6000)
 
-        deferred_calls, unhandled_events = sync.SyncWorker(local_client, s3_client).get_sync_actions()
+        worker = sync.SyncWorker(local_client, s3_client)
+        deferred_calls, unhandled_events = worker.get_sync_states()
         expected_deferred_calls = {
             'german.txt': sync.DeferredFunction(
                 sync.update_client, local_client, s3_client, 'german.txt', 6000)
@@ -152,7 +154,8 @@ class TestGetSyncActions(object):
         utils.set_local_contents(local_client, 'biology.txt', timestamp=4500)
         utils.set_s3_contents(s3_client, 'biology.txt', timestamp=6000)
 
-        deferred_calls, unhandled_events = sync.SyncWorker(local_client, s3_client).get_sync_actions()
+        worker = sync.SyncWorker(local_client, s3_client)
+        deferred_calls, unhandled_events = worker.get_sync_states()
         expected_unhandled_events = {
             'biology.txt': (
                 SyncState(SyncState.UPDATED, 4500, 3000), SyncState(SyncState.NOCHANGES, 6000, 6000)
@@ -176,7 +179,8 @@ class TestGetSyncActions(object):
         })
         utils.set_s3_contents(s3_client, 'chemistry.txt', timestamp=6000)
 
-        deferred_calls, unhandled_events = sync.SyncWorker(local_client, s3_client).get_sync_actions()
+        worker = sync.SyncWorker(local_client, s3_client)
+        deferred_calls, unhandled_events = worker.get_sync_states()
         expected_unhandled_events = {
             'chemistry.txt': (
                 SyncState(SyncState.DELETED, None, 3000), SyncState(SyncState.NOCHANGES, 6000, 6000)
@@ -192,7 +196,8 @@ class TestGetSyncActions(object):
                 'remote_timestamp': 4550,
             }
         })
-        deferred_calls, unhandled_events = sync.SyncWorker(local_client, s3_client).get_sync_actions()
+        worker = sync.SyncWorker(local_client, s3_client)
+        deferred_calls, unhandled_events = worker.get_sync_states()
         assert deferred_calls == {}
         assert unhandled_events == {}
 
