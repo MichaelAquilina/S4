@@ -11,8 +11,8 @@ class SyncState(object):
     NOCHANGES = 'NOCHANGES'
     DOESNOTEXIST = 'DOESNOTEXIST'
 
-    def __init__(self, action, local_timestamp, remote_timestamp):
-        self.action = action
+    def __init__(self, state, local_timestamp, remote_timestamp):
+        self.state = state
         self.local_timestamp = local_timestamp
         self.remote_timestamp = remote_timestamp
 
@@ -32,14 +32,14 @@ class SyncState(object):
         if not isinstance(other, SyncState):
             return False
         return (
-            self.action == other.action and
+            self.state == other.state and
             self.local_timestamp == other.local_timestamp and
             self.remote_timestamp == other.remote_timestamp
         )
 
     def __repr__(self):
         return 'SyncState<{}, local={}, remote={}>'.format(
-            self.action, self.get_local_datetime(), self.get_remote_datetime()
+            self.state, self.get_local_datetime(), self.get_remote_datetime()
         )
 
 
