@@ -135,7 +135,7 @@ class SyncWorker(object):
             self.logger.warning('Session interrupted by Keyboard Interrupt. Aborting....')
             return
 
-        run_deferred_calls(deferred_calls, self.client_1, self.client_2)
+        self.run_deferred_calls(deferred_calls)
 
     def get_sync_states(self):
         # we store a list of deferred calls to make sure we can handle everything before
@@ -258,32 +258,31 @@ class SyncWorker(object):
 
         return deferred_calls, unhandled_events
 
+    def run_deferred_calls(self, deferred_calls):
+        # call everything once we know we can handle all of it
+        self.logger.debug('There are %s total deferred calls', len(deferred_calls))
+        success = []
+        try:
+            for key in sorted(deferred_calls.keys()):
+                deferred_function = deferred_calls[key]
+                try:
+                    deferred_function()
+                    self.client_1.update_index_entry(key)
+                    self.client_2.update_index_entry(key)
+                    success.append(key)
+                except Exception as e:
+                    self.logger.error('An error occurred while trying to update %s: %s', key, e)
+        except KeyboardInterrupt:
+            self.logger.warning('Session interrupted by Keyboard Interrupt. Cleaning up....')
 
-def run_deferred_calls(deferred_calls, client_1, client_2):
-    # call everything once we know we can handle all of it
-    logger.debug('There are %s total deferred calls', len(deferred_calls))
-    success = []
-    try:
-        for key in sorted(deferred_calls.keys()):
-            deferred_function = deferred_calls[key]
-            try:
-                deferred_function()
-                client_1.update_index_entry(key)
-                client_2.update_index_entry(key)
-                success.append(key)
-            except Exception as e:
-                logger.error('An error occurred while trying to update %s: %s', key, e)
-    except KeyboardInterrupt:
-        logger.warning('Session interrupted by Keyboard Interrupt. Cleaning up....')
+        if len(deferred_calls) > 0:
+            self.logger.info('Flushing Index to Storage')
+            self.client_1.flush_index()
+            self.client_2.flush_index()
+        else:
+            self.logger.info('Nothing to update')
 
-    if len(deferred_calls) > 0:
-        logger.info('Flushing Index to Storage')
-        client_1.flush_index()
-        client_2.flush_index()
-    else:
-        logger.info('Nothing to update')
-
-    return success
+        return success
 
 
 def get_states(client_1, client_2):
