@@ -128,7 +128,7 @@ class SyncWorker(object):
                             key, action_2, self.client_1, self.client_2
                         )
                     else:
-                        logger.info('Ignoring sync conflict for %s', key)
+                        self.logger.info('Ignoring sync conflict for %s', key)
                         continue
 
         except KeyboardInterrupt:
