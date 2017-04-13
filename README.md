@@ -85,6 +85,6 @@ NOTE: Deleting this file will result in that folder being treated as if it was n
 Ignoring Files
 --------------
 Create a `.syncignore` file in the root of the directory being synced to list patterns of subdirectories and files you
-wish to ignore. The `.syncignore` file uses the exact same pattern that you would expect in `.gitignore`. Each line specifies a GLOB pattern to ignore during sync.
+wish to ignore. The `.syncignore` file uses the exact same pattern that you would expect in `.gitignore`. Each line specifies a [GLOB pattern](https://en.wikipedia.org/wiki/Glob_%28programming%29) to ignore during sync.
 
 Note that if you add a pattern which matches an item that was previously synced, that item will be deleted from the target you are syncing with next time you run s3backup.
