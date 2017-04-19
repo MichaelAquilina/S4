@@ -34,15 +34,16 @@ class TestDeferredFunction(object):
         assert repr(deferred_function) == expected_repr
 
 
-class TestGetActions(object):
+class TestGetStates(object):
     def test_empty_clients(self, s3_client, local_client):
-        actual_output = list(sync.get_actions(s3_client, local_client))
+        worker = sync.SyncWorker(s3_client, local_client)
+        actual_output = list(worker.get_states())
         assert actual_output == []
 
 
-class TestGetSyncActions(object):
+class TestGetSyncStates(object):
     def test_empty(self, local_client, s3_client):
-        assert sync.get_sync_actions(local_client, s3_client) == ({}, {})
+        assert sync.SyncWorker(local_client, s3_client).get_sync_states() == ({}, {})
 
     def test_correct_output(self, local_client, s3_client):
         utils.set_local_index(local_client, {
@@ -84,7 +85,8 @@ class TestGetSyncActions(object):
         utils.set_local_contents(local_client, 'maltese.txt', timestamp=7000)
         utils.set_s3_contents(s3_client, 'maltese.txt', timestamp=8000)
 
-        deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
+        worker = sync.SyncWorker(local_client, s3_client)
+        deferred_calls, unhandled_events = worker.get_sync_states()
         expected_unhandled_events = {
             'english.txt': (
                 SyncState(SyncState.CREATED, 90000, None),
@@ -128,7 +130,8 @@ class TestGetSyncActions(object):
         utils.set_local_contents(local_client, 'german.txt', timestamp=4000)
         utils.set_s3_contents(s3_client, 'german.txt', timestamp=6000)
 
-        deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
+        worker = sync.SyncWorker(local_client, s3_client)
+        deferred_calls, unhandled_events = worker.get_sync_states()
         expected_deferred_calls = {
             'german.txt': sync.DeferredFunction(
                 sync.update_client, local_client, s3_client, 'german.txt', 6000)
@@ -152,7 +155,8 @@ class TestGetSyncActions(object):
         utils.set_local_contents(local_client, 'biology.txt', timestamp=4500)
         utils.set_s3_contents(s3_client, 'biology.txt', timestamp=6000)
 
-        deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
+        worker = sync.SyncWorker(local_client, s3_client)
+        deferred_calls, unhandled_events = worker.get_sync_states()
         expected_unhandled_events = {
             'biology.txt': (
                 SyncState(SyncState.UPDATED, 4500, 3000), SyncState(SyncState.NOCHANGES, 6000, 6000)
@@ -176,7 +180,8 @@ class TestGetSyncActions(object):
         })
         utils.set_s3_contents(s3_client, 'chemistry.txt', timestamp=6000)
 
-        deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
+        worker = sync.SyncWorker(local_client, s3_client)
+        deferred_calls, unhandled_events = worker.get_sync_states()
         expected_unhandled_events = {
             'chemistry.txt': (
                 SyncState(SyncState.DELETED, None, 3000), SyncState(SyncState.NOCHANGES, 6000, 6000)
@@ -192,7 +197,8 @@ class TestGetSyncActions(object):
                 'remote_timestamp': 4550,
             }
         })
-        deferred_calls, unhandled_events = sync.get_sync_actions(local_client, s3_client)
+        worker = sync.SyncWorker(local_client, s3_client)
+        deferred_calls, unhandled_events = worker.get_sync_states()
         assert deferred_calls == {}
         assert unhandled_events == {}
 
@@ -230,7 +236,8 @@ class TestIntegrations(object):
         utils.set_local_contents(local_client, 'colors/green', 3000, '#00ff00')
         utils.set_local_contents(local_client, 'colors/blue', 2000, '#0000ff')
 
-        sync.sync(local_client, s3_client)
+        worker = sync.SyncWorker(local_client, s3_client)
+        worker.sync()
 
         clients = [local_client, s3_client]
         expected_keys = [
@@ -251,7 +258,7 @@ class TestIntegrations(object):
 
         utils.delete_local(local_client, 'colors/red')
 
-        sync.sync(local_client, s3_client)
+        worker.sync()
         expected_keys = [
             'colors/green',
             'colors/blue',
@@ -264,7 +271,8 @@ class TestIntegrations(object):
         utils.set_local_contents(local_client, 'bar', timestamp=2000)
         utils.set_s3_contents(s3_client, 'baz', timestamp=3000, data='what is up?')
 
-        sync.sync(local_client, s3_client)
+        worker = sync.SyncWorker(local_client, s3_client)
+        worker.sync()
 
         clients = [local_client, s3_client]
         assert_local_keys(clients, ['foo', 'bar', 'baz'])
@@ -279,7 +287,7 @@ class TestIntegrations(object):
         utils.set_s3_contents(s3_client, 'hello', timestamp=6000)
         utils.set_s3_contents(s3_client, 'baz', timestamp=8000, data='just syncing some stuff')
 
-        sync.sync(local_client, s3_client)
+        worker.sync()
 
         assert_existence(clients, ['foo'], False)
         assert_local_keys(clients, ['test', 'bar', 'baz', 'hello'])
@@ -290,16 +298,20 @@ class TestIntegrations(object):
         assert_remote_timestamp(clients, 'baz', 8000)
         assert_contents(clients, 'baz', b'just syncing some stuff')
 
-        sync.sync(local_client, s3_client)
+        worker.sync()
 
     def test_three_way_sync(self, local_client, s3_client, local_client_2):
         utils.set_local_contents(local_client, 'foo', timestamp=1000)
         utils.set_s3_contents(s3_client, 'bar', timestamp=2000, data='red')
         utils.set_local_contents(local_client_2, 'baz', timestamp=3000)
 
-        sync.sync(local_client, s3_client)
-        sync.sync(local_client_2, s3_client)
-        sync.sync(local_client, local_client_2)
+        worker_1 = sync.SyncWorker(local_client, s3_client)
+        worker_2 = sync.SyncWorker(local_client_2, s3_client)
+        worker_3 = sync.SyncWorker(local_client, local_client_2)
+
+        worker_1.sync()
+        worker_2.sync()
+        worker_3.sync()
 
         clients = [local_client, s3_client, local_client_2]
 
@@ -311,9 +323,9 @@ class TestIntegrations(object):
 
         utils.set_s3_contents(s3_client, 'bar', timestamp=8000, data='green')
 
-        sync.sync(local_client, s3_client)
-        sync.sync(local_client_2, s3_client)
-        sync.sync(local_client, local_client_2)
+        worker_1.sync()
+        worker_2.sync()
+        worker_3.sync()
 
         assert_local_keys(clients, ['foo', 'bar', 'baz'])
         assert_contents(clients, 'bar', b'green')
@@ -323,24 +335,25 @@ class TestIntegrations(object):
 
         utils.delete_local(local_client_2, 'foo')
 
-        sync.sync(local_client, s3_client)
-        sync.sync(local_client_2, s3_client)
-        sync.sync(local_client, local_client_2)
+        worker_1.sync()
+        worker_2.sync()
+        worker_3.sync()
 
         assert_existence(clients, ['foo'], False)
         assert_local_keys(clients, ['bar', 'baz'])
         assert_remote_timestamp(clients, 'foo', 1000)
 
-        sync.sync(local_client, s3_client)
-        sync.sync(local_client_2, s3_client)
-        sync.sync(local_client, local_client_2)
+        worker_1.sync()
+        worker_2.sync()
+        worker_3.sync()
 
     def test_ignore_conflicts(self, local_client, s3_client):
         utils.set_local_contents(local_client, 'foo', timestamp=2000)
         utils.set_s3_contents(s3_client, 'foo', timestamp=3000)
         utils.set_s3_contents(s3_client, 'bar', timestamp=5600, data='usador')
 
-        sync.sync(local_client, s3_client, conflict_choice='ignore')
+        worker = sync.SyncWorker(local_client, s3_client)
+        worker.sync(conflict_choice='ignore')
 
         clients = [local_client, s3_client]
         assert_local_keys(clients, ['foo', 'bar'])
@@ -357,7 +370,8 @@ class TestIntegrations(object):
         utils.set_local_contents(local_client, 'foo', timestamp=2000, data='abc')
         utils.set_s3_contents(s3_client, 'foo', timestamp=3000)
 
-        sync.sync(local_client, s3_client, conflict_choice='1')
+        worker = sync.SyncWorker(local_client, s3_client)
+        worker.sync(conflict_choice='1')
 
         clients = [local_client, s3_client]
         assert_local_keys(clients, ['foo'])
@@ -369,7 +383,8 @@ class TestIntegrations(object):
         utils.set_local_contents(local_client, 'foo', timestamp=2000)
         utils.set_s3_contents(s3_client, 'foo', timestamp=3000, data='123')
 
-        sync.sync(local_client, s3_client, conflict_choice='2')
+        worker = sync.SyncWorker(local_client, s3_client)
+        worker.sync(conflict_choice='2')
 
         clients = [local_client, s3_client]
         assert_local_keys(clients, ['foo'])
@@ -393,7 +408,8 @@ class TestIntegrations(object):
         utils.set_local_contents(local_client, 'foo', timestamp=7000)
 
         # Will create previously deleted file
-        sync.sync(local_client, s3_client)
+        worker = sync.SyncWorker(local_client, s3_client)
+        worker.sync()
 
         clients = [local_client, s3_client]
         assert_local_keys(clients, ['foo'])
@@ -402,14 +418,15 @@ class TestIntegrations(object):
         # delete the file again and check that it is successful
         utils.delete_local(local_client, 'foo')
 
-        sync.sync(local_client, s3_client)
+        worker.sync()
         assert_local_keys(clients, [])
         assert_remote_timestamp(clients, 'foo', 7000)
 
 
 class TestRunDeferredCalls(object):
     def test_empty(self, local_client, s3_client):
-        assert sync.run_deferred_calls({}, local_client, s3_client) == []
+        worker = sync.SyncWorker(local_client, s3_client)
+        assert worker.run_deferred_calls({}) == []
 
     def test_correct_output(self, local_client, s3_client):
         def failing_function():
@@ -419,15 +436,16 @@ class TestRunDeferredCalls(object):
             raise KeyboardInterrupt()
 
         clients = [local_client, s3_client]
+        worker = sync.SyncWorker(local_client, s3_client)
 
         utils.set_local_contents(local_client, 'foo')
         utils.set_s3_contents(s3_client, 'baz', timestamp=2000, data='testing')
-        success = sync.run_deferred_calls({
+        success = worker.run_deferred_calls({
             'foo': sync.DeferredFunction(sync.delete_client, local_client, 'foo', 1000),
             'bar': sync.DeferredFunction(failing_function),
             'yap': sync.DeferredFunction(keyboard_interrupt),
             'baz': sync.DeferredFunction(sync.create_client, local_client, s3_client, 'baz', 2000),
-        }, local_client, s3_client)
+        })
         assert sorted(success) == sorted(['foo', 'baz'])
         assert_local_keys(clients, ['baz'])
 
