@@ -147,7 +147,7 @@ class SyncWorker(object):
         unhandled_events = {}
 
         self.logger.debug('Generating deferred calls based on client states')
-        for key, state_1, state_2 in get_states(self.client_1, self.client_2):
+        for key, state_1, state_2 in self.get_states():
             self.logger.debug('%s: %s %s', key, state_1, state_2)
             if state_1.state == SyncState.NOCHANGES and state_2.state == SyncState.NOCHANGES:
                 if state_1.remote_timestamp == state_2.remote_timestamp:
@@ -284,24 +284,23 @@ class SyncWorker(object):
 
         return success
 
+    def get_states(self):
+        client_1_actions = self.client_1.get_all_actions()
+        client_2_actions = self.client_2.get_all_actions()
 
-def get_states(client_1, client_2):
-    client_1_actions = client_1.get_all_actions()
-    client_2_actions = client_2.get_all_actions()
+        all_keys = set(client_1_actions) | set(client_2_actions)
+        self.logger.debug(
+            '%s keys in total (%s for %s and %s for %s)',
+            len(all_keys),
+            len(client_1_actions), self.client_1.get_uri(),
+            len(client_2_actions), self.client_2.get_uri()
+        )
 
-    all_keys = set(client_1_actions) | set(client_2_actions)
-    logger.debug(
-        '%s keys in total (%s for %s and %s for %s)',
-        len(all_keys),
-        len(client_1_actions), client_1.get_uri(),
-        len(client_2_actions), client_2.get_uri()
-    )
-
-    DOES_NOT_EXIST = SyncState(SyncState.DOESNOTEXIST, None, None)
-    for key in sorted(all_keys):
-        action_1 = client_1_actions.get(key, DOES_NOT_EXIST)
-        action_2 = client_2_actions.get(key, DOES_NOT_EXIST)
-        yield key, action_1, action_2
+        DOES_NOT_EXIST = SyncState(SyncState.DOESNOTEXIST, None, None)
+        for key in sorted(all_keys):
+            action_1 = client_1_actions.get(key, DOES_NOT_EXIST)
+            action_2 = client_2_actions.get(key, DOES_NOT_EXIST)
+            yield key, action_1, action_2
 
 
 def get_deferred_function(key, action, to_client, from_client):

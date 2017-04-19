@@ -36,7 +36,8 @@ class TestDeferredFunction(object):
 
 class TestGetStates(object):
     def test_empty_clients(self, s3_client, local_client):
-        actual_output = list(sync.get_states(s3_client, local_client))
+        worker = sync.SyncWorker(s3_client, local_client)
+        actual_output = list(worker.get_states())
         assert actual_output == []
 
 
