@@ -99,16 +99,16 @@ class TestGetSyncStates(object):
         }
         expected_deferred_calls = {
             'maltese.txt': sync.DeferredFunction(
-                sync.update_client, local_client, s3_client, 'maltese.txt', 8000
+                worker.update_client, local_client, s3_client, 'maltese.txt', 8000
             ),
             'chemistry.txt': sync.DeferredFunction(
-                sync.delete_client, s3_client, 'chemistry.txt', 9431
+                worker.delete_client, s3_client, 'chemistry.txt', 9431
             ),
             'history.txt': sync.DeferredFunction(
-                sync.create_client, s3_client, local_client, 'history.txt', 5000
+                worker.create_client, s3_client, local_client, 'history.txt', 5000
             ),
             'art.txt': sync.DeferredFunction(
-                sync.create_client, local_client, s3_client, 'art.txt', 200000
+                worker.create_client, local_client, s3_client, 'art.txt', 200000
             ),
         }
         assert unhandled_events == expected_unhandled_events
@@ -134,7 +134,7 @@ class TestGetSyncStates(object):
         deferred_calls, unhandled_events = worker.get_sync_states()
         expected_deferred_calls = {
             'german.txt': sync.DeferredFunction(
-                sync.update_client, local_client, s3_client, 'german.txt', 6000)
+                worker.update_client, local_client, s3_client, 'german.txt', 6000)
         }
         assert deferred_calls == expected_deferred_calls
         assert unhandled_events == {}
@@ -441,10 +441,10 @@ class TestRunDeferredCalls(object):
         utils.set_local_contents(local_client, 'foo')
         utils.set_s3_contents(s3_client, 'baz', timestamp=2000, data='testing')
         success = worker.run_deferred_calls({
-            'foo': sync.DeferredFunction(sync.delete_client, local_client, 'foo', 1000),
+            'foo': sync.DeferredFunction(worker.delete_client, local_client, 'foo', 1000),
             'bar': sync.DeferredFunction(failing_function),
             'yap': sync.DeferredFunction(keyboard_interrupt),
-            'baz': sync.DeferredFunction(sync.create_client, local_client, s3_client, 'baz', 2000),
+            'baz': sync.DeferredFunction(worker.create_client, local_client, s3_client, 'baz', 2000),
         })
         assert sorted(success) == sorted(['foo', 'baz'])
         assert_local_keys(clients, ['baz'])
@@ -453,7 +453,10 @@ class TestRunDeferredCalls(object):
 class TestMove(object):
     def test_correct_behaviour(self, local_client, s3_client):
         utils.set_s3_contents(s3_client, 'art.txt', data='swirly abstract objects')
-        sync.move(
+
+        worker = sync.SyncWorker(local_client, s3_client)
+
+        worker.move(
             to_client=local_client,
             from_client=s3_client,
             key='art.txt',
