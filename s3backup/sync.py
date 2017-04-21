@@ -72,10 +72,16 @@ def show_diff(client_1, client_2, key):
 
 
 class SyncWorker(object):
-    def __init__(self, client_1, client_2):
+    def __init__(self, client_1, client_2, log_to_file=None):
         self.client_1 = client_1
         self.client_2 = client_2
         self.logger = logging.getLogger(str(self))
+        if log_to_file is not None:
+            file_handler = logging.FileHandler(os.path.expanduser(log_to_file))
+            file_handler.setFormatter(
+                logging.Formatter('%(asctime)-15s - %(message)s')
+            )
+            self.logger.addHandler(file_handler)
 
     def sync(self, conflict_choice=None):
         try:
