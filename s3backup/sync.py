@@ -12,9 +12,6 @@ import tqdm
 from s3backup.clients import SyncState
 
 
-logger = logging.getLogger(__name__)
-
-
 class DeferredFunction(object):
     def __init__(self, func, *args, **kwargs):
         self.func = func
@@ -120,11 +117,11 @@ class SyncWorker(object):
                         choice = conflict_choice
 
                     if choice == '1':
-                        deferred_calls[key] = get_deferred_function(
+                        deferred_calls[key] = self.get_deferred_function(
                             key, action_1, self.client_2, self.client_1
                         )
                     elif choice == '2':
-                        deferred_calls[key] = get_deferred_function(
+                        deferred_calls[key] = self.get_deferred_function(
                             key, action_2, self.client_1, self.client_2
                         )
                     else:
@@ -154,40 +151,42 @@ class SyncWorker(object):
                     continue
                 elif state_1.remote_timestamp > state_2.remote_timestamp:
                     deferred_calls[key] = DeferredFunction(
-                        update_client, self.client_2, self.client_1, key, state_1.remote_timestamp
+                        self.update_client, self.client_2, self.client_1,
+                        key, state_1.remote_timestamp
                     )
                 elif state_2.remote_timestamp > state_1.remote_timestamp:
                     deferred_calls[key] = DeferredFunction(
-                        update_client, self.client_1, self.client_2, key, state_2.remote_timestamp
+                        self.update_client, self.client_1, self.client_2,
+                        key, state_2.remote_timestamp
                     )
 
             elif state_1.state == SyncState.CREATED and state_2.state == SyncState.DOESNOTEXIST:
                 deferred_calls[key] = DeferredFunction(
-                    create_client, self.client_2, self.client_1, key, state_1.local_timestamp
+                    self.create_client, self.client_2, self.client_1, key, state_1.local_timestamp
                 )
 
             elif state_2.state == SyncState.CREATED and state_1.state == SyncState.DOESNOTEXIST:
                 deferred_calls[key] = DeferredFunction(
-                    create_client, self.client_1, self.client_2, key, state_2.local_timestamp
+                    self.create_client, self.client_1, self.client_2, key, state_2.local_timestamp
                 )
 
             elif state_1.state == SyncState.NOCHANGES and state_2.state == SyncState.DOESNOTEXIST:
                 deferred_calls[key] = DeferredFunction(
-                    create_client, self.client_2, self.client_1, key, state_1.remote_timestamp
+                    self.create_client, self.client_2, self.client_1, key, state_1.remote_timestamp
                 )
 
             elif state_2.state == SyncState.NOCHANGES and state_1.state == SyncState.DOESNOTEXIST:
                 deferred_calls[key] = DeferredFunction(
-                    create_client, self.client_1, self.client_2, key, state_2.remote_timestamp
+                    self.create_client, self.client_1, self.client_2, key, state_2.remote_timestamp
                 )
             elif state_1.state == SyncState.UPDATED and state_2.state == SyncState.DOESNOTEXIST:
                 deferred_calls[key] = DeferredFunction(
-                    create_client, self.client_2, self.client_1, key, state_1.local_timestamp
+                    self.create_client, self.client_2, self.client_1, key, state_1.local_timestamp
                 )
 
             elif state_2.state == SyncState.UPDATED and state_1.state == SyncState.DOESNOTEXIST:
                 deferred_calls[key] = DeferredFunction(
-                    create_client, self.client_2, self.client_1, key, state_1.local_timestamp
+                    self.create_client, self.client_2, self.client_1, key, state_1.local_timestamp
                 )
 
             elif (
@@ -203,7 +202,7 @@ class SyncWorker(object):
                 state_1.remote_timestamp == state_2.remote_timestamp
             ):
                 deferred_calls[key] = DeferredFunction(
-                    update_client, self.client_2, self.client_1, key, state_1.local_timestamp
+                    self.update_client, self.client_2, self.client_1, key, state_1.local_timestamp
                 )
 
             elif (
@@ -212,7 +211,7 @@ class SyncWorker(object):
                 state_1.remote_timestamp == state_2.remote_timestamp
             ):
                 deferred_calls[key] = DeferredFunction(
-                    update_client, self.client_1, self.client_2, key, state_2.local_timestamp
+                    self.update_client, self.client_1, self.client_2, key, state_2.local_timestamp
                 )
 
             elif (
@@ -221,7 +220,7 @@ class SyncWorker(object):
                 state_1.remote_timestamp == state_2.remote_timestamp
             ):
                 deferred_calls[key] = DeferredFunction(
-                    delete_client, self.client_2, key, state_1.remote_timestamp
+                    self.delete_client, self.client_2, key, state_1.remote_timestamp
                 )
 
             elif (
@@ -230,7 +229,7 @@ class SyncWorker(object):
                 state_1.remote_timestamp == state_2.remote_timestamp
             ):
                 deferred_calls[key] = DeferredFunction(
-                    delete_client, self.client_1, key, state_2.remote_timestamp
+                    self.delete_client, self.client_1, key, state_2.remote_timestamp
                 )
 
             elif (
@@ -239,7 +238,7 @@ class SyncWorker(object):
                 state_1.remote_timestamp == state_2.remote_timestamp
             ):
                 deferred_calls[key] = DeferredFunction(
-                    create_client, self.client_1, self.client_2, key, state_2.local_timestamp
+                    self.create_client, self.client_1, self.client_2, key, state_2.local_timestamp
                 )
 
             elif (
@@ -248,7 +247,7 @@ class SyncWorker(object):
                 state_1.remote_timestamp == state_2.remote_timestamp
             ):
                 deferred_calls[key] = DeferredFunction(
-                    create_client, self.client_2, self.client_1, key, state_1.local_timestamp
+                    self.create_client, self.client_2, self.client_1, key, state_1.local_timestamp
                 )
 
             else:
@@ -302,20 +301,50 @@ class SyncWorker(object):
             action_2 = client_2_actions.get(key, DOES_NOT_EXIST)
             yield key, action_1, action_2
 
+    def get_deferred_function(self, key, action, to_client, from_client):
+        if action.state in (SyncState.UPDATED, SyncState.NOCHANGES):
+            return DeferredFunction(
+                self.update_client, to_client, from_client, key, action.local_timestamp
+            )
+        elif action.state == SyncState.CREATED:
+            return DeferredFunction(
+                self.create_client, to_client, from_client, key, action.local_timestamp
+            )
+        elif action.state == SyncState.DELETED:
+            return DeferredFunction(self.delete_client, to_client, key, action.remote_timestamp)
+        else:
+            raise ValueError('Unknown action provided', action)
 
-def get_deferred_function(key, action, to_client, from_client):
-    if action.state in (SyncState.UPDATED, SyncState.NOCHANGES):
-        return DeferredFunction(
-            update_client, to_client, from_client, key, action.local_timestamp
+    def create_client(self, to_client, from_client, key, timestamp):
+        self.logger.info(
+            colored.green('Creating %s (%s => %s)'),
+            key, from_client.get_uri(), to_client.get_uri()
         )
-    elif action.state == SyncState.CREATED:
-        return DeferredFunction(
-            create_client, to_client, from_client, key, action.local_timestamp
+        self.move(to_client, from_client, key, timestamp)
+
+    def update_client(self, to_client, from_client, key, timestamp):
+        self.logger.info(
+            colored.yellow('Updating %s (%s => %s)'),
+            key, from_client.get_uri(), to_client.get_uri()
         )
-    elif action.state == SyncState.DELETED:
-        return DeferredFunction(delete_client, to_client, key, action.remote_timestamp)
-    else:
-        raise ValueError('Unknown action provided', action)
+        self.move(to_client, from_client, key, timestamp)
+
+    def move(self, to_client, from_client, key, timestamp):
+        sync_object = from_client.get(key)
+
+        with get_progress_bar(sync_object.total_size) as progress_bar:
+            to_client.put(key, sync_object, callback=progress_bar.update)
+
+        to_client.set_remote_timestamp(key, timestamp)
+        from_client.set_remote_timestamp(key, timestamp)
+
+    def delete_client(self, client, key, remote_timestamp):
+        self.logger.info(
+            colored.red('Deleting %s on %s'),
+            key, client.get_uri()
+        )
+        client.delete(key)
+        client.set_remote_timestamp(key, remote_timestamp)
 
 
 def get_progress_bar(max_value):
@@ -327,38 +356,3 @@ def get_progress_bar(max_value):
         unit_scale=True,
         mininterval=0.2,
     )
-
-
-def create_client(to_client, from_client, key, timestamp):
-    logger.info(
-        colored.green('Creating %s (%s => %s)'),
-        key, from_client.get_uri(), to_client.get_uri()
-    )
-    move(to_client, from_client, key, timestamp)
-
-
-def update_client(to_client, from_client, key, timestamp):
-    logger.info(
-        colored.yellow('Updating %s (%s => %s)'),
-        key, from_client.get_uri(), to_client.get_uri()
-    )
-    move(to_client, from_client, key, timestamp)
-
-
-def move(to_client, from_client, key, timestamp):
-    sync_object = from_client.get(key)
-
-    with get_progress_bar(sync_object.total_size) as progress_bar:
-        to_client.put(key, sync_object, callback=progress_bar.update)
-
-    to_client.set_remote_timestamp(key, timestamp)
-    from_client.set_remote_timestamp(key, timestamp)
-
-
-def delete_client(client, key, remote_timestamp):
-    logger.info(
-        colored.red('Deleting %s on %s'),
-        key, client.get_uri()
-    )
-    client.delete(key)
-    client.set_remote_timestamp(key, remote_timestamp)
