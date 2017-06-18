@@ -166,7 +166,7 @@ def targets_command(args, config, logger):
 def add_command(args, config, logger):
     entry = {}
 
-    entry['local_folder'] = utils.get_input('local folder: ')
+    entry['local_folder'] = os.path.expanduser(utils.get_input('local folder: '))
     entry['s3_uri'] = utils.get_input('s3 uri: ')
     entry['aws_access_key_id'] = utils.get_input('AWS Access Key ID: ')
     entry['aws_secret_access_key'] = utils.get_input('AWS Secret Access Key: ', secret=True)
