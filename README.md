@@ -73,6 +73,18 @@ Choice (default=skip):
 
 If you do not wish to fix the issue, you can simply skip the file for now.
 
+Other Subommands
+----------------
+
+Some other subcommands that you could find useful:
+
+* `./s3b targets` - print existing targets
+* `./s3b edit` - edit the settings of a targets
+* `./s3b rm` - remove a target
+* `./s3b ls` - print tracked files and metadata of a target
+
+Use the `--help` parameter on each subcommand to get more details.
+
 How S3Backup Works
 ------------------
 S3backup keeps track of changes between files with a `.index` file at the root of each folder you are syncing. This contains
