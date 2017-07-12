@@ -146,7 +146,9 @@ def sync_command(args, config, logger):
             entry = config['targets'][name]
             client_1, client_2 = get_clients(entry)
 
-            worker = sync.SyncWorker(client_1, client_2)
+            s3_log = os.path.expanduser('~/.s3blog')
+
+            worker = sync.SyncWorker(client_1, client_2, s3_log, name)
 
             logger.info('Syncing %s [%s <=> %s]', name, client_1.get_uri(), client_2.get_uri())
             worker.sync(conflict_choice=args.conflicts)
