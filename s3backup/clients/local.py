@@ -15,6 +15,10 @@ from s3backup.clients import SyncClient, SyncObject
 logger = logging.getLogger(__name__)
 
 
+def matches(key, patterns):
+    return any(fnmatch.fnmatch(key, pattern) for pattern in patterns)
+
+
 def traverse(path, ignore_files=None):
     if not os.path.exists(path):
         return
@@ -23,7 +27,7 @@ def traverse(path, ignore_files=None):
         ignore_files = []
 
     for item in os.scandir(path):
-        if any(fnmatch.fnmatch(item.name, pattern) for pattern in ignore_files):
+        if matches(item.name, ignore_files):
             logger.debug('Ignoring %s', item)
             continue
 
@@ -37,8 +41,8 @@ def traverse(path, ignore_files=None):
 class LocalSyncClient(SyncClient):
     def __init__(self, path):
         self.path = path
-        self.reload_index()
         self.reload_ignore_files()
+        self.reload_index()
 
     def get_client_name(self):
         return 'local'
@@ -117,6 +121,10 @@ class LocalSyncClient(SyncClient):
 
         with method(index_path, 'rt') as fp:
             data = json.load(fp)
+
+        # Filter out keys which are ignored if they happened to have been stored before
+        data = {k: v for k, v in data.items() if not matches(k, self.ignore_files)}
+
         return data
 
     def flush_index(self, compressed=True):
