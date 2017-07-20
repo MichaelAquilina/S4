@@ -24,17 +24,20 @@ Please note that because this project is under heavy development you
 should expect incomplete features, lots of bugs and many breaking
 changes between commits.
 
-Installation and Setup
-----------------------
+Installation
+------------
 
-Install the the necessary requirements using pip:
+The easiest way to install s4 is through pip:
 
 ::
 
-    $ pip install -r requirements.txt
+    $ pip install s4
 
-First, run ``s4 add`` to add a new sync local folder and target s3
-uri:
+
+Setup
+-----
+
+Run ``s4 add`` to add a new sync local folder and target s3 uri:
 
 ::
 
@@ -132,5 +135,5 @@ Note that if you add a pattern which matches an item that was previously
 synced, that item will be deleted from the target you are syncing with
 next time you run s4.
 
-.. |CircleCI| image:: https://circleci.com/gh/MichaelAquilina/s3backup.svg?style=svg
-   :target: https://circleci.com/gh/MichaelAquilina/s3backup
+.. |CircleCI| image:: https://circleci.com/gh/MichaelAquilina/s4.svg?style=svg
+   :target: https://circleci.com/gh/MichaelAquilina/s4
