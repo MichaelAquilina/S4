@@ -103,10 +103,10 @@ Some other subcommands that you could find useful:
 
 Use the ``--help`` parameter on each subcommand to get more details.
 
-How S3Backup Works
-------------------
+How S4 Works
+-------------
 
-S3backup keeps track of changes between files with a ``.index`` file at
+S4 keeps track of changes between files with a ``.index`` file at
 the root of each folder you are syncing. This contains the keys of each
 file being synchronised along with the timstamps found locally and
 remotely in JSON format.
