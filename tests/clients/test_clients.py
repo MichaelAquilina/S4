@@ -2,7 +2,7 @@
 
 import datetime
 
-from s3backup.clients import get_sync_state, SyncState, SyncObject
+from s4.clients import get_sync_state, SyncState, SyncObject
 
 
 class TestSyncState(object):

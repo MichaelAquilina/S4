@@ -10,7 +10,7 @@ import tempfile
 import mock
 import pytest
 
-from s3backup.clients import local, SyncObject
+from s4.clients import local, SyncObject
 import utils
 
 
