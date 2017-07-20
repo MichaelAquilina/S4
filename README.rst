@@ -33,12 +33,12 @@ Install the the necessary requirements using pip:
 
     $ pip install -r requirements.txt
 
-First, run ``./s3b add`` to add a new sync local folder and target s3
+First, run ``s4 add`` to add a new sync local folder and target s3
 uri:
 
 ::
 
-    $ ./s3b add
+    $ s4 add
     local folder: /home/username/myfolder1
     s3 uri: s3://mybucket/folder1
     AWS Access Key ID: AKIAJD53D9GCGKCD
@@ -49,12 +49,12 @@ uri:
 Synchronising
 -------------
 
-Run ``./s3b sync`` in the project directory to synchronise the local
+Run ``s4 sync`` in the project directory to synchronise the local
 folders you specified with the folders in the bucket.
 
 ::
 
-    $ ./s3b sync
+    $ s4 sync
     Syncing myfolder1 [/home/username/myfolder1/ <=> s3://mybucket/folder1/]
     Creating foobar.jpg (/home/username/myfolder1/ => s3://mybucket/folder1/)
     Creating boarding-pass.pdf (/home/username/myfolder1/ => s3://mybucket/folder1/)
