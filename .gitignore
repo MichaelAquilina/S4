@@ -1,3 +1,5 @@
+dist/*
+*.egg-info/*
 .venv
 *.py[co]
 __pycache__

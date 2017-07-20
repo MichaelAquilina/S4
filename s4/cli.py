@@ -10,12 +10,12 @@ import boto3
 
 from tabulate import tabulate
 
-from s3backup import sync
-from s3backup import utils
-from s3backup.clients import local, s3
+from s4 import sync
+from s4 import utils
+from s4.clients import local, s3
 
 
-CONFIG_FOLDER_PATH = os.path.expanduser('~/.config/s3backup')
+CONFIG_FOLDER_PATH = os.path.expanduser('~/.config/s4')
 CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, 'sync.conf')
 
 
@@ -36,7 +36,11 @@ def get_local_client(target):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--log-level', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'])
+    parser.add_argument(
+        '--log-level',
+        default='INFO',
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+    )
 
     subparsers = parser.add_subparsers(dest='command')
     sync_parser = subparsers.add_parser('sync')

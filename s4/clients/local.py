@@ -10,7 +10,7 @@ import tempfile
 
 import magic
 
-from s3backup.clients import SyncClient, SyncObject
+from s4.clients import SyncClient, SyncObject
 
 logger = logging.getLogger(__name__)
 

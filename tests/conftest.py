@@ -11,8 +11,8 @@ import moto
 
 import pytest
 
-from s3backup.clients.local import LocalSyncClient
-from s3backup.clients.s3 import S3SyncClient
+from s4.clients.local import LocalSyncClient
+from s4.clients.s3 import S3SyncClient
 
 fake = Faker()
 
