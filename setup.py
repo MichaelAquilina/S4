@@ -2,11 +2,25 @@
 
 from distutils.core import setup
 
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
+
+
+with open('README.md') as readme_file:
+    readme = readme_file.read()
+
+with open('requirements.txt') as requirements_file:
+    requirements = requirements_file.read().split('\n')
+
 setup(
     name='s4',
     packages=[],
-    version='0.1.1',
+    version='0.1.2',
     description='Sync your folders to s3 between multiple machines',
+    long_description=readme,
+    install_requires=requirements,
     author='Michael Aquilina',
     license='MIT',
     author_email='michaelaquilina@gmail.com',
@@ -29,7 +43,6 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: Implementation :: CPython',
