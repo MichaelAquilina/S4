@@ -28,7 +28,7 @@ setup(
     keywords=['aws', 's3', 'backup', 'sync'],
     scripts=[
         'bin/s4',
-        's4/s4.py',
+        's4/cli.py',
         's4/__init__.py',
         's4/sync.py',
         's4/utils.py',
