@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
 except ImportError:
     from distutils.core import setup
 
@@ -16,8 +16,8 @@ with open('requirements.txt') as requirements_file:
 
 setup(
     name='s4',
-    packages=['s4'],
-    version='0.1.13',
+    packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
+    version='0.1.14',
     description='Sync your folders to s3 between multiple machines',
     long_description=readme,
     install_requires=requirements,
