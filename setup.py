@@ -5,7 +5,7 @@ from distutils.core import setup
 setup(
     name='s4',
     packages=[],
-    version='0.1.0',
+    version='0.1.1',
     description='Sync your folders to s3 between multiple machines',
     author='Michael Aquilina',
     license='MIT',
