@@ -9,7 +9,7 @@ from clint.textui import colored
 
 import tqdm
 
-from s3backup.clients import SyncState
+from s4.clients import SyncState
 
 
 class DeferredFunction(object):

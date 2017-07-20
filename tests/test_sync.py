@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from s3backup import sync
-from s3backup.clients import SyncState
+from s4 import sync
+from s4.clients import SyncState
 import utils
 
 

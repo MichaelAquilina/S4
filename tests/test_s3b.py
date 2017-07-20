@@ -12,9 +12,8 @@ import mock
 import pytest
 import pytz
 
-import s3b
-
-from s3backup.utils import to_timestamp
+from s4 import cli
+from s4.utils import to_timestamp
 import utils
 
 
@@ -32,7 +31,7 @@ class FakeInputStream(object):
 @pytest.yield_fixture
 def config_file():
     fd, temp_path = tempfile.mkstemp()
-    mocker = mock.patch('s3b.CONFIG_FILE_PATH', temp_path)
+    mocker = mock.patch('s4.cli.CONFIG_FILE_PATH', temp_path)
     mocker.start()
     yield temp_path
     mocker.stop()
@@ -60,10 +59,10 @@ def get_timestamp(year, month, day, hour, minute):
     )
 
 
-@mock.patch('s3backup.utils.get_input')
+@mock.patch('s4.utils.get_input')
 class TestEditCommand(object):
     def test_no_targets(self, get_input, logger):
-        s3b.edit_command(None, {}, logger)
+        cli.edit_command(None, {}, logger)
         expected_result = (
             'You have not added any targets yet\n'
             'Use the "add" command to do this\n'
@@ -75,7 +74,7 @@ class TestEditCommand(object):
         config = {
             'targets': {'foo': {}}
         }
-        s3b.edit_command(args, config, logger)
+        cli.edit_command(args, config, logger)
 
         expected_result = (
             '"idontexist" is an unknown target\n'
@@ -103,7 +102,7 @@ class TestEditCommand(object):
                 'region_name': 'eu-west-1',
             }}
         }
-        s3b.edit_command(args, config, logger)
+        cli.edit_command(args, config, logger)
 
         with open(config_file, 'r') as fp:
             config = json.load(fp)
@@ -120,7 +119,7 @@ class TestEditCommand(object):
         assert expected_config == config
 
 
-@mock.patch('s3backup.utils.get_input')
+@mock.patch('s4.utils.get_input')
 class TestAddCommand(object):
     def test_correct_behaviour(self, get_input, logger, config_file):
         fake_stream = FakeInputStream([
@@ -133,7 +132,7 @@ class TestAddCommand(object):
         ])
         get_input.side_effect = fake_stream
 
-        s3b.add_command(None, {}, logger)
+        cli.add_command(None, {}, logger)
 
         with open(config_file, 'r') as fp:
             new_config = json.load(fp)
@@ -162,7 +161,7 @@ class TestAddCommand(object):
         ])
         get_input.side_effect = fake_stream
 
-        s3b.add_command(None, {}, logger)
+        cli.add_command(None, {}, logger)
 
         with open(config_file, 'r') as fp:
             new_config = json.load(fp)
@@ -184,7 +183,7 @@ class TestAddCommand(object):
 class TestLsCommand(object):
     def test_empty_config(self, logger):
         args = argparse.Namespace(target='idontexist')
-        s3b.ls_command(args, {}, logger)
+        cli.ls_command(args, {}, logger)
         expected_result = (
             'You have not added any targets yet\n'
             'Use the "add" command to do this\n'
@@ -199,7 +198,7 @@ class TestLsCommand(object):
                 'bar': {},
             }
         }
-        s3b.ls_command(args, config, logger)
+        cli.ls_command(args, config, logger)
         expected_result = (
             '"idontexist" is an unknown target\n'
             'Choices are: [\'bar\', \'foo\']\n'
@@ -220,7 +219,7 @@ class TestLsCommand(object):
         }
 
         args = argparse.Namespace(target='foo', sort_by='key', descending=False)
-        s3b.ls_command(args, config, logger)
+        cli.ls_command(args, config, logger)
 
         expected_result = (
             'key    local    s3\n'
@@ -261,7 +260,7 @@ class TestLsCommand(object):
         })
 
         args = argparse.Namespace(target='foo', sort_by='key', descending=False)
-        s3b.ls_command(args, config, logger)
+        cli.ls_command(args, config, logger)
 
         expected_result = (
             'key    local                s3\n'
@@ -277,7 +276,7 @@ class TestLsCommand(object):
 class TestTargetsCommand(object):
 
     def test_empty(self, logger):
-        s3b.targets_command(None, {}, logger)
+        cli.targets_command(None, {}, logger)
         assert get_stream_value(logger) == ''
 
     def test_correct_output(self, logger):
@@ -294,7 +293,7 @@ class TestTargetsCommand(object):
             }
         }
 
-        s3b.targets_command(None, config, logger)
+        cli.targets_command(None, config, logger)
 
         expected_result = (
             'Personal: [/home/user/Documents <=> s3://mybackup/Personal]\n'
@@ -306,7 +305,7 @@ class TestTargetsCommand(object):
 class TestRemoveCommand(object):
     def test_empty(self, logger, config_file):
         args = argparse.Namespace(target='foo')
-        s3b.remove_command(args, {}, logger)
+        cli.remove_command(args, {}, logger)
 
         expected_output = (
             'You have not added any targets yet\n'
@@ -315,7 +314,7 @@ class TestRemoveCommand(object):
 
     def test_missing(self, logger, config_file):
         args = argparse.Namespace(target='foo')
-        s3b.remove_command(args, {
+        cli.remove_command(args, {
             'targets': {
                 'bar': {}
             }
@@ -329,7 +328,7 @@ class TestRemoveCommand(object):
 
     def test_remove_target(self, logger, config_file):
         args = argparse.Namespace(target='foo')
-        s3b.remove_command(args, {
+        cli.remove_command(args, {
             'targets': {
                 'bar': {},
                 'foo': {},
