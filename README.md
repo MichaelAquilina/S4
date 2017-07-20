@@ -1,12 +1,14 @@
-S3 Backup
-=========
+S4 = S3 Syncer
+==============
 
 [![CircleCI](https://circleci.com/gh/MichaelAquilina/s3backup.svg?style=svg)](https://circleci.com/gh/MichaelAquilina/s3backup)
 
 Fast and cheap synchronisation of files using [Amazon S3](https://aws.amazon.com/s3/).
 
+S4 stands for "Simple Storage Solution (s3) Syncer".
+
 The intention of this project is to be an open source alternative to typical proprietary sync solutions like Dropbox.
-Because s3backup interacts with s3 directly, you can expect _very_ fast upload and download speeds as well as _very_
+Because s4 interacts with s3 directly, you can expect _very_ fast upload and download speeds as well as _very_
 cheap costs (See [Amazon S3 Pricing](https://aws.amazon.com/s3/pricing/) for an idea of how much this would cost you).
 
 You can also take advantage of other cool features that s3 provides like [versioning](http://docs.aws.amazon.com/AmazonS3/latest/dev/Versioning.html). Everytime you sync a version of a new file,
@@ -52,12 +54,12 @@ All files will be automatically synced between the source and target destination
 You may specify a specific folder to synchronise by the name you provided during `add`.
 
 ```
-$ ./s3b sync foo
+$ s4 sync foo
 ```
 
 Handling Conflicts
 ------------------
-In the case where s3backup cannot decide on a reasonable action by itself, it will ask you to intervene:
+In the case where s4 cannot decide on a reasonable action by itself, it will ask you to intervene:
 
 ```
 Syncing /home/username/myfolder1/ with s3://mybucket/folder1/
@@ -78,10 +80,10 @@ Other Subommands
 
 Some other subcommands that you could find useful:
 
-* `./s3b targets` - print existing targets
-* `./s3b edit` - edit the settings of a targets
-* `./s3b rm` - remove a target
-* `./s3b ls` - print tracked files and metadata of a target
+* `s4 targets` - print existing targets
+* `s4 edit` - edit the settings of a targets
+* `s4 rm` - remove a target
+* `s4 ls` - print tracked files and metadata of a target
 
 Use the `--help` parameter on each subcommand to get more details.
 
@@ -99,4 +101,4 @@ Ignoring Files
 Create a `.syncignore` file in the root of the directory being synced to list patterns of subdirectories and files you
 wish to ignore. The `.syncignore` file uses the exact same pattern that you would expect in `.gitignore`. Each line specifies a [GLOB pattern](https://en.wikipedia.org/wiki/Glob_%28programming%29) to ignore during sync.
 
-Note that if you add a pattern which matches an item that was previously synced, that item will be deleted from the target you are syncing with next time you run s3backup.
+Note that if you add a pattern which matches an item that was previously synced, that item will be deleted from the target you are syncing with next time you run s4.
