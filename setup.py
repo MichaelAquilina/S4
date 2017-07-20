@@ -17,7 +17,7 @@ with open('requirements.txt') as requirements_file:
 setup(
     name='s4',
     packages=[],
-    version='0.1.3',
+    version='0.1.4',
     description='Sync your folders to s3 between multiple machines',
     long_description=readme,
     install_requires=requirements,
