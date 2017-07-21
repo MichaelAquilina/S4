@@ -1,7 +1,7 @@
 S4 = S3 Syncer
 ==============
 
-|CircleCI|
+|CircleCI| |PyPi|
 
 Fast and cheap synchronisation of files using `Amazon
 S3 <https://aws.amazon.com/s3/>`__.
@@ -137,3 +137,6 @@ next time you run s4.
 
 .. |CircleCI| image:: https://circleci.com/gh/MichaelAquilina/s4.svg?style=svg
    :target: https://circleci.com/gh/MichaelAquilina/s4
+
+.. |PyPi| image:: https://badge.fury.io/py/s4.svg
+    :target: https://badge.fury.io/py/s4
