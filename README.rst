@@ -20,10 +20,6 @@ You can also take advantage of other cool features that s3 provides like
 Everytime you sync a version of a new file, you will now have the
 ability to easily rollback to any previous version.
 
-Please note that because this project is under heavy development you
-should expect incomplete features, lots of bugs and many breaking
-changes between commits.
-
 Requirements
 ------------
 
