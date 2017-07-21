@@ -1,7 +1,7 @@
 S4 = S3 Syncer
 ==============
 
-|CircleCI| |PyPi|
+|TravisCI| |PyPi|
 
 Fast and cheap synchronisation of files using `Amazon
 S3 <https://aws.amazon.com/s3/>`__.
@@ -135,8 +135,8 @@ Note that if you add a pattern which matches an item that was previously
 synced, that item will be deleted from the target you are syncing with
 next time you run s4.
 
-.. |CircleCI| image:: https://circleci.com/gh/MichaelAquilina/s4.svg?style=svg
-   :target: https://circleci.com/gh/MichaelAquilina/s4
+.. |TravisCI| image:: https://travis-ci.org/MichaelAquilina/s4.svg?branch=master
+   :target: https://travis-ci.org/MichaelAquilina/s4
 
 .. |PyPi| image:: https://badge.fury.io/py/s4.svg
     :target: https://badge.fury.io/py/s4
