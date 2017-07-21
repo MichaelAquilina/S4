@@ -79,49 +79,49 @@ def get_sync_state(index_local, real_local, remote):
 
 class SyncClient(object):
     def get_client_name(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_uri(self, key=''):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def put(self, key, sync_object):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get(self, key):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def delete(self, key):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_local_keys(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_real_local_timestamp(self, key):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_index_keys(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_index_local_timestamp(self, key):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def set_index_local_timestamp(self, key, timestamp):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_remote_timestamp(self, key):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def set_remote_timestamp(self, key, timestamp):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_all_remote_timestamps(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_all_index_local_timestamps(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_all_real_local_timestamps(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_all_keys(self):
         local_keys = self.get_local_keys()
@@ -146,7 +146,7 @@ class SyncClient(object):
         }
 
     def flush_index(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_action(self, key):
         """

@@ -2,7 +2,9 @@
 
 import datetime
 
-from s4.clients import get_sync_state, SyncState, SyncObject
+import pytest
+
+from s4.clients import get_sync_state, SyncClient, SyncState, SyncObject
 
 
 class TestSyncState(object):
@@ -21,6 +23,83 @@ class TestSyncState(object):
         assert SyncState(SyncState.UPDATED, 10, 30) != SyncState(SyncState.DELETED, 10, 30)
         assert SyncState(SyncState.DELETED, 20, 20) != SyncState(SyncState.DELETED, 40, 20)
         assert SyncState(SyncState.CONFLICT, 20, 20) != SyncState(SyncState.CONFLICT, 20, 40)
+
+
+class TestSyncClient(object):
+    def test_get_client_name(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.get_client_name()
+
+    def test_get_uri(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.get_uri()
+
+    def test_put(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.put("something", None)
+
+    def test_get(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.get("something")
+
+    def test_delete(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.delete("something")
+
+    def test_get_local_keys(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.get_local_keys()
+
+    def test_get_real_local_timestamp(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.get_real_local_timestamp("something")
+
+    def test_get_index_keys(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.get_index_keys()
+
+    def test_get_index_local_timestamp(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.get_index_local_timestamp("something")
+
+    def test_set_index_local_timestamp(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.set_index_local_timestamp("something", None)
+
+    def test_get_remote_timestamp(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.get_remote_timestamp("something")
+
+    def test_get_all_remote_timestamps(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.get_all_remote_timestamps()
+
+    def test_get_all_index_local_timestamps(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.get_all_index_local_timestamps()
+
+    def test_get_all_real_local_timestamps(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.get_all_real_local_timestamps()
+
+    def test_flush_index(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.flush_index()
 
 
 class TestSyncObject(object):
