@@ -15,6 +15,14 @@ class TestSyncState(object):
             datetime.datetime.utcfromtimestamp(53434)
         )
 
+    def test_get_local_datetime_missing(self):
+        action = SyncState(SyncState.UPDATED, None, None)
+        assert action.get_local_datetime() is None
+
+    def test_get_remote_datetime_missing(self):
+        action = SyncState(SyncState.CREATED, None, None)
+        assert action.get_remote_datetime() is None
+
     def test_equality_with_self(self):
         action = SyncState(SyncState.UPDATED, 1000, 53434)
         assert action == action
@@ -23,6 +31,11 @@ class TestSyncState(object):
         assert SyncState(SyncState.UPDATED, 10, 30) != SyncState(SyncState.DELETED, 10, 30)
         assert SyncState(SyncState.DELETED, 20, 20) != SyncState(SyncState.DELETED, 40, 20)
         assert SyncState(SyncState.CONFLICT, 20, 20) != SyncState(SyncState.CONFLICT, 20, 40)
+
+    def test_equality_with_wrong_type(self):
+        action = SyncState(SyncState.DELETED, 1000, 3000)
+        assert action != 10
+        assert action != "hello"
 
 
 class TestSyncClient(object):
