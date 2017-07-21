@@ -1,7 +1,7 @@
 S4 = S3 Syncer
 ==============
 
-|TravisCI| |PyPi|
+|TravisCI| |CodeCov| |PyPi|
 
 Fast and cheap synchronisation of files using `Amazon
 S3 <https://aws.amazon.com/s3/>`__.
@@ -144,4 +144,7 @@ next time you run s4.
    :target: https://travis-ci.org/MichaelAquilina/s4
 
 .. |PyPi| image:: https://badge.fury.io/py/s4.svg
-    :target: https://badge.fury.io/py/s4
+   :target: https://badge.fury.io/py/s4
+
+.. |CodeCov| image:: https://codecov.io/gh/MichaelAquilina/s4/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/MichaelAquilina/s4
