@@ -17,6 +17,11 @@ class TestDeferredFunction(object):
         deferred_function = sync.DeferredFunction(foo, 'red', b='green')
         assert deferred_function() == 'red green'
 
+    def test_equality_wrong_type(self):
+        deferred_function = sync.DeferredFunction(lambda x: x)
+        assert deferred_function != 2
+        assert deferred_function != 'hello'
+
     def test_equality_with_self(self):
         deferred_function = sync.DeferredFunction(lambda x: x**2, 2)
         assert deferred_function == deferred_function
