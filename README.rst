@@ -24,6 +24,11 @@ Please note that because this project is under heavy development you
 should expect incomplete features, lots of bugs and many breaking
 changes between commits.
 
+Requirements
+------------
+
+s4 requires python 3.5+ to work
+
 Installation
 ------------
 
