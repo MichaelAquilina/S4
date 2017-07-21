@@ -59,6 +59,52 @@ def get_timestamp(year, month, day, hour, minute):
     )
 
 
+@mock.patch('s4.sync.SyncWorker')
+class TestSyncCommand(object):
+    def test_no_targets(self, SyncWorker, logger):
+        args = argparse.Namespace(targets=None, conflicts=None)
+        cli.sync_command(args, {'targets': {}}, logger)
+        assert get_stream_value(logger) == ''
+        assert SyncWorker.call_count == 0
+
+    def test_wrong_target(self, SyncWorker, logger):
+        args = argparse.Namespace(targets=['foo', 'bar'], conflicts=None)
+        cli.sync_command(args, {'targets': {'baz': {}}}, logger)
+        assert get_stream_value(logger) == (
+            '"bar" is an unknown target. Choices are: [\'baz\']\n'
+            '"foo" is an unknown target. Choices are: [\'baz\']\n'
+        )
+        assert SyncWorker.call_count == 0
+
+    def test_all_targets(self, SyncWorker, logger):
+        args = argparse.Namespace(targets=None, conflicts=None)
+        config = {
+            'targets': {
+                'foo': {
+                    'local_folder': '/home/mike/docs',
+                    's3_uri': 's3://foobar/docs',
+                    'aws_access_key_id': '3223323',
+                    'aws_secret_access_key': '23#@423#@',
+                    'region_name': 'us-east-1',
+                },
+                'bar': {
+                    'local_folder': '/home/mike/barmil',
+                    's3_uri': 's3://foobar/barrel',
+                    'aws_access_key_id': '3223',
+                    'aws_secret_access_key': '23#eWEa@423#@',
+                    'region_name': 'us-west-2',
+                }
+            }
+        }
+
+        cli.sync_command(args,  config, logger)
+        assert get_stream_value(logger) == (
+            'Syncing bar [/home/mike/barmil/ <=> s3://foobar/barrel/]\n'
+            'Syncing foo [/home/mike/docs/ <=> s3://foobar/docs/]\n'
+        )
+        assert SyncWorker.call_count == 2
+
+
 @mock.patch('s4.utils.get_input')
 class TestEditCommand(object):
     def test_no_targets(self, get_input, logger):
