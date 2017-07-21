@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import mock
+
+import pytest
+
 from s4 import sync
 from s4.clients import SyncState
 import utils
@@ -226,6 +230,55 @@ def assert_existence(clients, keys, exists):
     for client in clients:
         for key in keys:
             assert (client.get(key) is not None) == exists
+
+
+class TestShowDiff(object):
+    @mock.patch('shutil.which')
+    def test_diff_not_found(self, which, capsys, local_client, s3_client):
+        which.return_value = None
+        sync.show_diff(local_client, s3_client, "something")
+
+        out, err = capsys.readouterr()
+        assert out == (
+            'Missing required "diff" executable.\n'
+            "Install this using your distribution's package manager\n"
+        )
+
+    @mock.patch('shutil.which')
+    def test_less_not_found(self, which, capsys, local_client, s3_client):
+        def missing_less(value):
+            if value == "less":
+                return None
+            else:
+                return "something"
+
+        which.side_effect = missing_less
+        sync.show_diff(local_client, s3_client, "something")
+
+        out, err = capsys.readouterr()
+        assert out == (
+            'Missing required "less" executable.\n'
+            "Install this using your distribution's package manager\n"
+        )
+
+    @mock.patch('subprocess.call')
+    def test_diff(self, call, local_client, s3_client):
+        utils.set_local_contents(local_client, "something", 4000, "wow")
+        utils.set_s3_contents(s3_client, "something", 3000, "nice")
+
+        sync.show_diff(local_client, s3_client, "something")
+
+        assert call.call_count == 2
+        assert call.call_args_list[0][0][0][0] == "diff"
+        assert call.call_args_list[1][0][0][0] == "less"
+
+class TestSyncWorker(object):
+    def test_get_deferred_function_unknown(self, local_client, s3_client):
+        worker = sync.SyncWorker(local_client, s3_client)
+
+        state = SyncState("unkonwn state", None, None)
+        with pytest.raises(ValueError):
+            worker.get_deferred_function("test", state, local_client, s3_client)
 
 
 class TestIntegrations(object):
