@@ -246,6 +246,9 @@ class TestLsCommand(object):
             'honey': {
                 'local_timestamp': get_timestamp(2016, 12, 12, 8, 30)
             },
+            'ginger': {
+                'local_timestamp': None,
+            }
         })
         utils.set_local_index(local_client, {
             'milk': {
@@ -257,9 +260,17 @@ class TestLsCommand(object):
             'lemon': {
                 'local_timestamp': get_timestamp(2017, 2, 2, 8, 30)
             },
+            'ginger': {
+                'local_timestamp': None,
+            }
         })
 
-        args = argparse.Namespace(target='foo', sort_by='key', descending=False)
+        args = argparse.Namespace(
+            target='foo',
+            sort_by='key',
+            show_all=False,
+            descending=False,
+        )
         cli.ls_command(args, config, logger)
 
         expected_result = (
@@ -271,6 +282,53 @@ class TestLsCommand(object):
 
         )
         assert get_stream_value(logger) == expected_result
+
+    def test_show_all(self, s3_client, local_client, logger):
+        config = {
+            'targets': {
+                'foo': {
+                    'local_folder': local_client.get_uri(),
+                    's3_uri': s3_client.get_uri(),
+                    'aws_access_key_id': '',
+                    'aws_secret_access_key': '',
+                    'region_name': 'eu-west-2',
+                }
+            }
+        }
+        utils.set_s3_index(s3_client, {
+            'cheese': {
+                'local_timestamp': get_timestamp(2017, 12, 12, 8, 30)
+            },
+            'crackers': {
+                'local_timestamp': None,
+            }
+        })
+        utils.set_local_index(local_client, {
+            'cheese': {
+                'local_timestamp': get_timestamp(2017, 2, 2, 8, 30)
+            },
+            'crackers': {
+                'local_timestamp': None,
+            }
+        })
+
+        args = argparse.Namespace(
+            target='foo',
+            sort_by='key',
+            show_all=True,
+            descending=False,
+        )
+        cli.ls_command(args, config, logger)
+
+        expected_result = (
+            'key       local                s3\n'
+            '--------  -------------------  -------------------\n'
+            'cheese    2017-02-02 08:30:00  2017-12-12 08:30:00\n'
+            'crackers  <deleted>\n'
+
+        )
+        assert get_stream_value(logger) == expected_result
+
 
 
 class TestTargetsCommand(object):
