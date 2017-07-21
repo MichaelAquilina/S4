@@ -2,6 +2,7 @@
 
 import logging
 import os
+import shutil
 import subprocess
 import tempfile
 
@@ -35,6 +36,16 @@ class DeferredFunction(object):
 
 
 def show_diff(client_1, client_2, key):
+    if shutil.which("diff") is None:
+        print('Missing required "diff" executable.')
+        print("Install this using your distribution's package manager")
+        return
+
+    if shutil.which("less") is None:
+        print('Missing required "less" executable.')
+        print("Install this using your distribution's package manager")
+        return
+
     so1 = client_1.get(key)
     data1 = so1.fp.read()
     so1.fp.close()
