@@ -56,6 +56,12 @@ def main():
     ls_parser.add_argument('target')
     ls_parser.add_argument('--sort-by', '-s', choices=['key', 'local', 's3'], default='key')
     ls_parser.add_argument('--descending', '-d', action='store_true')
+    ls_parser.add_argument(
+        '--all', '-A',
+        dest='show_all',
+        action='store_true',
+        help='show deleted files',
+    )
 
     remove_parser = subparsers.add_parser('rm')
     remove_parser.add_argument('target')
@@ -262,7 +268,7 @@ def ls_command(args, config, logger):
         ts_1 = entry_1.get('local_timestamp')
         ts_2 = entry_2.get('local_timestamp')
 
-        if ts_1 is not None:
+        if args.show_all or ts_1 is not None:
             data.append((
                 key,
                 datetime.datetime.utcfromtimestamp(int(ts_1)) if ts_1 is not None else '<deleted>',
