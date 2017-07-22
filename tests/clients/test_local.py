@@ -54,6 +54,13 @@ class TestTraverse(object):
 
 
 class TestLocalSyncClient(object):
+    def test_get_client_name(self, local_client):
+        assert local_client.get_client_name() == 'local'
+
+    def test_repr(self):
+        client = local.LocalSyncClient('/my/test/path')
+        assert repr(client) == 'LocalSyncClient</my/test/path>'
+
     def test_put_new(self, local_client):
         data = b'hi'
         local_client.put(
