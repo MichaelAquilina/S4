@@ -62,7 +62,7 @@ class TestS3SyncClient(object):
         assert repr(client) == 'S3SyncClient<testbucket, foo/bar>'
 
     @mock_s3
-    def test_index_path(self):
+    def test_get_uri(self):
         s3_client = boto3.client(
             's3',
             aws_access_key_id='',
