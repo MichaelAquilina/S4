@@ -44,6 +44,9 @@ class TestIsIgnoredFile(object):
 
 
 class TestS3SyncClient(object):
+    def test_get_client_name(self, s3_client):
+        assert s3_client.get_client_name() == 's3'
+
     def test_repr(self):
         boto_client = boto3.client(
             's3',
