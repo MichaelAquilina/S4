@@ -268,6 +268,16 @@ class TestLocalSyncClient(object):
         assert local_client.get_remote_timestamp('dontexist') is None
         assert local_client.get_remote_timestamp('bar') is None
 
+    def test_set_index_local_timestamp(self, local_client):
+        utils.set_local_index(local_client, {
+            'foo': {
+                'local_timestamp': 100000,
+                'remote_timestamp': 2222222222,
+            }
+        })
+        local_client.set_index_local_timestamp('foo', 123456)
+        assert local_client.get_index_local_timestamp('foo') == 123456
+
     def test_get_all_index_local_timestamps(self, local_client):
         utils.set_local_index(local_client, {
             'frap': {
