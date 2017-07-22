@@ -122,9 +122,9 @@ If you are curious, you can view the contents of an index file using the
 `s4 ls` subcommand or you can view the file directly using a command
 like `zcat`.
 
-NOTE: Deleting this file will result in that folder being treated as if
-it was never synced before so make sure you *do not* delete it unless
-you know what you are doing.
+    NOTE: Deleting this file will result in that folder being treated as if
+    it was never synced before so make sure you *do not* delete it unless
+    you know what you are doing.
 
 Ignoring Files
 --------------
