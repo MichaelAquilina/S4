@@ -59,6 +59,17 @@ def get_timestamp(year, month, day, hour, minute):
     )
 
 
+class TestGetConfigFile(object):
+    @mock.patch('s4.cli.CONFIG_FILE_PATH', '/i/dont/exist')
+    def test_no_file(self):
+        assert cli.get_config() == {}
+
+    def test_correct_output(self, config_file):
+        with open(config_file, 'w') as fp:
+            json.dump({'local_folder': '/home/someone/something'}, fp)
+
+        assert cli.get_config() == {'local_folder': '/home/someone/something'}
+
 @mock.patch('s4.sync.SyncWorker')
 class TestSyncCommand(object):
     def test_no_targets(self, SyncWorker, logger):
