@@ -26,6 +26,9 @@ class TestParseS3URI(object):
         assert s3.parse_s3_uri('nos3infront/some/path') is None
         assert s3.parse_s3_uri(':/232red+-32') is None
 
+    def test_no_path(self):
+        assert s3.parse_s3_uri('s3://bucket') is None
+
     def test_correct_output(self):
         actual_output = s3.parse_s3_uri('s3://fruit.bowl/apples/and/oranges/')
         assert actual_output.bucket == 'fruit.bowl'
