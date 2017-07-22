@@ -64,12 +64,12 @@ class TestLocalSyncClient(object):
     def test_put_new(self, local_client):
         data = b'hi'
         local_client.put(
-            key='hello_world.txt',
+            key='foo/hello_world.txt',
             sync_object=SyncObject(io.BytesIO(data), len(data), 20000)
         )
 
-        assert local_client.index['hello_world.txt']['remote_timestamp'] == 20000
-        assert utils.get_local_contents(local_client, 'hello_world.txt') == data
+        assert local_client.index['foo/hello_world.txt']['remote_timestamp'] == 20000
+        assert utils.get_local_contents(local_client, 'foo/hello_world.txt') == data
 
     def test_get_uri(self):
         client = local.LocalSyncClient('/home/michael')
