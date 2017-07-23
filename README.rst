@@ -2,7 +2,7 @@
 S4 = S3 Syncer
 ==============
 
-|TravisCI| |CodeCov| |PyPi|
+|TravisCI| |CodeCov| |PyPi| |GPLv3|
 
 Fast and cheap synchronisation of files using `Amazon
 S3 <https://aws.amazon.com/s3/>`__.
@@ -168,3 +168,6 @@ Here are is a list of open source solutions that I have tried in the past.
 
 .. |CodeCov| image:: https://codecov.io/gh/MichaelAquilina/s4/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/MichaelAquilina/s4
+
+.. |GPLv3| image:: https://img.shields.io/badge/License-GPL%20v3-blue.svg
+   :target: https://www.gnu.org/licenses/gpl-3.0
