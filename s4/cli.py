@@ -5,6 +5,7 @@ import datetime
 import os
 import json
 import logging
+import sys
 
 import boto3
 
@@ -34,7 +35,7 @@ def get_local_client(target):
     return local.LocalSyncClient(target)
 
 
-def main():
+def main(arguments):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--log-level',
@@ -66,7 +67,7 @@ def main():
     remove_parser = subparsers.add_parser('rm')
     remove_parser.add_argument('target')
 
-    args = parser.parse_args()
+    args = parser.parse_args(arguments)
 
     if args.log_level == 'DEBUG':
         log_format = '%(levelname)s:%(module)s:%(lineno)s %(message)s'
@@ -98,7 +99,7 @@ def main():
         elif args.command == 'ls':
             ls_command(args, config, logger)
         elif args.command == 'rm':
-            remove_command(args, config, logger)
+            rm_command(args, config, logger)
         else:
             parser.print_help()
     except KeyboardInterrupt:
@@ -281,7 +282,7 @@ def ls_command(args, config, logger):
     logger.info(tabulate(data, headers=headers))
 
 
-def remove_command(args, config, logger):
+def rm_command(args, config, logger):
     if 'targets' not in config:
         logger.info('You have not added any targets yet')
         return
@@ -296,4 +297,4 @@ def remove_command(args, config, logger):
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
