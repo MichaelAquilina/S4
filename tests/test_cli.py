@@ -59,6 +59,43 @@ def get_timestamp(year, month, day, hour, minute):
     )
 
 
+class TestMain(object):
+    @mock.patch('argparse.ArgumentParser.print_help')
+    def test_no_arguments_prints_help(self, print_help):
+        cli.main([])
+        assert print_help.call_count == 1
+
+    @mock.patch('s4.cli.ls_command')
+    def test_ls_command(self, ls_command):
+        cli.main(['ls', 'foo'])
+        assert ls_command.call_count == 1
+
+    @mock.patch('s4.cli.sync_command')
+    def test_sync_command(self, sync_command):
+        cli.main(['sync', 'foo'])
+        assert sync_command.call_count == 1
+
+    @mock.patch('s4.cli.edit_command')
+    def test_edit_command(self, edit_command):
+        cli.main(['edit', 'foo'])
+        assert edit_command.call_count == 1
+
+    @mock.patch('s4.cli.targets_command')
+    def test_targets_command(self, targets_command):
+        cli.main(['targets'])
+        assert targets_command.call_count == 1
+
+    @mock.patch('s4.cli.rm_command')
+    def test_rm_command(self, rm_command):
+        cli.main(['rm', 'foo'])
+        assert rm_command.call_count == 1
+
+    @mock.patch('s4.cli.add_command')
+    def test_add_command(self, add_command):
+        cli.main(['add'])
+        assert add_command.call_count == 1
+
+
 class TestGetConfigFile(object):
     @mock.patch('s4.cli.CONFIG_FILE_PATH', '/i/dont/exist')
     def test_no_file(self):
@@ -485,7 +522,7 @@ class TestTargetsCommand(object):
 class TestRemoveCommand(object):
     def test_empty(self, logger, config_file):
         args = argparse.Namespace(target='foo')
-        cli.remove_command(args, {}, logger)
+        cli.rm_command(args, {}, logger)
 
         expected_output = (
             'You have not added any targets yet\n'
@@ -494,7 +531,7 @@ class TestRemoveCommand(object):
 
     def test_missing(self, logger, config_file):
         args = argparse.Namespace(target='foo')
-        cli.remove_command(args, {
+        cli.rm_command(args, {
             'targets': {
                 'bar': {}
             }
@@ -508,7 +545,7 @@ class TestRemoveCommand(object):
 
     def test_remove_target(self, logger, config_file):
         args = argparse.Namespace(target='foo')
-        cli.remove_command(args, {
+        cli.rm_command(args, {
             'targets': {
                 'bar': {},
                 'foo': {},
