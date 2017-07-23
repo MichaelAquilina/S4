@@ -17,7 +17,7 @@ with open('requirements.txt') as requirements_file:
 setup(
     name='s4',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
-    version='0.1.18',
+    version='0.1.19',
     description='Sync your folders to s3 between multiple machines',
     long_description=readme,
     install_requires=requirements,
@@ -25,7 +25,7 @@ setup(
     license='GPLv3',
     author_email='michaelaquilina@gmail.com',
     url='https://github.com/MichaelAquilina/s4',
-    keywords=['aws', 's3', 'backup', 'sync'],
+    keywords='aws s3 backup sync',
     scripts=[
         'bin/s4',
         's4/cli.py',
