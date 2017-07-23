@@ -36,7 +36,7 @@ def get_local_client(target):
 
 
 def main(arguments):
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog='s4')
     parser.add_argument(
         '--log-level',
         default='INFO',
