@@ -7,16 +7,16 @@ S4 = S3 Syncer
 Fast and cheap synchronisation of files using `Amazon
 S3 <https://aws.amazon.com/s3/>`__.
 
-S4 stands for "Simple Storage Solution (s3) Syncer".
+S4 stands for "Simple Storage Solution (S3) Syncer".
 
 The intention of this project is to be an open source alternative to
 typical proprietary sync solutions like Dropbox. Because s4 interacts
-with s3 directly, you can expect *very* fast upload and download speeds
+with S3 directly, you can expect *very* fast upload and download speeds
 as well as *very* cheap costs (See `Amazon S3
 Pricing <https://aws.amazon.com/s3/pricing/>`__ for an idea of how much
 this would cost you). See `Why?`_ for further motivation for this project.
 
-You can also take advantage of other cool features that s3 provides like
+You can also take advantage of other cool features that S3 provides like
 `versioning <http://docs.aws.amazon.com/AmazonS3/latest/dev/Versioning.html>`__.
 Everytime you sync a version of a new file, you will now have the
 ability to easily rollback to any previous version.
@@ -24,12 +24,12 @@ ability to easily rollback to any previous version.
 Requirements
 ------------
 
-s4 requires python 3.5+ to work
+S4 requires python 3.5+ to work
 
 Installation
 ------------
 
-The easiest way to install s4 is through pip:
+The easiest way to install S4 is through pip:
 
 ::
 
@@ -39,7 +39,7 @@ The easiest way to install s4 is through pip:
 Setup
 -----
 
-Run ``s4 add`` to add a new sync local folder and target s3 uri:
+Run ``s4 add`` to add a new sync local folder and target S3 uri:
 
 ::
 
@@ -78,7 +78,7 @@ provided during ``add``.
 Handling Conflicts
 ------------------
 
-In the case where s4 cannot decide on a reasonable action by itself, it
+In the case where S4 cannot decide on a reasonable action by itself, it
 will ask you to intervene:
 
 ::
@@ -139,21 +139,21 @@ ignore during sync.
 
 Note that if you add a pattern which matches an item that was previously
 synced, that item will be deleted from the target you are syncing with
-next time you run s4.
+next time you run S4.
 
 Why?
 ----
 
-There are a number of open source s3 backup tools out there - but none of them really satisfied the
+There are a number of open source S3 backup tools out there - but none of them really satisfied the
 requirements that this project tries to solve.
 
 Here are is a list of open source solutions that I have tried in the past.
 
 * ``s3cmd``: Provides a sync function that works very well for backing up - but stops working correctly
-  as soon as there is second machine you want to sync to s3.
+  as soon as there is second machine you want to sync to S3.
 
 * ``owncloud/nextcloud``: Requires you to setup a server to perform your syncing. In terms of costs on AWS,
-  this quickly becomes costly compared with just using s3. The speed of your uploads and downloads are also
+  this quickly becomes costly compared with just using S3. The speed of your uploads and downloads are also
   heavily bottlenectked by the network and hardware performance of your ec2 instance.
 
 * ``seafile``: suffers from the same problem as owncloud/nextcloud.
