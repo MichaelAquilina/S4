@@ -16,6 +16,7 @@ from s4 import utils
 from s4.clients import local, s3
 
 
+VERSION = '0.1.21'
 CONFIG_FOLDER_PATH = os.path.expanduser('~/.config/s4')
 CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, 'sync.conf')
 
@@ -42,8 +43,10 @@ def main(arguments):
         default='INFO',
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
     )
-
     subparsers = parser.add_subparsers(dest='command')
+
+    subparsers.add_parser('version')
+
     sync_parser = subparsers.add_parser('sync')
     sync_parser.add_argument('targets', nargs='*')
     sync_parser.add_argument('--conflicts', default=None, choices=['1', '2', 'ignore'])
@@ -88,7 +91,9 @@ def main(arguments):
     config = get_config()
 
     try:
-        if args.command == 'sync':
+        if args.command == 'version':
+            print(VERSION)
+        elif args.command == 'sync':
             sync_command(args, config, logger)
         elif args.command == 'targets':
             targets_command(args, config, logger)

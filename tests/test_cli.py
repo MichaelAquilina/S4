@@ -65,6 +65,11 @@ class TestMain(object):
         cli.main([])
         assert print_help.call_count == 1
 
+    def test_version_command(self, capsys):
+        cli.main(['version'])
+        out, err = capsys.readouterr()
+        assert out == '{}\n'.format(cli.VERSION)
+
     @mock.patch('s4.cli.ls_command')
     def test_ls_command(self, ls_command):
         cli.main(['ls', 'foo'])
