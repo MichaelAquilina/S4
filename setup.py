@@ -7,7 +7,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-from s4.cli import VERSION
+from s4 import VERSION
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()

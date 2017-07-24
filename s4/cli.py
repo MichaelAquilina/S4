@@ -13,10 +13,10 @@ from tabulate import tabulate
 
 from s4 import sync
 from s4 import utils
+from s4 import VERSION
 from s4.clients import local, s3
 
 
-VERSION = '0.1.21'
 CONFIG_FOLDER_PATH = os.path.expanduser('~/.config/s4')
 CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, 'sync.conf')
 
