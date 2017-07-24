@@ -160,8 +160,8 @@ Here are is a list of open source solutions that I have tried in the past.
 
 * ``duplicity``: great backup tool, but does not provide a sync solution of any kind.
 
-.. |TravisCI| image:: https://travis-ci.org/MichaelAquilina/s4.svg?branch=master
-   :target: https://travis-ci.org/MichaelAquilina/s4
+.. |TravisCI| image:: https://travis-ci.org/MichaelAquilina/S4.svg?branch=master
+   :target: https://travis-ci.org/MichaelAquilina/S4
 
 .. |PyPi| image:: https://badge.fury.io/py/s4.svg
    :target: https://badge.fury.io/py/s4
