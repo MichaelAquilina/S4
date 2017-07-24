@@ -37,7 +37,14 @@ def get_local_client(target):
 
 
 def main(arguments):
-    parser = argparse.ArgumentParser(prog='s4')
+    parser = argparse.ArgumentParser(
+        prog='s4',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=(
+            'Fast and cheap synchronisation of files with Amazon S3\n'
+            'Version: {}\n'.format(VERSION)
+        ),
+    )
     parser.add_argument(
         '--log-level',
         default='INFO',
