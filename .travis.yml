@@ -6,3 +6,4 @@ python:
 install: pip install tox-travis
 script:
   - tox
+  - bin/s4 version
