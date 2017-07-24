@@ -7,6 +7,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
+from s4.cli import VERSION
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -17,7 +18,7 @@ with open('requirements.txt') as requirements_file:
 setup(
     name='s4',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
-    version='0.1.20',
+    version=VERSION,
     description='Sync your folders to s3 between multiple machines',
     long_description=readme,
     install_requires=requirements,
