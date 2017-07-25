@@ -10,7 +10,7 @@ Welcome to S4's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-    readme
+   readme
 
 
 
