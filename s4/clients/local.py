@@ -8,6 +8,13 @@ import os
 import shutil
 import tempfile
 
+# Use the built-in version of scandir/walk if possible, otherwise
+# use the scandir module version
+try:
+    from os import scandir
+except ImportError:
+    from scandir import scandir
+
 import magic
 
 from s4.clients import SyncClient, SyncObject
@@ -22,7 +29,7 @@ def traverse(path, ignore_files=None):
     if ignore_files is None:
         ignore_files = []
 
-    for item in os.scandir(path):
+    for item in scandir(path):
         if any(fnmatch.fnmatch(item.name, pattern) for pattern in ignore_files):
             logger.debug('Ignoring %s', item)
             continue
