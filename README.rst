@@ -24,7 +24,7 @@ ability to easily rollback to any previous version.
 Requirements
 ------------
 
-S4 requires python 3.5+ to work
+S4 requires python 3.3+ to work
 
 Installation
 ------------
