@@ -73,7 +73,7 @@ provided during ``add``.
 
 ::
 
-    $ s4 sync foo
+    $ s4 sync myfolder1
 
 Handling Conflicts
 ------------------
