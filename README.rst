@@ -24,7 +24,7 @@ ability to easily rollback to any previous version.
 Requirements
 ------------
 
-S4 requires python 3.5+ to work
+S4 requires python 3.3+ to work
 
 Installation
 ------------
@@ -73,7 +73,7 @@ provided during ``add``.
 
 ::
 
-    $ s4 sync foo
+    $ s4 sync myfolder1
 
 Handling Conflicts
 ------------------
