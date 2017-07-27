@@ -113,7 +113,7 @@ How S4 Works
 
 S4 keeps track of changes between files with a ``.index`` file at
 the root of each folder you are syncing. This contains the keys of each
-file being synchronised along with the timstamps found locally and
+file being synchronised along with the timestamps found locally and
 remotely in JSON format.
 
 This is compressed (currently using gzip) to save space and increase
