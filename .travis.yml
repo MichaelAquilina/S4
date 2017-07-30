@@ -12,3 +12,8 @@ script:
   - python setup.py install && s4 version
 after_success:
   - codecov
+cache:
+  directories:
+    - $HOME/.cache/pip
+before_cache:
+  - rm -f $HOME/.cache/pip/log/debug.log
