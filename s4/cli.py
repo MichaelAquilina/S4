@@ -42,8 +42,11 @@ def main(arguments):
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=(
             'Fast and cheap synchronisation of files with Amazon S3\n'
-            'Version: {}\n'.format(VERSION)
-        ),
+            '\n'
+            'Version: {}\n'
+            '\n'
+            'To start off, add a Target with the "add" command\n'
+        ).format(VERSION),
     )
     parser.add_argument(
         '--log-level',
@@ -52,18 +55,20 @@ def main(arguments):
     )
     subparsers = parser.add_subparsers(dest='command')
 
-    subparsers.add_parser('version')
+    subparsers.add_parser('add', help="Add a new Target to synchronise")
 
-    sync_parser = subparsers.add_parser('sync')
+    sync_parser = subparsers.add_parser('sync', help="Synchronise Targets with S3")
     sync_parser.add_argument('targets', nargs='*')
     sync_parser.add_argument('--conflicts', default=None, choices=['1', '2', 'ignore'])
 
-    subparsers.add_parser('targets')
-    subparsers.add_parser('add')
-    edit_parser = subparsers.add_parser('edit')
+    edit_parser = subparsers.add_parser('edit', help="Edit Target details")
     edit_parser.add_argument('target')
 
-    ls_parser = subparsers.add_parser('ls')
+    subparsers.add_parser('targets', help="Print available Targets")
+
+    subparsers.add_parser('version', help="Print S4 Version")
+
+    ls_parser = subparsers.add_parser('ls', help="Display list of files for a Target")
     ls_parser.add_argument('target')
     ls_parser.add_argument('--sort-by', '-s', choices=['key', 'local', 's3'], default='key')
     ls_parser.add_argument('--descending', '-d', action='store_true')
@@ -74,7 +79,7 @@ def main(arguments):
         help='show deleted files',
     )
 
-    remove_parser = subparsers.add_parser('rm')
+    remove_parser = subparsers.add_parser('rm', help="Remove a Target")
     remove_parser.add_argument('target')
 
     args = parser.parse_args(arguments)
