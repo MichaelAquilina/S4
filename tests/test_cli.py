@@ -129,6 +129,35 @@ class TestSyncCommand(object):
         )
         assert SyncWorker.call_count == 0
 
+    def test_sync_error(self, SyncWorker, logger):
+        args = argparse.Namespace(targets=None, conflicts=None)
+        config = {
+            'targets': {
+                'foo': {
+                    'local_folder': '/home/mike/docs',
+                    's3_uri': 's3://foobar/docs',
+                    'aws_access_key_id': '3223323',
+                    'aws_secret_access_key': '23#@423#@',
+                    'region_name': 'us-east-1',
+                },
+                'bar': {
+                    'local_folder': '/home/mike/barmil',
+                    's3_uri': 's3://foobar/barrel',
+                    'aws_access_key_id': '3223',
+                    'aws_secret_access_key': '23#eWEa@423#@',
+                    'region_name': 'us-west-2',
+                }
+            }
+        }
+        SyncWorker.side_effect = ValueError('something bad happened')
+
+        cli.sync_command(args,  config, logger)
+        assert SyncWorker.call_count == 2
+        assert get_stream_value(logger) == (
+            "There was an error syncing 'bar': something bad happened\n"
+            "There was an error syncing 'foo': something bad happened\n"
+        )
+
     def test_keyboard_interrupt(self, SyncWorker, logger):
         args = argparse.Namespace(targets=None, conflicts=None)
         config = {
