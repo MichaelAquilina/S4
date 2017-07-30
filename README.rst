@@ -21,6 +21,10 @@ You can also take advantage of other cool features that S3 provides like
 Everytime you sync a version of a new file, you will now have the
 ability to easily rollback to any previous version.
 
+See it in action here:
+
+|ASCIINEMA|
+
 Requirements
 ------------
 
@@ -174,3 +178,6 @@ Here are is a list of open source solutions that I have tried in the past.
 
 .. |ReadTheDocs| image:: https://readthedocs.org/projects/s4docs/badge/?version=latest
    :target: https://s4docs.readthedocs.org
+
+.. |ASCIINEMA| image:: https://asciinema.org/a/131389.png
+   :target: https://asciinema.org/a/131389
