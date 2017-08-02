@@ -9,6 +9,8 @@ import sys
 
 import boto3
 
+from inotify_simple import INotify, flags
+
 from tabulate import tabulate
 
 from s4 import VERSION
@@ -54,6 +56,9 @@ def main(arguments):
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
     )
     subparsers = parser.add_subparsers(dest='command')
+
+    daemon_parser = subparsers.add_parser('daemon', help="Run S4 continiously")
+    daemon_parser.add_argument('targets', nargs='*')
 
     subparsers.add_parser('add', help="Add a new Target to synchronise")
 
@@ -117,6 +122,8 @@ def main(arguments):
             ls_command(args, config, logger)
         elif args.command == 'rm':
             rm_command(args, config, logger)
+        elif args.command == 'daemon':
+            daemon_command(args, config, logger)
         else:
             parser.print_help()
     except KeyboardInterrupt:
@@ -158,6 +165,42 @@ def get_clients(entry):
     return client_1, client_2
 
 
+def get_sync_worker(entry):
+    client_1, client_2 = get_clients(entry)
+    return sync.SyncWorker(client_1, client_2)
+
+
+def daemon_command(args, config, logger):
+    all_targets = list(config['targets'].keys())
+    if not args.targets:
+        targets = all_targets
+    else:
+        targets = args.targets
+
+    notifier = INotify()
+    watch_flags = flags.CREATE | flags.DELETE | flags.MODIFY
+
+    watch_map = {}
+
+    for target in targets:
+        entry = config['targets'][target]
+        path = entry['local_folder']
+        logger.info("Watching %s", path)
+        wd = notifier.add_watch(path.encode('utf8'), watch_flags)
+        watch_map[wd] = entry
+
+        # Check for any pending changes
+        worker = get_sync_worker(entry)
+        worker.sync(conflict_choice='ignore')
+
+    while True:
+        for event in notifier.read():
+            print(event)
+            entry = watch_map[event.wd]
+            worker = get_sync_worker(entry)
+            worker.sync(conflict_choice='ignore')
+
+
 def sync_command(args, config, logger):
     all_targets = list(config['targets'].keys())
     if not args.targets:
@@ -174,9 +217,9 @@ def sync_command(args, config, logger):
             entry = config['targets'][name]
             client_1, client_2 = get_clients(entry)
 
-            try:
-                worker = sync.SyncWorker(client_1, client_2)
+            worker = sync.SyncWorker(client_1, client_2)
 
+            try:
                 logger.info('Syncing %s [%s <=> %s]', name, client_1.get_uri(), client_2.get_uri())
                 worker.sync(conflict_choice=args.conflicts)
             except Exception as e:
