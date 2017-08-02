@@ -4,3 +4,4 @@ python-magic>=0.4.12
 tabulate>=0.7.7
 tqdm>=4.8.4
 scandir>=1.5
+inotify-simple>=1.1.0
