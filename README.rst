@@ -10,7 +10,7 @@ S3 <https://aws.amazon.com/s3/>`__.
 S4 stands for "Simple Storage Solution (S3) Syncer".
 
 The intention of this project is to be an open source alternative to
-typical proprietary sync solutions like Dropbox. Because s4 interacts
+typical proprietary sync solutions like Dropbox. Because S4 interacts
 with S3 directly, you can expect *very* fast upload and download speeds
 as well as *very* cheap costs (See `Amazon S3
 Pricing <https://aws.amazon.com/s3/pricing/>`__ for an idea of how much
