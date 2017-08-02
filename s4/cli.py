@@ -194,8 +194,14 @@ def daemon_command(args, config, logger):
         worker.sync(conflict_choice='ignore')
 
     while True:
-        for event in notifier.read():
+        to_run = set()
+        for event in notifier.read(read_delay=1000):
             print(event)
+            # Dont bother running for .index
+            if event.name != '.index':
+                to_run.add(event.wd)
+
+        for wd in to_run:
             entry = watch_map[event.wd]
             worker = get_sync_worker(entry)
             worker.sync(conflict_choice='ignore')
