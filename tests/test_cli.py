@@ -75,6 +75,11 @@ class TestMain(object):
         cli.main(['ls', 'foo'])
         assert ls_command.call_count == 1
 
+    @mock.patch('s4.cli.daemon_command')
+    def test_daemon_command(self, daemon_command):
+        cli.main(['daemon'])
+        assert daemon_command.call_count == 1
+
     @mock.patch('s4.cli.sync_command')
     def test_sync_command(self, sync_command):
         cli.main(['sync', 'foo'])
