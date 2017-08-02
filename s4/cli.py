@@ -59,6 +59,7 @@ def main(arguments):
 
     daemon_parser = subparsers.add_parser('daemon', help="Run S4 continiously")
     daemon_parser.add_argument('targets', nargs='*')
+    daemon_parser.add_argument('--read-delay', default=1000, type=int)
 
     subparsers.add_parser('add', help="Add a new Target to synchronise")
 
@@ -195,7 +196,7 @@ def daemon_command(args, config, logger):
 
     while True:
         to_run = set()
-        for event in notifier.read(read_delay=1000):
+        for event in notifier.read(read_delay=args.read_delay):
             print(event)
             # Dont bother running for .index
             if event.name != '.index':
