@@ -217,6 +217,11 @@ def sync_command(args, config, logger):
 
     try:
         for name in sorted(targets):
+            keys = None
+            if ':' in name:
+                name, key = name.split(':')
+                keys = [key]
+
             if name not in config['targets']:
                 logger.info('"%s" is an unknown target. Choices are: %s', name, all_targets)
                 continue
@@ -228,7 +233,7 @@ def sync_command(args, config, logger):
                 worker = sync.SyncWorker(client_1, client_2)
 
                 logger.info('Syncing %s [%s <=> %s]', name, client_1.get_uri(), client_2.get_uri())
-                worker.sync(conflict_choice=args.conflicts)
+                worker.sync(conflict_choice=args.conflicts, keys=keys)
             except Exception as e:
                 logger.error("There was an error syncing '%s': %s", name, e)
     except KeyboardInterrupt:

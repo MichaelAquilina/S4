@@ -88,9 +88,9 @@ class SyncWorker(object):
         self.client_2 = client_2
         self.logger = logging.getLogger(str(self))
 
-    def sync(self, conflict_choice=None):
+    def sync(self, conflict_choice=None, keys=None):
         try:
-            deferred_calls, unhandled_events = self.get_sync_states()
+            deferred_calls, unhandled_events = self.get_sync_states(keys)
 
             self.logger.debug(
                 'There are %s unhandled events for the user to solve', len(unhandled_events)
@@ -145,7 +145,7 @@ class SyncWorker(object):
 
         self.run_deferred_calls(deferred_calls)
 
-    def get_sync_states(self):
+    def get_sync_states(self, keys=None):
         # we store a list of deferred calls to make sure we can handle everything before
         # running any updates on the file system and indexes
         deferred_calls = {}
@@ -155,7 +155,7 @@ class SyncWorker(object):
         unhandled_events = {}
 
         self.logger.debug('Generating deferred calls based on client states')
-        for key, state_1, state_2 in self.get_states():
+        for key, state_1, state_2 in self.get_states(keys):
             self.logger.debug('%s: %s %s', key, state_1, state_2)
             if state_1.state == SyncState.NOCHANGES and state_2.state == SyncState.NOCHANGES:
                 if state_1.remote_timestamp == state_2.remote_timestamp:
@@ -294,7 +294,7 @@ class SyncWorker(object):
 
         return success
 
-    def get_states(self):
+    def get_states(self, keys=None):
         client_1_actions = self.client_1.get_all_actions()
         client_2_actions = self.client_2.get_all_actions()
 
@@ -305,9 +305,13 @@ class SyncWorker(object):
             len(client_1_actions), self.client_1.get_uri(),
             len(client_2_actions), self.client_2.get_uri()
         )
+        if keys is None:
+            target_keys = sorted(all_keys)
+        else:
+            target_keys = keys
 
         DOES_NOT_EXIST = SyncState(SyncState.DOESNOTEXIST, None, None)
-        for key in sorted(all_keys):
+        for key in target_keys:
             action_1 = client_1_actions.get(key, DOES_NOT_EXIST)
             action_2 = client_2_actions.get(key, DOES_NOT_EXIST)
             yield key, action_1, action_2
