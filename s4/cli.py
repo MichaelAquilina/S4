@@ -60,6 +60,7 @@ def main(arguments):
     daemon_parser = subparsers.add_parser('daemon', help="Run S4 continiously")
     daemon_parser.add_argument('targets', nargs='*')
     daemon_parser.add_argument('--read-delay', default=1000, type=int)
+    daemon_parser.add_argument('--conflicts', default='ignore', choices=['1', '2', 'ignore'])
 
     subparsers.add_parser('add', help="Add a new Target to synchronise")
 
@@ -192,7 +193,7 @@ def daemon_command(args, config, logger):
 
         # Check for any pending changes
         worker = get_sync_worker(entry)
-        worker.sync(conflict_choice='ignore')
+        worker.sync(conflict_choice=args.conflicts)
 
     while True:
         to_run = set()
@@ -205,7 +206,7 @@ def daemon_command(args, config, logger):
         for wd in to_run:
             entry = watch_map[event.wd]
             worker = get_sync_worker(entry)
-            worker.sync(conflict_choice='ignore')
+            worker.sync(conflict_choice=args.conflicts)
 
 
 def sync_command(args, config, logger):
