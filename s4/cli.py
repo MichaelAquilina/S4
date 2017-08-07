@@ -11,6 +11,11 @@ import boto3
 
 from inotify_simple import INotify, flags
 
+try:
+    from os import scandir
+except ImportError:
+    from scandir import scandir
+
 from tabulate import tabulate
 
 from s4 import VERSION
@@ -172,6 +177,19 @@ def get_sync_worker(entry):
     return sync.SyncWorker(client_1, client_2)
 
 
+class INotifyRecursive(INotify):
+    def add_watches(self, path, mask):
+        results = []
+
+        for item in scandir(path):
+            if item.is_dir():
+                results.extend(self.add_watches(item.path, mask))
+            else:
+                results.append(super().add_watch(item.path, mask))
+
+        return results
+
+
 def daemon_command(args, config, logger):
     all_targets = list(config['targets'].keys())
     if not args.targets:
@@ -179,7 +197,7 @@ def daemon_command(args, config, logger):
     else:
         targets = args.targets
 
-    notifier = INotify()
+    notifier = INotifyRecursive()
     watch_flags = flags.CREATE | flags.DELETE | flags.MODIFY
 
     watch_map = {}
@@ -188,8 +206,8 @@ def daemon_command(args, config, logger):
         entry = config['targets'][target]
         path = entry['local_folder']
         logger.info("Watching %s", path)
-        wd = notifier.add_watch(path.encode('utf8'), watch_flags)
-        watch_map[wd] = entry
+        for wd in notifier.add_watches(path.encode('utf8'), watch_flags):
+            watch_map[wd] = entry
 
         # Check for any pending changes
         worker = get_sync_worker(entry)
