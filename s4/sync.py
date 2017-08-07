@@ -88,6 +88,9 @@ class SyncWorker(object):
         self.client_2 = client_2
         self.logger = logging.getLogger(str(self))
 
+    def __repr__(self):
+        return 'SyncWorker<{}, {}>'.format(self.client_1.get_uri(), self.client_2.get_uri())
+
     def sync(self, conflict_choice=None, keys=None):
         try:
             deferred_calls, unhandled_events = self.get_sync_states(keys)

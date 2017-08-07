@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import sys
+from collections import defaultdict
 
 import boto3
 
@@ -179,13 +180,12 @@ def get_sync_worker(entry):
 
 class INotifyRecursive(INotify):
     def add_watches(self, path, mask):
-        results = []
+        results = {}
+        results[self.add_watch(path, mask)] = path
 
         for item in scandir(path):
             if item.is_dir():
-                results.extend(self.add_watches(item.path, mask))
-            else:
-                results.append(super().add_watch(item.path, mask))
+                results.update(self.add_watches(item.path, mask))
 
         return results
 
@@ -207,23 +207,27 @@ def daemon_command(args, config, logger):
         path = entry['local_folder']
         logger.info("Watching %s", path)
         for wd in notifier.add_watches(path.encode('utf8'), watch_flags):
-            watch_map[wd] = entry
+            watch_map[wd] = target
 
         # Check for any pending changes
         worker = get_sync_worker(entry)
         worker.sync(conflict_choice=args.conflicts)
 
     while True:
-        to_run = set()
+        to_run = defaultdict(set)
         for event in notifier.read(read_delay=args.read_delay):
-            print(event)
+            target = watch_map[event.wd]
+
             # Dont bother running for .index
             if event.name != '.index':
-                to_run.add(event.wd)
+                to_run[target].add(event.name)
 
-        for wd in to_run:
-            entry = watch_map[event.wd]
+        for target, keys in to_run.items():
+            entry = config['targets'][target]
             worker = get_sync_worker(entry)
+
+            # Should ideally be setting keys to sync
+            logger.info('Syncing {}'.format(worker))
             worker.sync(conflict_choice=args.conflicts)
 
 
