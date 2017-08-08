@@ -61,6 +61,11 @@ def main(arguments):
         default='INFO',
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
     )
+    parser.add_argument(
+        '--timestamps',
+        action='store_true',
+        help='Display timestamps for each log message',
+    )
     subparsers = parser.add_subparsers(dest='command')
 
     daemon_parser = subparsers.add_parser('daemon', help="Run S4 continiously")
@@ -101,6 +106,9 @@ def main(arguments):
         log_format = '%(levelname)s:%(module)s:%(lineno)s %(message)s'
     else:
         log_format = '%(message)s'
+
+    if args.timestamps:
+        log_format = '%(asctime)s: ' + log_format
 
     logging.basicConfig(format=log_format, level=args.log_level)
 
