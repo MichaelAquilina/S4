@@ -277,6 +277,7 @@ class TestShowDiff(object):
         assert call.call_args_list[0][0][0][0] == "diff"
         assert call.call_args_list[1][0][0][0] == "less"
 
+
 class TestSyncWorker(object):
     def test_get_deferred_function_unknown(self, local_client, s3_client):
         worker = sync.SyncWorker(local_client, s3_client)
@@ -502,7 +503,7 @@ class TestRunDeferredCalls(object):
             'foo': sync.DeferredFunction(worker.delete_client, local_client, 'foo', 1000),
             'bar': sync.DeferredFunction(failing_function),
             'yap': sync.DeferredFunction(keyboard_interrupt),
-            'baz': sync.DeferredFunction(worker.create_client, local_client, s3_client, 'baz', 2000),
+            'baz': sync.DeferredFunction(worker.create_client, local_client, s3_client, 'baz', 20),
         })
         assert sorted(success) == sorted(['foo', 'baz'])
         assert_local_keys(clients, ['baz'])

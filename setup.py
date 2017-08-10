@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 try:
-    from setuptools import setup, find_packages
+    from setuptools import setup, find_packages  # noqa
 except ImportError:
     from distutils.core import setup
 

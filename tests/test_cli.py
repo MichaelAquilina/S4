@@ -112,6 +112,7 @@ class TestGetConfigFile(object):
 
         assert cli.get_config() == {'local_folder': '/home/someone/something'}
 
+
 @mock.patch('s4.sync.SyncWorker')
 class TestSyncCommand(object):
     def test_no_targets(self, SyncWorker, logger):
@@ -273,7 +274,6 @@ class TestEditCommand(object):
             }}
         }
         assert expected_config == config
-
 
     def test_correct_output(self, get_input, logger, config_file):
         fake_stream = FakeInputStream([
@@ -521,7 +521,6 @@ class TestLsCommand(object):
 
         )
         assert get_stream_value(logger) == expected_result
-
 
 
 class TestTargetsCommand(object):
