@@ -198,12 +198,22 @@ class INotifyRecursive(INotify):
         return results
 
 
-def daemon_command(args, config, logger):
+def daemon_command(args, config, logger, terminator=lambda x: False):
     all_targets = list(config['targets'].keys())
     if not args.targets:
         targets = all_targets
     else:
         targets = args.targets
+
+    if not targets:
+        logger.info('No targets available')
+        logger.info('Use "add" command first')
+        return
+
+    for target in targets:
+        if target not in config['targets']:
+            logger.info("Unknown target: %s", target)
+            return
 
     notifier = INotifyRecursive()
     watch_flags = flags.CREATE | flags.DELETE | flags.MODIFY
@@ -221,7 +231,10 @@ def daemon_command(args, config, logger):
         worker = get_sync_worker(entry)
         worker.sync(conflict_choice=args.conflicts)
 
-    while True:
+    index = 0
+    while not terminator(index):
+        index += 1
+
         to_run = defaultdict(set)
         for event in notifier.read(read_delay=args.read_delay):
             target = watch_map[event.wd]
