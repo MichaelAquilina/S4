@@ -4,6 +4,7 @@ import mock
 
 from s4 import utils
 
+
 @mock.patch('getpass.getpass')
 @mock.patch('builtins.input')
 def test_get_input(getpass, input_fn):
@@ -20,4 +21,3 @@ def test_get_input_secret(getpass, input_fn):
 
     assert getpass.call_count == 0
     assert input_fn.call_count == 1
-
