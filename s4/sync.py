@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import tempfile
 
-from clint.textui import colored
+import colored
 
 import tqdm
 
@@ -87,6 +87,12 @@ class SyncWorker(object):
         self.client_1 = client_1
         self.client_2 = client_2
         self.logger = logging.getLogger(str(self))
+
+    def log(self, message, *args, color=None, **kwargs):
+        if color is not None:
+            message = colored.fg(color) + message + colored.attr('reset')
+
+        self.logger.info(message, *args, **kwargs)
 
     def sync(self, conflict_choice=None):
         try:
@@ -327,16 +333,18 @@ class SyncWorker(object):
             raise ValueError('Unknown action provided', action)
 
     def create_client(self, to_client, from_client, key, timestamp):
-        self.logger.info(
-            colored.green('Creating %s (%s => %s)'),
-            key, from_client.get_uri(), to_client.get_uri()
+        self.log(
+            'Creating %s (%s => %s)',
+            key, from_client.get_uri(), to_client.get_uri(),
+            color='green',
         )
         self.move(to_client, from_client, key, timestamp)
 
     def update_client(self, to_client, from_client, key, timestamp):
-        self.logger.info(
-            colored.yellow('Updating %s (%s => %s)'),
-            key, from_client.get_uri(), to_client.get_uri()
+        self.log(
+            'Updating %s (%s => %s)',
+            key, from_client.get_uri(), to_client.get_uri(),
+            color='yellow',
         )
         self.move(to_client, from_client, key, timestamp)
 
@@ -350,9 +358,10 @@ class SyncWorker(object):
         from_client.set_remote_timestamp(key, timestamp)
 
     def delete_client(self, client, key, remote_timestamp):
-        self.logger.info(
-            colored.red('Deleting %s on %s'),
-            key, client.get_uri()
+        self.log(
+            'Deleting %s on %s',
+            key, client.get_uri(),
+            color='red',
         )
         client.delete(key)
         client.set_remote_timestamp(key, remote_timestamp)
