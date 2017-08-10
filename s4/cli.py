@@ -6,8 +6,16 @@ import json
 import logging
 import os
 import sys
+from collections import defaultdict
 
 import boto3
+
+from inotify_simple import INotify, flags
+
+try:
+    from os import scandir
+except ImportError:
+    from scandir import scandir
 
 from tabulate import tabulate
 
@@ -53,7 +61,17 @@ def main(arguments):
         default='INFO',
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
     )
+    parser.add_argument(
+        '--timestamps',
+        action='store_true',
+        help='Display timestamps for each log message',
+    )
     subparsers = parser.add_subparsers(dest='command')
+
+    daemon_parser = subparsers.add_parser('daemon', help="Run S4 sync continiously")
+    daemon_parser.add_argument('targets', nargs='*')
+    daemon_parser.add_argument('--read-delay', default=1000, type=int)
+    daemon_parser.add_argument('--conflicts', default='ignore', choices=['1', '2', 'ignore'])
 
     subparsers.add_parser('add', help="Add a new Target to synchronise")
 
@@ -89,6 +107,9 @@ def main(arguments):
     else:
         log_format = '%(message)s'
 
+    if args.timestamps:
+        log_format = '%(asctime)s: ' + log_format
+
     logging.basicConfig(format=log_format, level=args.log_level)
 
     # shut boto up
@@ -117,6 +138,8 @@ def main(arguments):
             ls_command(args, config, logger)
         elif args.command == 'rm':
             rm_command(args, config, logger)
+        elif args.command == 'daemon':
+            daemon_command(args, config, logger)
         else:
             parser.print_help()
     except KeyboardInterrupt:
@@ -156,6 +179,77 @@ def get_clients(entry):
     client_1 = get_local_client(target_1)
     client_2 = get_s3_client(target_2, aws_access_key_id, aws_secret_access_key, region_name)
     return client_1, client_2
+
+
+def get_sync_worker(entry):
+    client_1, client_2 = get_clients(entry)
+    return sync.SyncWorker(client_1, client_2)
+
+
+class INotifyRecursive(INotify):
+    def add_watches(self, path, mask):
+        results = {}
+        results[self.add_watch(path, mask)] = path
+
+        for item in scandir(path):
+            if item.is_dir():
+                results.update(self.add_watches(item.path, mask))
+
+        return results
+
+
+def daemon_command(args, config, logger, terminator=lambda x: False):
+    all_targets = list(config['targets'].keys())
+    if not args.targets:
+        targets = all_targets
+    else:
+        targets = args.targets
+
+    if not targets:
+        logger.info('No targets available')
+        logger.info('Use "add" command first')
+        return
+
+    for target in targets:
+        if target not in config['targets']:
+            logger.info("Unknown target: %s", target)
+            return
+
+    notifier = INotifyRecursive()
+    watch_flags = flags.CREATE | flags.DELETE | flags.MODIFY
+
+    watch_map = {}
+
+    for target in targets:
+        entry = config['targets'][target]
+        path = entry['local_folder']
+        logger.info("Watching %s", path)
+        for wd in notifier.add_watches(path.encode('utf8'), watch_flags):
+            watch_map[wd] = target
+
+        # Check for any pending changes
+        worker = get_sync_worker(entry)
+        worker.sync(conflict_choice=args.conflicts)
+
+    index = 0
+    while not terminator(index):
+        index += 1
+
+        to_run = defaultdict(set)
+        for event in notifier.read(read_delay=args.read_delay):
+            target = watch_map[event.wd]
+
+            # Dont bother running for .index
+            if event.name != '.index':
+                to_run[target].add(event.name)
+
+        for target, keys in to_run.items():
+            entry = config['targets'][target]
+            worker = get_sync_worker(entry)
+
+            # Should ideally be setting keys to sync
+            logger.info('Syncing {}'.format(worker))
+            worker.sync(conflict_choice=args.conflicts)
 
 
 def sync_command(args, config, logger):
