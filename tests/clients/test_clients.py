@@ -4,7 +4,7 @@ import datetime
 
 import pytest
 
-from s4.clients import get_sync_state, SyncClient, SyncState, SyncObject
+from s4.clients import SyncClient, SyncObject, SyncState, get_sync_state
 
 
 class TestSyncState(object):
