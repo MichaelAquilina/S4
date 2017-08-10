@@ -8,6 +8,7 @@ import os
 import tempfile
 from datetime import datetime
 
+from inotify_simple import flags, Event
 import mock
 import pytest
 import pytz
@@ -59,11 +60,56 @@ def get_timestamp(year, month, day, hour, minute):
     )
 
 
+class TestINotifyRecursive(object):
+    @pytest.mark.timeout(5)
+    def test_add_watches(self, tmpdir):
+        foo = tmpdir.mkdir("foo")
+        bar = tmpdir.mkdir("bar")
+        baz = bar.mkdir("baz")
+
+        notifier = cli.INotifyRecursive()
+        result_1 = notifier.add_watches(str(foo), flags.CREATE)
+        result_2 = notifier.add_watches(str(bar), flags.CREATE)
+
+        assert sorted(result_1.values()) == sorted([str(foo)])
+        assert sorted(result_2.values()) == sorted([str(bar), str(baz)])
+
+        bar.join("hello.txt").write("hello")
+        foo.join("fennek.md").write("*jumps*")
+        baz.mkdir("bong")
+
+        events = notifier.read()
+        assert len(events) == 3
+
+        assert events[0].name == 'hello.txt'
+        assert result_2[events[0].wd] == str(bar)
+
+        assert events[1].name == 'fennek.md'
+        assert result_1[events[1].wd] == str(foo)
+
+        assert events[2].name == 'bong'
+        assert result_2[events[2].wd] == str(baz)
+
+
+# TODO: Should catch KeyboardExceptions and raise them again
 class TestMain(object):
+
     @mock.patch('argparse.ArgumentParser.print_help')
     def test_no_arguments_prints_help(self, print_help):
         cli.main([])
         assert print_help.call_count == 1
+
+    @pytest.mark.parametrize(['loglevel'], [('INFO', ), ('DEBUG', )])
+    @mock.patch('logging.basicConfig')
+    def test_timestamps(self, basicConfig, loglevel):
+        cli.main(['--timestamps', '--log-level', loglevel, 'version'])
+        assert basicConfig.call_args[1]['format'].startswith('%(asctime)s: ')
+
+    @mock.patch('logging.basicConfig')
+    def test_debug_loglevel(self, basicConfig):
+        cli.main(['--log-level=DEBUG', 'version'])
+        assert basicConfig.call_args[1]['format'].startswith('%(levelname)s:%(module)s')
+        assert basicConfig.call_args[1]['level'] == 'DEBUG'
 
     def test_version_command(self, capsys):
         cli.main(['version'])
@@ -74,6 +120,11 @@ class TestMain(object):
     def test_ls_command(self, ls_command):
         cli.main(['ls', 'foo'])
         assert ls_command.call_count == 1
+
+    @mock.patch('s4.cli.daemon_command')
+    def test_daemon_command(self, daemon_command):
+        cli.main(['daemon'])
+        assert daemon_command.call_count == 1
 
     @mock.patch('s4.cli.sync_command')
     def test_sync_command(self, sync_command):
@@ -111,6 +162,80 @@ class TestGetConfigFile(object):
             json.dump({'local_folder': '/home/someone/something'}, fp)
 
         assert cli.get_config() == {'local_folder': '/home/someone/something'}
+
+
+class FakeINotify(object):
+    def __init__(self, events, wd_map):
+        self.events = events
+        self.wd_map = wd_map
+
+    def add_watches(self, *args, **kwargs):
+        return self.wd_map
+
+    def read(self, *args, **kwargs):
+        return self.events
+
+
+@mock.patch('s4.sync.SyncWorker')
+@mock.patch('s4.cli.INotifyRecursive')
+class TestDaemonCommand(object):
+    def single_term(self, index):
+        """Simple terminator for the daemon command"""
+        return index >= 1
+
+    @pytest.mark.timeout(5)
+    def test_no_targets(self, INotifyRecursive, SyncWorker, logger):
+        args = argparse.Namespace(targets=None, conflicts='ignore', read_delay=0)
+        cli.daemon_command(args, {'targets': {}}, logger, terminator=self.single_term)
+
+        assert get_stream_value(logger) == (
+            'No targets available\n'
+            'Use "add" command first\n'
+        )
+        assert SyncWorker.call_count == 0
+        assert INotifyRecursive.call_count == 0
+
+    @pytest.mark.timeout(5)
+    def test_wrong_target(self, INotifyRecursive, SyncWorker, logger):
+        args = argparse.Namespace(targets=['foo'], conflicts='ignore', read_delay=0)
+        cli.daemon_command(args, {'targets': {'bar': {}}}, logger, terminator=self.single_term)
+
+        assert get_stream_value(logger) == (
+            'Unknown target: foo\n'
+        )
+        assert SyncWorker.call_count == 0
+        assert INotifyRecursive.call_count == 0
+
+    @pytest.mark.timeout(5)
+    def test_specific_target(self, INotifyRecursive, SyncWorker, logger):
+        INotifyRecursive.return_value = FakeINotify(
+            events={
+                Event(wd=1, mask=flags.CREATE, cookie=None, name="hello.txt"),
+                Event(wd=2, mask=flags.CREATE, cookie=None, name="bar.txt"),
+            },
+            wd_map={
+                1: '/home/jon/code/',
+                2: '/home/jon/code/hoot',
+            }
+        )
+
+        args = argparse.Namespace(targets=['foo'], conflicts='ignore', read_delay=0)
+        config = {
+            'targets': {
+                'foo': {
+                    'local_folder': '/home/jon/code',
+                    's3_uri': 's3://bucket/code',
+                    'aws_secret_access_key': '23232323',
+                    'aws_access_key_id': '########',
+                    'region_name': 'eu-west-2',
+                },
+                'bar': {},
+            }
+        }
+        cli.daemon_command(args, config, logger, terminator=self.single_term)
+
+        assert SyncWorker.call_count == 2
+        assert INotifyRecursive.call_count == 1
 
 
 @mock.patch('s4.sync.SyncWorker')

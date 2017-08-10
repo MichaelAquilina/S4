@@ -5,7 +5,7 @@ import mock
 import pytest
 
 from s4 import sync
-from s4.clients import SyncState
+from s4.clients import SyncState, local, s3
 from tests import utils
 
 
@@ -279,6 +279,12 @@ class TestShowDiff(object):
 
 
 class TestSyncWorker(object):
+    def test_repr(self):
+        local_client = local.LocalSyncClient('/home/bobs/burgers')
+        s3_client = s3.S3SyncClient(None, 'burgerbucket', 'foozie')
+        worker = sync.SyncWorker(local_client, s3_client)
+        assert repr(worker) == 'SyncWorker</home/bobs/burgers/, s3://burgerbucket/foozie/>'
+
     def test_get_deferred_function_unknown(self, local_client, s3_client):
         worker = sync.SyncWorker(local_client, s3_client)
 
