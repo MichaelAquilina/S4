@@ -7,4 +7,5 @@ mock==2.0.0
 moto==0.4.30
 pytest==3.0.2
 pytest-cov==2.4.0
+pytest-timeout==1.2.0
 pytz==2016.6.1
