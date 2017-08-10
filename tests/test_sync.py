@@ -6,7 +6,7 @@ import pytest
 
 from s4 import sync
 from s4.clients import SyncState
-import utils
+from tests import utils
 
 
 class TestDeferredFunction(object):

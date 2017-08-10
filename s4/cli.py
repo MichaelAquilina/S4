@@ -2,18 +2,18 @@
 
 import argparse
 import datetime
-import os
 import json
 import logging
+import os
 import sys
 
 import boto3
 
 from tabulate import tabulate
 
+from s4 import VERSION
 from s4 import sync
 from s4 import utils
-from s4 import VERSION
 from s4.clients import local, s3
 
 

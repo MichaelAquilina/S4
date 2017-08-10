@@ -14,7 +14,7 @@ import pytz
 
 from s4 import cli
 from s4.utils import to_timestamp
-import utils
+from tests import utils
 
 
 class FakeInputStream(object):
