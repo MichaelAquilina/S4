@@ -48,8 +48,9 @@ class S3SyncClient(SyncClient):
         self.boto = boto
         self.bucket = bucket
         self.prefix = prefix
-        self.index = self.load_index()
-        self.reload_ignore_files()
+        # These are lazy loaded as needed
+        self._index = None
+        self._ignore_files = None
 
     def get_client_name(self):
         return 's3'
@@ -62,6 +63,16 @@ class S3SyncClient(SyncClient):
 
     def index_path(self):
         return os.path.join(self.prefix, '.index')
+
+    @property
+    def index(self):
+        if self._index is None:
+            self._index = self.load_index()
+        return self._index
+
+    @index.setter
+    def index(self, value):
+        self._index = value
 
     def put(self, key, sync_object, callback=None):
         self.boto.upload_fileobj(
@@ -204,8 +215,14 @@ class S3SyncClient(SyncClient):
     def get_all_index_local_timestamps(self):
         return {key: value.get('local_timestamp') for key, value in self.index.items()}
 
+    @property
+    def ignore_files(self):
+        if self._ignore_files is None:
+            self.reload_ignore_files()
+        return self._ignore_files
+
     def reload_ignore_files(self):
-        self.ignore_files = ['.index']
+        self._ignore_files = ['.index']
         try:
             response = self.boto.get_object(
                 Bucket=self.bucket,
@@ -214,6 +231,6 @@ class S3SyncClient(SyncClient):
             data = response['Body'].read()
             data = data.decode('utf8')
             ignore_list = data.split('\n')
-            self.ignore_files.extend(ignore_list)
+            self._ignore_files.extend(ignore_list)
         except ClientError:
             pass
