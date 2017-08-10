@@ -65,6 +65,18 @@ class TestMain(object):
         cli.main([])
         assert print_help.call_count == 1
 
+    @pytest.mark.parametrize(['loglevel'], [('INFO', ), ('DEBUG', )])
+    @mock.patch('logging.basicConfig')
+    def test_timestamps(self, basicConfig, loglevel):
+        cli.main(['--timestamps', '--log-level', loglevel, 'version'])
+        assert basicConfig.call_args[1]['format'].startswith('%(asctime)s: ')
+
+    @mock.patch('logging.basicConfig')
+    def test_debug_loglevel(self, basicConfig):
+        cli.main(['--log-level=DEBUG', 'version'])
+        assert basicConfig.call_args[1]['format'].startswith('%(levelname)s:%(module)s')
+        assert basicConfig.call_args[1]['level'] == 'DEBUG'
+
     def test_version_command(self, capsys):
         cli.main(['version'])
         out, err = capsys.readouterr()
