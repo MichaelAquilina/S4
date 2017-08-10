@@ -68,7 +68,7 @@ def main(arguments):
     )
     subparsers = parser.add_subparsers(dest='command')
 
-    daemon_parser = subparsers.add_parser('daemon', help="Run S4 continiously")
+    daemon_parser = subparsers.add_parser('daemon', help="Run S4 sync continiously")
     daemon_parser.add_argument('targets', nargs='*')
     daemon_parser.add_argument('--read-delay', default=1000, type=int)
     daemon_parser.add_argument('--conflicts', default='ignore', choices=['1', '2', 'ignore'])
