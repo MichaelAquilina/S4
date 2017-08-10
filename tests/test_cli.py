@@ -61,6 +61,7 @@ def get_timestamp(year, month, day, hour, minute):
 
 
 class TestINotifyRecursive(object):
+    @pytest.mark.timeout(5)
     def test_add_watches(self, tmpdir):
         foo = tmpdir.mkdir("foo")
         bar = tmpdir.mkdir("bar")
