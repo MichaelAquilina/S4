@@ -15,6 +15,8 @@ try:
 except ImportError:
     from scandir import scandir
 
+import filelock
+
 import magic
 
 from s4.clients import SyncClient, SyncObject
@@ -42,10 +44,26 @@ def traverse(path, ignore_files=None):
 
 
 class LocalSyncClient(SyncClient):
+    DEFAULT_IGNORE_FILES = ['.index', '.s4lock']
+
     def __init__(self, path):
         self.path = path
         self.reload_index()
         self.reload_ignore_files()
+        self._lock = filelock.FileLock(self.get_uri('.s4lock'))
+
+    def lock(self):
+        """
+        Advisory lock.
+        Use to ensure that only one LocalSyncClient is working on the Target at the same time.
+        """
+        self._lock.acquire(timeout=10)
+
+    def unlock(self):
+        """
+        Unlock the active advisory lock.
+        """
+        self._lock.release()
 
     def get_client_name(self):
         return 'local'
@@ -184,9 +202,12 @@ class LocalSyncClient(SyncClient):
         self.index[key]['remote_timestamp'] = timestamp
 
     def reload_ignore_files(self):
-        self.ignore_files = ['.index']
         ignore_path = os.path.join(self.path, '.syncignore')
+
         if os.path.exists(ignore_path):
             with open(ignore_path, 'r') as fp:
                 ignore_list = fp.read().split('\n')
-            self.ignore_files.extend(ignore_list)
+        else:
+            ignore_list = []
+
+        self.ignore_files = self.DEFAULT_IGNORE_FILES + ignore_list
