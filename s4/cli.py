@@ -117,6 +117,7 @@ def main(arguments):
     logging.getLogger('botocore').setLevel(logging.CRITICAL)
     logging.getLogger('nose').setLevel(logging.CRITICAL)
     logging.getLogger('s3transfer').setLevel(logging.CRITICAL)
+    logging.getLogger('filelock').setLevel(logging.CRITICAL)
 
     logger = logging.getLogger(__name__)
     logger.setLevel(args.log_level)

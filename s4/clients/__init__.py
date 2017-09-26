@@ -84,6 +84,12 @@ class SyncClient(object):
     def get_uri(self, key=''):
         raise NotImplementedError()
 
+    def lock(self, timeout=10):
+        raise NotImplementedError()
+
+    def unlock(self):
+        raise NotImplementedError()
+
     def put(self, key, sync_object):
         raise NotImplementedError()
 
