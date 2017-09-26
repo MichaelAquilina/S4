@@ -7,6 +7,7 @@ import os
 import shutil
 import tempfile
 
+import filelock
 import mock
 import pytest
 
@@ -62,8 +63,14 @@ class TestLocalSyncClient(object):
         assert repr(client) == 'LocalSyncClient</my/test/path>'
 
     def test_lock(self, local_client):
-        local_client.lock()
+        local_client2 = local.LocalSyncClient(local_client.path)
+        local_client.lock(timeout=0.01)
+        with pytest.raises(filelock.Timeout):
+            local_client2.lock(timeout=0.01)
         local_client.unlock()
+
+        local_client.lock(timeout=0.01)
+        local_client2.unlock()
 
     def test_put_new(self, local_client):
         data = b'hi'
