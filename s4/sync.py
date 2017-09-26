@@ -92,6 +92,8 @@ class SyncWorker(object):
         return 'SyncWorker<{}, {}>'.format(self.client_1.get_uri(), self.client_2.get_uri())
 
     def sync(self, conflict_choice=None, keys=None):
+        self.client_1.lock()
+        self.client_2.lock()
         try:
             deferred_calls, unhandled_events = self.get_sync_states(keys)
 
@@ -142,11 +144,13 @@ class SyncWorker(object):
                         self.logger.info('Ignoring sync conflict for %s', key)
                         continue
 
+            self.run_deferred_calls(deferred_calls)
+
         except KeyboardInterrupt:
             self.logger.warning('Session interrupted by Keyboard Interrupt. Aborting....')
-            return
-
-        self.run_deferred_calls(deferred_calls)
+        finally:
+            self.client_1.unlock()
+            self.client_2.unlock()
 
     def get_sync_states(self, keys=None):
         # we store a list of deferred calls to make sure we can handle everything before

@@ -39,6 +39,16 @@ class TestSyncState(object):
 
 
 class TestSyncClient(object):
+    def test_lock(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.lock()
+
+    def test_unlock(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.unlock()
+
     def test_get_client_name(self):
         client = SyncClient()
         with pytest.raises(NotImplementedError):

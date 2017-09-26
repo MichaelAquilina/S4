@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import collections
+import copy
 import fnmatch
 import json
 import logging
@@ -44,6 +45,8 @@ def is_ignored_key(key, ignore_files):
 
 
 class S3SyncClient(SyncClient):
+    DEFAULT_IGNORE_FILES = ['.index', '.s4lock']
+
     def __init__(self, boto, bucket, prefix):
         self.boto = boto
         self.bucket = bucket
@@ -51,6 +54,12 @@ class S3SyncClient(SyncClient):
         # These are lazy loaded as needed
         self._index = None
         self._ignore_files = None
+
+    def lock(self):
+        pass
+
+    def unlock(self):
+        pass
 
     def get_client_name(self):
         return 's3'
@@ -222,7 +231,7 @@ class S3SyncClient(SyncClient):
         return self._ignore_files
 
     def reload_ignore_files(self):
-        self._ignore_files = ['.index']
+        self._ignore_files = copy.copy(self.DEFAULT_IGNORE_FILES)
         try:
             response = self.boto.get_object(
                 Bucket=self.bucket,
