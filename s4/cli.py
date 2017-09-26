@@ -342,7 +342,7 @@ def edit_command(args, config, logger):
     new_region_name = utils.get_input('region name [{}]: '.format(region_name))
 
     if new_local_folder:
-        entry['local_folder'] = new_local_folder
+        entry['local_folder'] = os.path.expanduser(new_local_folder)
     if new_s3_uri:
         entry['s3_uri'] = new_s3_uri
     if new_aws_access_key_id:
