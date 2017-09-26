@@ -61,6 +61,10 @@ class TestLocalSyncClient(object):
         client = local.LocalSyncClient('/my/test/path')
         assert repr(client) == 'LocalSyncClient</my/test/path>'
 
+    def test_lock(self, local_client):
+        local_client.lock()
+        local_client.unlock()
+
     def test_put_new(self, local_client):
         data = b'hi'
         local_client.put(
