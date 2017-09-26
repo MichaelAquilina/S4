@@ -52,12 +52,12 @@ class LocalSyncClient(SyncClient):
         self.reload_ignore_files()
         self._lock = filelock.FileLock(self.get_uri('.s4lock'))
 
-    def lock(self):
+    def lock(self, timeout=10):
         """
         Advisory lock.
         Use to ensure that only one LocalSyncClient is working on the Target at the same time.
         """
-        self._lock.acquire(timeout=10)
+        self._lock.acquire(timeout=timeout)
 
     def unlock(self):
         """
