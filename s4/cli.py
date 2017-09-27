@@ -275,7 +275,11 @@ def sync_command(args, config, logger):
                 logger.info('Syncing %s [%s <=> %s]', name, client_1.get_uri(), client_2.get_uri())
                 worker.sync(conflict_choice=args.conflicts)
             except Exception as e:
-                logger.error("There was an error syncing '%s': %s", name, e)
+                if args.log_level == "DEBUG":
+                    logger.exception(e)
+                else:
+                    logger.error("There was an error syncing '%s': %s", name, e)
+
     except KeyboardInterrupt:
         logger.warning('Quitting due to Keyboard Interrupt...')
 
