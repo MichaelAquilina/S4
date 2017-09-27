@@ -45,25 +45,42 @@ def traverse(path, ignore_files=None):
 
 class LocalSyncClient(SyncClient):
     DEFAULT_IGNORE_FILES = ['.index', '.s4lock']
+    LOCK_FILE_NAME = '.s4lock'
 
     def __init__(self, path):
         self.path = path
         self.reload_index()
         self.reload_ignore_files()
-        self._lock = filelock.FileLock(self.get_uri('.s4lock'))
+        self._lock = filelock.FileLock(self.lock_file)
+
+    @property
+    def lock_file(self):
+        return self.get_uri(self.LOCK_FILE_NAME)
+
+    def ensure_path(self, path):
+        parent = os.path.dirname(path)
+        if not os.path.exists(parent):
+            os.makedirs(parent)
 
     def lock(self, timeout=10):
         """
         Advisory lock.
         Use to ensure that only one LocalSyncClient is working on the Target at the same time.
         """
+        logger.debug("Locking %s", self.lock_file)
+        if not os.path.exists(self.lock_file):
+            self.ensure_path(self.lock_file)
+            with open(self.lock_file, 'w'):
+                os.utime(self.lock_file)
         self._lock.acquire(timeout=timeout)
 
     def unlock(self):
         """
         Unlock the active advisory lock.
         """
+        logger.debug("Releasing lock %s", self.lock_file)
         self._lock.release()
+        os.unlink(self.lock_file)
 
     def get_client_name(self):
         return 'local'
@@ -79,10 +96,7 @@ class LocalSyncClient(SyncClient):
 
     def put(self, key, sync_object, callback=None):
         path = os.path.join(self.path, key)
-
-        parent = os.path.dirname(path)
-        if not os.path.exists(parent):
-            os.makedirs(parent)
+        self.ensure_path(path)
 
         BUFFER_SIZE = 4096
         fd, temp_path = tempfile.mkstemp()
