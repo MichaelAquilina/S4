@@ -398,7 +398,7 @@ def ls_command(args, config, logger):
     headers = ['key', 'local', 's3']
     data = sorted(data, reverse=descending, key=lambda x: x[headers.index(sort_by)])
 
-    logger.info(tabulate(data, headers=headers))
+    print(tabulate(data, headers=headers))
 
 
 def rm_command(args, config, logger):
