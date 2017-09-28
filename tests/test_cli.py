@@ -523,16 +523,20 @@ class TestAddCommand(object):
 
 
 class TestLsCommand(object):
-    def test_empty_config(self, logger):
+    def test_empty_config(self, capsys):
         args = argparse.Namespace(target='idontexist')
+        logger = logging.getLogger('test_empty_config')
+        logger.setLevel(logging.INFO)
+        logger.addHandler(logging.StreamHandler())
         cli.ls_command(args, {}, logger)
-        expected_result = (
+        out, err = capsys.readouterr()
+        assert out == ''
+        assert err == (
             'You have not added any targets yet\n'
             'Use the "add" command to do this\n'
         )
-        assert get_stream_value(logger) == expected_result
 
-    def test_missing_target(self, logger):
+    def test_missing_target(self, capsys):
         args = argparse.Namespace(target='idontexist')
         config = {
             'targets': {
@@ -540,14 +544,18 @@ class TestLsCommand(object):
                 'bar': {},
             }
         }
+        logger = logging.getLogger('test_missing_target')
+        logger.setLevel(logging.INFO)
+        logger.addHandler(logging.StreamHandler())
         cli.ls_command(args, config, logger)
-        expected_result = (
+        out, err = capsys.readouterr()
+        assert out == ""
+        assert err == (
             '"idontexist" is an unknown target\n'
             'Choices are: [\'bar\', \'foo\']\n'
         )
-        assert get_stream_value(logger) == expected_result
 
-    def test_correct_output_empty(self, s3_client, local_client, logger):
+    def test_correct_output_empty(self, s3_client, local_client, capsys):
         config = {
             'targets': {
                 'foo': {
@@ -559,17 +567,22 @@ class TestLsCommand(object):
                 }
             }
         }
+        logger = logging.getLogger('test_correct_output_empty')
+        logger.setLevel(logging.INFO)
+        logger.addHandler(logging.StreamHandler())
 
         args = argparse.Namespace(target='foo', sort_by='key', descending=False)
         cli.ls_command(args, config, logger)
 
-        expected_result = (
+        out, err = capsys.readouterr()
+
+        assert err == ""
+        assert out == (
             'key    local    s3\n'
             '-----  -------  ----\n'
         )
-        assert get_stream_value(logger) == expected_result
 
-    def test_correct_output_nonempty(self, s3_client, local_client, logger):
+    def test_correct_output_nonempty(self, s3_client, local_client, capsys):
         config = {
             'targets': {
                 'foo': {
@@ -607,6 +620,10 @@ class TestLsCommand(object):
             }
         })
 
+        logger = logging.getLogger('test_correct_output_nonempty')
+        logger.setLevel(logging.INFO)
+        logger.addHandler(logging.StreamHandler())
+
         args = argparse.Namespace(
             target='foo',
             sort_by='key',
@@ -615,7 +632,10 @@ class TestLsCommand(object):
         )
         cli.ls_command(args, config, logger)
 
-        expected_result = (
+        out, err = capsys.readouterr()
+
+        assert err == ""
+        assert out == (
             'key    local                s3\n'
             '-----  -------------------  -------------------\n'
             'honey  2016-11-10 18:40:00  2016-12-12 08:30:00\n'
@@ -623,9 +643,8 @@ class TestLsCommand(object):
             'milk   2016-12-12 08:30:00  1989-10-23 11:30:00\n'
 
         )
-        assert get_stream_value(logger) == expected_result
 
-    def test_show_all(self, s3_client, local_client, logger):
+    def test_show_all(self, s3_client, local_client, capsys):
         config = {
             'targets': {
                 'foo': {
@@ -654,6 +673,10 @@ class TestLsCommand(object):
             }
         })
 
+        logger = logging.getLogger('test_show_all')
+        logger.setLevel(logging.INFO)
+        logger.addHandler(logging.StreamHandler())
+
         args = argparse.Namespace(
             target='foo',
             sort_by='key',
@@ -662,14 +685,16 @@ class TestLsCommand(object):
         )
         cli.ls_command(args, config, logger)
 
-        expected_result = (
+        out, err = capsys.readouterr()
+
+        assert err == ""
+        assert out == (
             'key       local                s3\n'
             '--------  -------------------  -------------------\n'
             'cheese    2017-02-02 08:30:00  2017-12-12 08:30:00\n'
             'crackers  <deleted>\n'
 
         )
-        assert get_stream_value(logger) == expected_result
 
 
 class TestTargetsCommand(object):
