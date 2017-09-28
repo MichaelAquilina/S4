@@ -101,7 +101,7 @@ will ask you to intervene:
        (1) /home/username/myfolder1/test.txt updated at 2017-01-23 12:26:24 (CREATED)
        (2) s3://mybucket/folder1/test.txt updated at 2017-01-23 12:26:30 (CREATED)
        (d) View difference (requires diff command)
-       (3) Skip this file
+       (X) Skip this file
 
     Choice (default=skip):
 
