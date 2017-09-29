@@ -40,18 +40,12 @@ def config_file():
     os.remove(temp_path)
 
 
-@pytest.fixture
-def logger():
-    stream = io.StringIO()
-    result = logging.getLogger('test_targets')
+def create_logger():
+    result = logging.getLogger('create_logger')
     result.setLevel(logging.INFO)
     result.handlers = []
-    result.addHandler(logging.StreamHandler(stream))
+    result.addHandler(logging.StreamHandler())
     return result
-
-
-def get_stream_value(logger):
-    return logger.handlers[0].stream.getvalue()
 
 
 def get_timestamp(year, month, day, hour, minute):
@@ -184,11 +178,13 @@ class TestDaemonCommand(object):
         return index >= 1
 
     @pytest.mark.timeout(5)
-    def test_no_targets(self, INotifyRecursive, SyncWorker, logger):
+    def test_no_targets(self, INotifyRecursive, SyncWorker, capsys):
         args = argparse.Namespace(targets=None, conflicts='ignore', read_delay=0)
-        cli.daemon_command(args, {'targets': {}}, logger, terminator=self.single_term)
+        cli.daemon_command(args, {'targets': {}}, create_logger(), terminator=self.single_term)
 
-        assert get_stream_value(logger) == (
+        out, err = capsys.readouterr()
+        assert out == ''
+        assert err == (
             'No targets available\n'
             'Use "add" command first\n'
         )
@@ -196,18 +192,25 @@ class TestDaemonCommand(object):
         assert INotifyRecursive.call_count == 0
 
     @pytest.mark.timeout(5)
-    def test_wrong_target(self, INotifyRecursive, SyncWorker, logger):
+    def test_wrong_target(self, INotifyRecursive, SyncWorker, capsys):
         args = argparse.Namespace(targets=['foo'], conflicts='ignore', read_delay=0)
-        cli.daemon_command(args, {'targets': {'bar': {}}}, logger, terminator=self.single_term)
+        cli.daemon_command(
+            args,
+            {'targets': {'bar': {}}},
+            create_logger(),
+            terminator=self.single_term
+        )
 
-        assert get_stream_value(logger) == (
+        out, err = capsys.readouterr()
+        assert out == ''
+        assert err == (
             'Unknown target: foo\n'
         )
         assert SyncWorker.call_count == 0
         assert INotifyRecursive.call_count == 0
 
     @pytest.mark.timeout(5)
-    def test_specific_target(self, INotifyRecursive, SyncWorker, logger):
+    def test_specific_target(self, INotifyRecursive, SyncWorker):
         INotifyRecursive.return_value = FakeINotify(
             events={
                 Event(wd=1, mask=flags.CREATE, cookie=None, name="hello.txt"),
@@ -232,7 +235,7 @@ class TestDaemonCommand(object):
                 'bar': {},
             }
         }
-        cli.daemon_command(args, config, logger, terminator=self.single_term)
+        cli.daemon_command(args, config, create_logger(), terminator=self.single_term)
 
         assert SyncWorker.call_count == 2
         assert INotifyRecursive.call_count == 1
@@ -240,22 +243,25 @@ class TestDaemonCommand(object):
 
 @mock.patch('s4.sync.SyncWorker')
 class TestSyncCommand(object):
-    def test_no_targets(self, SyncWorker, logger):
+    def test_no_targets(self, SyncWorker, capsys):
         args = argparse.Namespace(targets=None, conflicts=None)
-        cli.sync_command(args, {'targets': {}}, logger)
-        assert get_stream_value(logger) == ''
+        cli.sync_command(args, {'targets': {}}, create_logger())
+        out, err = capsys.readouterr()
+        assert out == err == ''
         assert SyncWorker.call_count == 0
 
-    def test_wrong_target(self, SyncWorker, logger):
+    def test_wrong_target(self, SyncWorker, capsys):
         args = argparse.Namespace(targets=['foo', 'bar'], conflicts=None)
-        cli.sync_command(args, {'targets': {'baz': {}}}, logger)
-        assert get_stream_value(logger) == (
+        cli.sync_command(args, {'targets': {'baz': {}}}, create_logger())
+        out, err = capsys.readouterr()
+        assert out == ''
+        assert err == (
             '"bar" is an unknown target. Choices are: [\'baz\']\n'
             '"foo" is an unknown target. Choices are: [\'baz\']\n'
         )
         assert SyncWorker.call_count == 0
 
-    def test_sync_error(self, SyncWorker, logger):
+    def test_sync_error(self, SyncWorker, capsys):
         args = argparse.Namespace(targets=None, conflicts=None, log_level="INFO")
         config = {
             'targets': {
@@ -277,14 +283,16 @@ class TestSyncCommand(object):
         }
         SyncWorker.side_effect = ValueError('something bad happened')
 
-        cli.sync_command(args,  config, logger)
+        cli.sync_command(args,  config, create_logger())
+        out, err = capsys.readouterr()
         assert SyncWorker.call_count == 2
-        assert get_stream_value(logger) == (
+        assert out == ''
+        assert err == (
             "There was an error syncing 'bar': something bad happened\n"
             "There was an error syncing 'foo': something bad happened\n"
         )
 
-    def test_sync_error_debug(self, SyncWorker, logger):
+    def test_sync_error_debug(self, SyncWorker, capsys):
         args = argparse.Namespace(targets=None, conflicts=None, log_level="DEBUG")
         config = {
             'targets': {
@@ -299,16 +307,17 @@ class TestSyncCommand(object):
         }
         SyncWorker.side_effect = ValueError('something bad happened')
 
-        cli.sync_command(args,  config, logger)
+        cli.sync_command(args,  config, create_logger())
+
+        out, err = capsys.readouterr()
         assert SyncWorker.call_count == 1
-        first_two_lines = get_stream_value(logger).split('\n')[:2]
-        assert first_two_lines == [
+        assert out == ''
+        assert err.split('\n')[:2] == [
             "something bad happened",
             "Traceback (most recent call last):",
         ]
 
-
-    def test_keyboard_interrupt(self, SyncWorker, logger):
+    def test_keyboard_interrupt(self, SyncWorker, capsys):
         args = argparse.Namespace(targets=None, conflicts=None)
         config = {
             'targets': {
@@ -330,13 +339,15 @@ class TestSyncCommand(object):
         }
         SyncWorker.side_effect = KeyboardInterrupt
 
-        cli.sync_command(args,  config, logger)
+        cli.sync_command(args,  config, create_logger())
+        out, err = capsys.readouterr()
         assert SyncWorker.call_count == 1
-        assert get_stream_value(logger) == (
+        assert out == ''
+        assert err == (
             'Quitting due to Keyboard Interrupt...\n'
         )
 
-    def test_all_targets(self, SyncWorker, logger):
+    def test_all_targets(self, SyncWorker, capsys):
         args = argparse.Namespace(targets=None, conflicts=None)
         config = {
             'targets': {
@@ -357,8 +368,10 @@ class TestSyncCommand(object):
             }
         }
 
-        cli.sync_command(args,  config, logger)
-        assert get_stream_value(logger) == (
+        cli.sync_command(args,  config, create_logger())
+        out, err = capsys.readouterr()
+        assert out == ''
+        assert err == (
             'Syncing bar [/home/mike/barmil/ <=> s3://foobar/barrel/]\n'
             'Syncing foo [/home/mike/docs/ <=> s3://foobar/docs/]\n'
         )
@@ -367,28 +380,30 @@ class TestSyncCommand(object):
 
 @mock.patch('s4.utils.get_input')
 class TestEditCommand(object):
-    def test_no_targets(self, get_input, logger):
-        cli.edit_command(None, {}, logger)
-        expected_result = (
+    def test_no_targets(self, get_input, capsys):
+        cli.edit_command(None, {}, create_logger())
+        out, err = capsys.readouterr()
+        assert out == ''
+        assert err == (
             'You have not added any targets yet\n'
             'Use the "add" command to do this\n'
         )
-        assert get_stream_value(logger) == expected_result
 
-    def test_missing_target(self, get_input, logger):
+    def test_missing_target(self, get_input, capsys):
         args = argparse.Namespace(target='idontexist')
         config = {
             'targets': {'foo': {}}
         }
-        cli.edit_command(args, config, logger)
+        cli.edit_command(args, config, create_logger())
 
-        expected_result = (
+        out, err = capsys.readouterr()
+        assert out == ''
+        assert err == (
             '"idontexist" is an unknown target\n'
             'Choices are: [\'foo\']\n'
         )
-        assert get_stream_value(logger) == expected_result
 
-    def test_no_changes(self, get_input, logger, config_file):
+    def test_no_changes(self, get_input, config_file):
         fake_stream = FakeInputStream([
             '',
             '',
@@ -408,7 +423,7 @@ class TestEditCommand(object):
                 'region_name': 'eu-west-1',
             }}
         }
-        cli.edit_command(args, config, logger)
+        cli.edit_command(args, config, create_logger())
 
         with open(config_file, 'r') as fp:
             config = json.load(fp)
@@ -424,7 +439,7 @@ class TestEditCommand(object):
         }
         assert expected_config == config
 
-    def test_correct_output(self, get_input, logger, config_file):
+    def test_correct_output(self, get_input, config_file):
         fake_stream = FakeInputStream([
             '/home/user/Documents',
             's3://buckets/mybackup222',
@@ -444,7 +459,7 @@ class TestEditCommand(object):
                 'region_name': 'eu-west-1',
             }}
         }
-        cli.edit_command(args, config, logger)
+        cli.edit_command(args, config, create_logger())
 
         with open(config_file, 'r') as fp:
             config = json.load(fp)
@@ -463,7 +478,7 @@ class TestEditCommand(object):
 
 @mock.patch('s4.utils.get_input')
 class TestAddCommand(object):
-    def test_correct_behaviour(self, get_input, logger, config_file):
+    def test_correct_behaviour(self, get_input, config_file):
         fake_stream = FakeInputStream([
             '/home/user/Documents',
             's3://mybucket/Documents',
@@ -474,7 +489,7 @@ class TestAddCommand(object):
         ])
         get_input.side_effect = fake_stream
 
-        cli.add_command(None, {}, logger)
+        cli.add_command(None, {}, create_logger())
 
         with open(config_file, 'r') as fp:
             new_config = json.load(fp)
@@ -492,7 +507,7 @@ class TestAddCommand(object):
         }
         assert new_config == expected_config
 
-    def test_custom_target_name(self, get_input, logger, config_file):
+    def test_custom_target_name(self, get_input, config_file):
         fake_stream = FakeInputStream([
             '/home/user/Music',
             's3://mybucket/Musiccccc',
@@ -503,7 +518,7 @@ class TestAddCommand(object):
         ])
         get_input.side_effect = fake_stream
 
-        cli.add_command(None, {}, logger)
+        cli.add_command(None, {}, create_logger())
 
         with open(config_file, 'r') as fp:
             new_config = json.load(fp)
@@ -525,10 +540,7 @@ class TestAddCommand(object):
 class TestLsCommand(object):
     def test_empty_config(self, capsys):
         args = argparse.Namespace(target='idontexist')
-        logger = logging.getLogger('test_empty_config')
-        logger.setLevel(logging.INFO)
-        logger.addHandler(logging.StreamHandler())
-        cli.ls_command(args, {}, logger)
+        cli.ls_command(args, {}, create_logger())
         out, err = capsys.readouterr()
         assert out == ''
         assert err == (
@@ -544,10 +556,7 @@ class TestLsCommand(object):
                 'bar': {},
             }
         }
-        logger = logging.getLogger('test_missing_target')
-        logger.setLevel(logging.INFO)
-        logger.addHandler(logging.StreamHandler())
-        cli.ls_command(args, config, logger)
+        cli.ls_command(args, config, create_logger())
         out, err = capsys.readouterr()
         assert out == ""
         assert err == (
@@ -567,12 +576,8 @@ class TestLsCommand(object):
                 }
             }
         }
-        logger = logging.getLogger('test_correct_output_empty')
-        logger.setLevel(logging.INFO)
-        logger.addHandler(logging.StreamHandler())
-
         args = argparse.Namespace(target='foo', sort_by='key', descending=False)
-        cli.ls_command(args, config, logger)
+        cli.ls_command(args, config, create_logger())
 
         out, err = capsys.readouterr()
 
@@ -620,17 +625,13 @@ class TestLsCommand(object):
             }
         })
 
-        logger = logging.getLogger('test_correct_output_nonempty')
-        logger.setLevel(logging.INFO)
-        logger.addHandler(logging.StreamHandler())
-
         args = argparse.Namespace(
             target='foo',
             sort_by='key',
             show_all=False,
             descending=False,
         )
-        cli.ls_command(args, config, logger)
+        cli.ls_command(args, config, create_logger())
 
         out, err = capsys.readouterr()
 
@@ -673,17 +674,13 @@ class TestLsCommand(object):
             }
         })
 
-        logger = logging.getLogger('test_show_all')
-        logger.setLevel(logging.INFO)
-        logger.addHandler(logging.StreamHandler())
-
         args = argparse.Namespace(
             target='foo',
             sort_by='key',
             show_all=True,
             descending=False,
         )
-        cli.ls_command(args, config, logger)
+        cli.ls_command(args, config, create_logger())
 
         out, err = capsys.readouterr()
 
@@ -699,11 +696,12 @@ class TestLsCommand(object):
 
 class TestTargetsCommand(object):
 
-    def test_empty(self, logger):
-        cli.targets_command(None, {}, logger)
-        assert get_stream_value(logger) == ''
+    def test_empty(self, capsys):
+        cli.targets_command(None, {}, create_logger())
+        out, err = capsys.readouterr()
+        assert out == err == ''
 
-    def test_correct_output(self, logger):
+    def test_correct_output(self, capsys):
         config = {
             'targets': {
                 'Personal': {
@@ -717,49 +715,53 @@ class TestTargetsCommand(object):
             }
         }
 
-        cli.targets_command(None, config, logger)
+        cli.targets_command(None, config, create_logger())
 
-        expected_result = (
+        out, err = capsys.readouterr()
+        assert out == ''
+        assert err == (
             'Personal: [/home/user/Documents <=> s3://mybackup/Personal]\n'
             'Studies: [/media/backup/Studies <=> s3://something/something/Studies]\n'
         )
-        assert get_stream_value(logger) == expected_result
 
 
 class TestRemoveCommand(object):
-    def test_empty(self, logger, config_file):
+    def test_empty(self, capsys, config_file):
         args = argparse.Namespace(target='foo')
-        cli.rm_command(args, {}, logger)
+        cli.rm_command(args, {}, create_logger())
 
-        expected_output = (
+        out, err = capsys.readouterr()
+        assert out == ''
+        assert err == (
             'You have not added any targets yet\n'
         )
-        assert get_stream_value(logger) == expected_output
 
-    def test_missing(self, logger, config_file):
+    def test_missing(self, capsys, config_file):
         args = argparse.Namespace(target='foo')
         cli.rm_command(args, {
             'targets': {
                 'bar': {}
             }
-        }, logger)
+        }, create_logger())
 
-        expected_output = (
+        out, err = capsys.readouterr()
+        assert out == ''
+        assert err == (
             '"foo" is an unknown target\n'
             'Choices are: [\'bar\']\n'
         )
-        assert get_stream_value(logger) == expected_output
 
-    def test_remove_target(self, logger, config_file):
+    def test_remove_target(self, capsys, config_file):
         args = argparse.Namespace(target='foo')
         cli.rm_command(args, {
             'targets': {
                 'bar': {},
                 'foo': {},
             }
-        }, logger)
+        }, create_logger())
 
-        assert get_stream_value(logger) == ''
+        out, err = capsys.readouterr()
+        assert out == err == ''
 
         with open(config_file, 'rt') as fp:
             new_config = json.load(fp)
