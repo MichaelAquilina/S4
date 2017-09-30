@@ -243,14 +243,14 @@ class TestDaemonCommand(object):
 @mock.patch('s4.sync.SyncWorker')
 class TestSyncCommand(object):
     def test_no_targets(self, SyncWorker, capsys):
-        args = argparse.Namespace(targets=None, conflicts=None)
+        args = argparse.Namespace(targets=None, conflicts=None, dry_run=False)
         cli.sync_command(args, {'targets': {}}, create_logger())
         out, err = capsys.readouterr()
         assert out == err == ''
         assert SyncWorker.call_count == 0
 
     def test_wrong_target(self, SyncWorker, capsys):
-        args = argparse.Namespace(targets=['foo', 'bar'], conflicts=None)
+        args = argparse.Namespace(targets=['foo', 'bar'], conflicts=None, dry_run=False)
         cli.sync_command(args, {'targets': {'baz': {}}}, create_logger())
         out, err = capsys.readouterr()
         assert out == ''
@@ -261,7 +261,7 @@ class TestSyncCommand(object):
         assert SyncWorker.call_count == 0
 
     def test_sync_error(self, SyncWorker, capsys):
-        args = argparse.Namespace(targets=None, conflicts=None, log_level="INFO")
+        args = argparse.Namespace(targets=None, conflicts=None, dry_run=False, log_level="INFO")
         config = {
             'targets': {
                 'foo': {
@@ -292,7 +292,7 @@ class TestSyncCommand(object):
         )
 
     def test_sync_error_debug(self, SyncWorker, capsys):
-        args = argparse.Namespace(targets=None, conflicts=None, log_level="DEBUG")
+        args = argparse.Namespace(targets=None, conflicts=None, dry_run=False, log_level="DEBUG")
         config = {
             'targets': {
                 'bar': {
@@ -317,7 +317,7 @@ class TestSyncCommand(object):
         ]
 
     def test_keyboard_interrupt(self, SyncWorker, capsys):
-        args = argparse.Namespace(targets=None, conflicts=None)
+        args = argparse.Namespace(targets=None, conflicts=None, dry_run=False)
         config = {
             'targets': {
                 'foo': {
@@ -347,7 +347,7 @@ class TestSyncCommand(object):
         )
 
     def test_all_targets(self, SyncWorker, capsys):
-        args = argparse.Namespace(targets=None, conflicts=None)
+        args = argparse.Namespace(targets=None, conflicts=None, dry_run=False)
         config = {
             'targets': {
                 'foo': {
