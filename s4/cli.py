@@ -35,7 +35,7 @@ CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, 'sync.conf')
 
 def handle_conflict(key, action_1, client_1, action_2, client_2):
     print(
-        '\nConflict for "%s". Which version would you like to keep?\n'
+        '\nConflict for "{}". Which version would you like to keep?\n'
         '   (1) {}{} updated at {} ({})\n'
         '   (2) {}{} updated at {} ({})\n'
         '   (d) View difference (requires the diff command)\n'
@@ -61,9 +61,6 @@ def handle_conflict(key, action_1, client_1, action_2, client_2):
         return sync.get_resolution(key, action_1, client_2, client_1)
     elif choice == '2':
         return sync.get_resolution(key, action_2, client_1, client_2)
-    else:
-        print('Ignoring sync conflict for {}'.format(key), file=sys.stderr)
-        return None
 
 
 def get_progress_bar(max_value):
@@ -369,7 +366,11 @@ def sync_command(args, config, logger):
                 worker = sync.SyncWorker(client_1, client_2)
 
                 logger.info('Syncing %s [%s <=> %s]', name, client_1.get_uri(), client_2.get_uri())
-                worker.sync(conflict_choice=args.conflicts, dry_run=args.dry_run)
+                worker.sync(
+                    conflict_choice=args.conflicts,
+                    dry_run=args.dry_run,
+                    conflict_handler=handle_conflict,
+                )
             except Exception as e:
                 if args.log_level == "DEBUG":
                     logger.exception(e)
