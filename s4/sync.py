@@ -85,9 +85,13 @@ class SyncWorker(object):
                         key, action_2, self.client_1, self.client_2
                     )
                 if conflict_handler is not None:
-                    resolutions[key] = conflict_handler(
+                    resolution = conflict_handler(
                         key, action_1, self.client_1, action_2, self.client_2
                     )
+                    if resolution is not None:
+                        resolutions[key] = resolution
+                    else:
+                        self.logger.info('Ignoring sync conflict for %s', key)
                 else:
                     self.logger.info('Unable to resolve conflict for %s', key)
 
