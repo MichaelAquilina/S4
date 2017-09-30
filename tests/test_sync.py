@@ -9,37 +9,17 @@ from s4.clients import SyncState, local, s3
 from tests import utils
 
 
-class TestDeferredFunction(object):
-    def test_call(self):
-        def foo(a, b):
-            return a + ' ' + b
-
-        deferred_function = sync.DeferredFunction(foo, 'red', b='green')
-        assert deferred_function() == 'red green'
-
-    def test_equality_wrong_type(self):
-        deferred_function = sync.DeferredFunction(lambda x: x)
-        assert deferred_function != 2
-        assert deferred_function != 'hello'
-
-    def test_equality_with_self(self):
-        deferred_function = sync.DeferredFunction(lambda x: x**2, 2)
-        assert deferred_function == deferred_function
-
-    def test_non_equality(self):
-        def foo(a, b, c):
-            return a + b * c
-
-        def bar(a, b, c):
-            return a + b + c
-        assert sync.DeferredFunction(bar, 4, 4, 5) != sync.DeferredFunction(bar, 4, 4, 10)
-        assert sync.DeferredFunction(foo, 4, 4, 5) != sync.DeferredFunction(bar, 4, 4, 5)
-
+class TestResolution(object):
     def test_repr(self):
-        def baz(a):
-            return 1
-        deferred_function = sync.DeferredFunction(baz, 'testing')
-        expected_repr = "DeferredFunction<func={}, args=('testing',), kwargs={{}}>".format(baz)
+        s3_client = s3.S3SyncClient(None, 'mortybucket', 'dimensional/portals')
+        local_client = local.LocalSyncClient('/home/picklerick')
+        deferred_function = sync.Resolution('CREATE', s3_client, local_client, 'foo', 20023)
+        expected_repr = (
+            "Resolution<action=CREATE, "
+            "to=s3://mortybucket/dimensional/portals/, "
+            "from=/home/picklerick/, "
+            "key=foo, timestamp=20023>"
+        )
         assert repr(deferred_function) == expected_repr
 
 

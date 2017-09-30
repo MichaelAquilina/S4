@@ -17,10 +17,10 @@ class Resolution(object):
         self.timestamp = timestamp
 
     def __repr__(self):
-        return 'Resolution<action={}, from={}, to={}, key={}, timestamp={}>'.format(
+        return 'Resolution<action={}, to={}, from={}, key={}, timestamp={}>'.format(
             self.action,
-            self.from_client.get_uri(),
             self.to_client.get_uri(),
+            self.from_client.get_uri(),
             self.key,
             self.timestamp,
         )
