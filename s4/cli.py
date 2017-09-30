@@ -174,6 +174,7 @@ def main(arguments):
     sync_parser = subparsers.add_parser('sync', help="Synchronise Targets with S3")
     sync_parser.add_argument('targets', nargs='*')
     sync_parser.add_argument('--conflicts', default=None, choices=['1', '2', 'ignore'])
+    sync_parser.add_argument('--dry-run', action='store_true')
 
     edit_parser = subparsers.add_parser('edit', help="Edit Target details")
     edit_parser.add_argument('target')
@@ -369,7 +370,7 @@ def sync_command(args, config, logger):
                 worker = sync.SyncWorker(client_1, client_2)
 
                 logger.info('Syncing %s [%s <=> %s]', name, client_1.get_uri(), client_2.get_uri())
-                worker.sync(conflict_choice=args.conflicts)
+                worker.sync(conflict_choice=args.conflicts, dry_run=args.dry_run)
             except Exception as e:
                 if args.log_level == "DEBUG":
                     logger.exception(e)

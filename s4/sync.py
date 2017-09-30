@@ -36,7 +36,7 @@ class SyncWorker(object):
     def __repr__(self):
         return 'SyncWorker<{}, {}>'.format(self.client_1.get_uri(), self.client_2.get_uri())
 
-    def sync(self, conflict_choice=None, keys=None, conflict_handler=None):
+    def sync(self, conflict_choice=None, keys=None, conflict_handler=None, dry_run=False):
         self.client_1.lock()
         self.client_2.lock()
         try:
@@ -55,7 +55,7 @@ class SyncWorker(object):
                 else:
                     self.logger.info('Unable to resolve conflict for %s', key)
 
-            self.run_resolutions(resolutions)
+            self.run_resolutions(resolutions, dry_run)
 
         except KeyboardInterrupt:
             self.logger.warning('Session interrupted by Keyboard Interrupt. Aborting....')
@@ -186,7 +186,7 @@ class SyncWorker(object):
 
         return resolutions, unhandled_events
 
-    def run_resolutions(self, resolutions):
+    def run_resolutions(self, resolutions, dry_run=False):
         # call everything once we know we can handle all of it
         self.logger.debug('There are %s total deferred calls', len(resolutions))
         success = []
@@ -194,13 +194,33 @@ class SyncWorker(object):
             for key in sorted(resolutions.keys()):
                 resolution = resolutions[key]
                 if resolution.action == 'UPDATE':
-                    deferred_function = self.update_client
+                    self.logger.info(
+                        colored.yellow('Updating %s (%s => %s)'),
+                        resolution.key,
+                        resolution.from_client.get_uri(),
+                        resolution.to_client.get_uri()
+                    )
+                    deferred_function = self.move_client
                 elif resolution.action == 'CREATE':
-                    deferred_function = self.create_client
+                    self.logger.info(
+                        colored.green('Creating %s (%s => %s)'),
+                        resolution.key,
+                        resolution.from_client.get_uri(),
+                        resolution.to_client.get_uri()
+                    )
+                    deferred_function = self.move_client
                 elif resolution.action == 'DELETE':
+                    self.logger.info(
+                        colored.red('Deleting %s on %s'),
+                        resolution.key,
+                        resolution.to_client.get_uri()
+                    )
                     deferred_function = self.delete_client
                 else:
                     raise ValueError('Unknown resolution', resolution)
+
+                if dry_run:
+                    continue
 
                 try:
                     deferred_function(resolution)
@@ -244,25 +264,7 @@ class SyncWorker(object):
             action_2 = client_2_actions.get(key, DOES_NOT_EXIST)
             yield key, action_1, action_2
 
-    def create_client(self, resolution):
-        self.logger.info(
-            colored.green('Creating %s (%s => %s)'),
-            resolution.key,
-            resolution.from_client.get_uri(),
-            resolution.to_client.get_uri()
-        )
-        self.move(resolution)
-
-    def update_client(self, resolution):
-        self.logger.info(
-            colored.yellow('Updating %s (%s => %s)'),
-            resolution.key,
-            resolution.from_client.get_uri(),
-            resolution.to_client.get_uri()
-        )
-        self.move(resolution)
-
-    def move(self, resolution):
+    def move_client(self, resolution):
         sync_object = resolution.from_client.get(resolution.key)
 
         resolution.to_client.put(
@@ -275,10 +277,5 @@ class SyncWorker(object):
         resolution.from_client.set_remote_timestamp(resolution.key, resolution.timestamp)
 
     def delete_client(self, resolution):
-        self.logger.info(
-            colored.red('Deleting %s on %s'),
-            resolution.key,
-            resolution.to_client.get_uri()
-        )
         resolution.to_client.delete(resolution.key)
         resolution.to_client.set_remote_timestamp(resolution.key, resolution.remote_timestamp)
