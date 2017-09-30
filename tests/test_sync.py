@@ -8,17 +8,35 @@ from tests import utils
 
 
 class TestResolution(object):
+    def test_equal_wrong_instance(self):
+        resolution = sync.Resolution('CREATE', None, None, 'bar', 23232)
+        assert resolution != "Not a Resolution"
+
+    def test_equal_to_self(self):
+        resolution = sync.Resolution('UPDATE', None, None, 'fffff', 232323)
+        assert resolution == resolution
+
+    def test_equal(self):
+        resolution_1 = sync.Resolution('UPDATE', None, None, 'fffff', 232323)
+        resolution_2 = sync.Resolution('UPDATE', None, None, 'fffff', 232323)
+        assert resolution_1 == resolution_2
+
+    def test_not_equal(self):
+        resolution_1 = sync.Resolution('UPDATE', None, None, 'fffff', 232323)
+        resolution_2 = sync.Resolution('DELETE', None, None, 'wew', 3823)
+        assert resolution_1 != resolution_2
+
     def test_repr(self):
         s3_client = s3.S3SyncClient(None, 'mortybucket', 'dimensional/portals')
         local_client = local.LocalSyncClient('/home/picklerick')
-        deferred_function = sync.Resolution('CREATE', s3_client, local_client, 'foo', 20023)
+        resolution = sync.Resolution('CREATE', s3_client, local_client, 'foo', 20023)
         expected_repr = (
             "Resolution<action=CREATE, "
             "to=s3://mortybucket/dimensional/portals/, "
             "from=/home/picklerick/, "
             "key=foo, timestamp=20023>"
         )
-        assert repr(deferred_function) == expected_repr
+        assert repr(resolution) == expected_repr
 
 
 class TestGetStates(object):
