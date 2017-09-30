@@ -718,8 +718,8 @@ class TestTargetsCommand(object):
         cli.targets_command(None, config, create_logger())
 
         out, err = capsys.readouterr()
-        assert out == ''
-        assert err == (
+        assert err == ''
+        assert out == (
             'Personal: [/home/user/Documents <=> s3://mybackup/Personal]\n'
             'Studies: [/media/backup/Studies <=> s3://something/something/Studies]\n'
         )
