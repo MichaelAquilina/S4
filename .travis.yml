@@ -6,9 +6,10 @@ python:
   - "3.5"
   - "3.6"
   - "3.7-dev"
-install: pip install tox-travis codecov
+install: pip install tox-travis codecov flake8
 script:
   - tox
+  - flake8 s4 tests
   - pip install . && s4 version
 after_success:
   - codecov
