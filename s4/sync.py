@@ -16,14 +16,40 @@ class Resolution(object):
         self.key = key
         self.timestamp = timestamp
 
+    def __eq__(self, other):
+        if not isinstance(other, Resolution):
+            return False
+        return (
+            self.action == other.action and
+            self.to_client == other.to_client and
+            self.from_client == other.from_client and
+            self.key == other.key and
+            self.timestamp == other.timestamp
+        )
+
     def __repr__(self):
         return 'Resolution<action={}, to={}, from={}, key={}, timestamp={}>'.format(
             self.action,
-            self.to_client.get_uri(),
-            self.from_client.get_uri(),
+            self.to_client.get_uri() if self.to_client is not None else None,
+            self.from_client.get_uri() if self.from_client is not None else None,
             self.key,
             self.timestamp,
         )
+
+
+def get_resolution(key, action, to_client, from_client):
+    if action.state in (SyncState.UPDATED, SyncState.NOCHANGES):
+        return Resolution(
+            'UPDATE', to_client, from_client, key, action.local_timestamp
+        )
+    elif action.state == SyncState.CREATED:
+        return Resolution(
+            'CREATE', to_client, from_client, key, action.local_timestamp
+        )
+    elif action.state == SyncState.DELETED:
+        return Resolution('DELETE', to_client, None, key, action.remote_timestamp)
+    else:
+        raise ValueError('Unknown action provided', action)
 
 
 class SyncWorker(object):
@@ -50,8 +76,18 @@ class SyncWorker(object):
             )
             for key in sorted(unhandled_events.keys()):
                 action_1, action_2 = unhandled_events[key]
+                if conflict_choice == '1':
+                    resolutions[key] = get_resolution(
+                        key, action_1, self.client_2, self.client_1
+                    )
+                elif conflict_choice == '2':
+                    resolutions[key] = get_resolution(
+                        key, action_2, self.client_1, self.client_2
+                    )
                 if conflict_handler is not None:
-                    conflict_handler(key, action_1, self.client_1, action_2, self.client_2)
+                    resolutions[key] = conflict_handler(
+                        key, action_1, self.client_1, action_2, self.client_2
+                    )
                 else:
                     self.logger.info('Unable to resolve conflict for %s', key)
 
@@ -105,7 +141,7 @@ class SyncWorker(object):
                 )
 
             elif state_2.state == SyncState.NOCHANGES and state_1.state == SyncState.DOESNOTEXIST:
-                resolutions[key] = (
+                resolutions[key] = Resolution(
                     'CREATE', self.client_1, self.client_2, key, state_2.remote_timestamp
                 )
             elif state_1.state == SyncState.UPDATED and state_2.state == SyncState.DOESNOTEXIST:
@@ -233,7 +269,7 @@ class SyncWorker(object):
         except KeyboardInterrupt:
             self.logger.warning('Session interrupted by Keyboard Interrupt. Cleaning up....')
 
-        if len(resolutions) > 0:
+        if len(success) > 0:
             self.logger.info('Flushing Index to Storage')
             self.client_1.flush_index()
             self.client_2.flush_index()
@@ -278,4 +314,4 @@ class SyncWorker(object):
 
     def delete_client(self, resolution):
         resolution.to_client.delete(resolution.key)
-        resolution.to_client.set_remote_timestamp(resolution.key, resolution.remote_timestamp)
+        resolution.to_client.set_remote_timestamp(resolution.key, resolution.timestamp)

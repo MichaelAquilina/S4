@@ -2,7 +2,6 @@
 
 import argparse
 import datetime
-import functools
 import json
 import logging
 import os
@@ -59,9 +58,9 @@ def handle_conflict(key, action_1, client_1, action_2, client_2):
             break
 
     if choice == '1':
-        return get_deferred_function(key, action_1, client_2, client_1)
+        return sync.get_resolution(key, action_1, client_2, client_1)
     elif choice == '2':
-        return get_deferred_function(key, action_2, client_1, client_2)
+        return sync.get_resolution(key, action_2, client_1, client_2)
     else:
         print('Ignoring sync conflict for {}'.format(key), file=sys.stderr)
         return None

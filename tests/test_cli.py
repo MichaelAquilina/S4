@@ -53,6 +53,47 @@ def get_timestamp(year, month, day, hour, minute):
     )
 
 
+class TestShowDiff(object):
+    @mock.patch('shutil.which')
+    def test_diff_not_found(self, which, capsys, local_client, s3_client):
+        which.return_value = None
+        cli.show_diff(local_client, s3_client, "something")
+
+        out, err = capsys.readouterr()
+        assert out == (
+            'Missing required "diff" executable.\n'
+            "Install this using your distribution's package manager\n"
+        )
+
+    @mock.patch('shutil.which')
+    def test_less_not_found(self, which, capsys, local_client, s3_client):
+        def missing_less(value):
+            if value == "less":
+                return None
+            else:
+                return "something"
+
+        which.side_effect = missing_less
+        cli.show_diff(local_client, s3_client, "something")
+
+        out, err = capsys.readouterr()
+        assert out == (
+            'Missing required "less" executable.\n'
+            "Install this using your distribution's package manager\n"
+        )
+
+    @mock.patch('subprocess.call')
+    def test_diff(self, call, local_client, s3_client):
+        utils.set_local_contents(local_client, "something", 4000, "wow")
+        utils.set_s3_contents(s3_client, "something", 3000, "nice")
+
+        cli.show_diff(local_client, s3_client, "something")
+
+        assert call.call_count == 2
+        assert call.call_args_list[0][0][0][0] == "diff"
+        assert call.call_args_list[1][0][0][0] == "less"
+
+
 class TestINotifyRecursive(object):
     @pytest.mark.timeout(5)
     def test_add_watches(self, tmpdir):

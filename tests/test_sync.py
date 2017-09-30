@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import mock
-
 import pytest
 
 from s4 import sync
@@ -75,7 +73,7 @@ class TestGetSyncStates(object):
         utils.set_s3_contents(s3_client, 'maltese.txt', timestamp=8000)
 
         worker = sync.SyncWorker(local_client, s3_client)
-        deferred_calls, unhandled_events = worker.get_sync_states()
+        resolutions, unhandled_events = worker.get_sync_states()
         expected_unhandled_events = {
             'english.txt': (
                 SyncState(SyncState.CREATED, 90000, None),
@@ -86,22 +84,22 @@ class TestGetSyncStates(object):
                 SyncState(SyncState.NOCHANGES, 13000, 12000),
             )
         }
-        expected_deferred_calls = {
-            'maltese.txt': sync.DeferredFunction(
-                worker.update_client, local_client, s3_client, 'maltese.txt', 8000
+        expected_resolutions = {
+            'maltese.txt': sync.Resolution(
+                'UPDATE', local_client, s3_client, 'maltese.txt', 8000
             ),
-            'chemistry.txt': sync.DeferredFunction(
-                worker.delete_client, s3_client, 'chemistry.txt', 9431
+            'chemistry.txt': sync.Resolution(
+                'DELETE', s3_client, None, 'chemistry.txt', 9431
             ),
-            'history.txt': sync.DeferredFunction(
-                worker.create_client, s3_client, local_client, 'history.txt', 5000
+            'history.txt': sync.Resolution(
+                'CREATE', s3_client, local_client, 'history.txt', 5000
             ),
-            'art.txt': sync.DeferredFunction(
-                worker.create_client, local_client, s3_client, 'art.txt', 200000
+            'art.txt': sync.Resolution(
+                'CREATE', local_client, s3_client, 'art.txt', 200000
             ),
         }
         assert unhandled_events == expected_unhandled_events
-        assert deferred_calls == expected_deferred_calls
+        assert resolutions == expected_resolutions
 
     def test_nochanges_but_different_remote_timestamps(self, local_client, s3_client):
         utils.set_local_index(local_client, {
@@ -120,12 +118,12 @@ class TestGetSyncStates(object):
         utils.set_s3_contents(s3_client, 'german.txt', timestamp=6000)
 
         worker = sync.SyncWorker(local_client, s3_client)
-        deferred_calls, unhandled_events = worker.get_sync_states()
-        expected_deferred_calls = {
-            'german.txt': sync.DeferredFunction(
-                worker.update_client, local_client, s3_client, 'german.txt', 6000)
+        resolutions, unhandled_events = worker.get_sync_states()
+        expected_resolutions = {
+            'german.txt': sync.Resolution(
+                "UPDATE", local_client, s3_client, 'german.txt', 6000)
         }
-        assert deferred_calls == expected_deferred_calls
+        assert resolutions == expected_resolutions
         assert unhandled_events == {}
 
     def test_updated_but_different_remote_timestamp(self, local_client, s3_client):
@@ -145,13 +143,13 @@ class TestGetSyncStates(object):
         utils.set_s3_contents(s3_client, 'biology.txt', timestamp=6000)
 
         worker = sync.SyncWorker(local_client, s3_client)
-        deferred_calls, unhandled_events = worker.get_sync_states()
+        resolutions, unhandled_events = worker.get_sync_states()
         expected_unhandled_events = {
             'biology.txt': (
                 SyncState(SyncState.UPDATED, 4500, 3000), SyncState(SyncState.NOCHANGES, 6000, 6000)
             )
         }
-        assert deferred_calls == {}
+        assert resolutions == {}
         assert unhandled_events == expected_unhandled_events
 
     def test_deleted_but_different_remote_timestamp(self, local_client, s3_client):
@@ -170,13 +168,13 @@ class TestGetSyncStates(object):
         utils.set_s3_contents(s3_client, 'chemistry.txt', timestamp=6000)
 
         worker = sync.SyncWorker(local_client, s3_client)
-        deferred_calls, unhandled_events = worker.get_sync_states()
+        resolutions, unhandled_events = worker.get_sync_states()
         expected_unhandled_events = {
             'chemistry.txt': (
                 SyncState(SyncState.DELETED, None, 3000), SyncState(SyncState.NOCHANGES, 6000, 6000)
             )
         }
-        assert deferred_calls == {}
+        assert resolutions == {}
         assert unhandled_events == expected_unhandled_events
 
     def test_deleted_doesnotexist(self, local_client, s3_client):
@@ -187,8 +185,8 @@ class TestGetSyncStates(object):
             }
         })
         worker = sync.SyncWorker(local_client, s3_client)
-        deferred_calls, unhandled_events = worker.get_sync_states()
-        assert deferred_calls == {}
+        resolutions, unhandled_events = worker.get_sync_states()
+        assert resolutions == {}
         assert unhandled_events == {}
 
 
@@ -217,47 +215,6 @@ def assert_existence(clients, keys, exists):
             assert (client.get(key) is not None) == exists
 
 
-class TestShowDiff(object):
-    @mock.patch('shutil.which')
-    def test_diff_not_found(self, which, capsys, local_client, s3_client):
-        which.return_value = None
-        sync.show_diff(local_client, s3_client, "something")
-
-        out, err = capsys.readouterr()
-        assert out == (
-            'Missing required "diff" executable.\n'
-            "Install this using your distribution's package manager\n"
-        )
-
-    @mock.patch('shutil.which')
-    def test_less_not_found(self, which, capsys, local_client, s3_client):
-        def missing_less(value):
-            if value == "less":
-                return None
-            else:
-                return "something"
-
-        which.side_effect = missing_less
-        sync.show_diff(local_client, s3_client, "something")
-
-        out, err = capsys.readouterr()
-        assert out == (
-            'Missing required "less" executable.\n'
-            "Install this using your distribution's package manager\n"
-        )
-
-    @mock.patch('subprocess.call')
-    def test_diff(self, call, local_client, s3_client):
-        utils.set_local_contents(local_client, "something", 4000, "wow")
-        utils.set_s3_contents(s3_client, "something", 3000, "nice")
-
-        sync.show_diff(local_client, s3_client, "something")
-
-        assert call.call_count == 2
-        assert call.call_args_list[0][0][0][0] == "diff"
-        assert call.call_args_list[1][0][0][0] == "less"
-
-
 class TestSyncWorker(object):
     def test_repr(self):
         local_client = local.LocalSyncClient('/home/bobs/burgers')
@@ -265,12 +222,12 @@ class TestSyncWorker(object):
         worker = sync.SyncWorker(local_client, s3_client)
         assert repr(worker) == 'SyncWorker</home/bobs/burgers/, s3://burgerbucket/foozie/>'
 
-    def test_get_deferred_function_unknown(self, local_client, s3_client):
-        worker = sync.SyncWorker(local_client, s3_client)
 
+def TestGetResolution(object):
+    def test_unknown(self, local_client, s3_client):
         state = SyncState("unkonwn state", None, None)
         with pytest.raises(ValueError):
-            worker.get_deferred_function("test", state, local_client, s3_client)
+            sync.get_resolution("test", state, local_client, s3_client)
 
 
 class TestIntegrations(object):
@@ -468,15 +425,19 @@ class TestIntegrations(object):
         assert_remote_timestamp(clients, 'foo', 7000)
 
 
-class TestRunDeferredCalls(object):
+class TestRunResolutions(object):
     def test_empty(self, local_client, s3_client):
         worker = sync.SyncWorker(local_client, s3_client)
-        assert worker.run_deferred_calls({}) == []
+        assert worker.run_resolutions({}) == []
+
+    def test_invalid_action(self, local_client, s3_client):
+        worker = sync.SyncWorker(local_client, s3_client)
+        with pytest.raises(ValueError):
+            worker.run_resolutions({
+                'foo': sync.Resolution('UNKNOWN', None, None, None, None),
+            })
 
     def test_correct_output(self, local_client, s3_client):
-        def failing_function():
-            raise ValueError()
-
         def keyboard_interrupt():
             raise KeyboardInterrupt()
 
@@ -485,28 +446,28 @@ class TestRunDeferredCalls(object):
 
         utils.set_local_contents(local_client, 'foo')
         utils.set_s3_contents(s3_client, 'baz', timestamp=2000, data='testing')
-        success = worker.run_deferred_calls({
-            'foo': sync.DeferredFunction(worker.delete_client, local_client, 'foo', 1000),
-            'bar': sync.DeferredFunction(failing_function),
-            'yap': sync.DeferredFunction(keyboard_interrupt),
-            'baz': sync.DeferredFunction(worker.create_client, local_client, s3_client, 'baz', 20),
+        success = worker.run_resolutions({
+            'foo': sync.Resolution('DELETE', local_client, None, 'foo', 1000),
+            'baz': sync.Resolution('CREATE', local_client, s3_client, 'baz', 20),
         })
         assert sorted(success) == sorted(['foo', 'baz'])
         assert_local_keys(clients, ['baz'])
 
 
-class TestMove(object):
+class TestMoveClient(object):
     def test_correct_behaviour(self, local_client, s3_client):
         utils.set_s3_contents(s3_client, 'art.txt', data='swirly abstract objects')
 
         worker = sync.SyncWorker(local_client, s3_client)
 
-        worker.move(
+        resolution = sync.Resolution(
+            action='CREATE',
             to_client=local_client,
             from_client=s3_client,
             key='art.txt',
             timestamp=6000,
         )
+        worker.move_client(resolution)
 
         assert utils.get_local_contents(local_client, 'art.txt') == b'swirly abstract objects'
         assert local_client.get_remote_timestamp('art.txt') == 6000
