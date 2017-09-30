@@ -290,7 +290,7 @@ def targets_command(args, config, logger):
 
     for name in sorted(config['targets']):
         entry = config['targets'][name]
-        print('%s: [%s <=> %s]', name, entry['local_folder'], entry['s3_uri'])
+        print('{}: [{} <=> {}]'.format(name, entry['local_folder'], entry['s3_uri']))
 
 
 def add_command(args, config, logger):
