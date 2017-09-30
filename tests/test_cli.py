@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import io
 import json
 import logging
 import os
 import tempfile
 from datetime import datetime
 
-from inotify_simple import flags, Event
+from inotify_simple import Event, flags
 import mock
 import pytest
 import pytz
