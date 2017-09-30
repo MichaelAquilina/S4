@@ -5,12 +5,13 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 
 from clint.textui import colored
 
 import tqdm
 
-from s4.clients import SyncState
+from s4.clients import SyncObject, SyncState
 
 
 class DeferredFunction(object):
@@ -33,6 +34,51 @@ class DeferredFunction(object):
             args=self.args,
             kwargs=self.kwargs,
         )
+
+
+def automerge(client_1, client_2, key):
+    if shutil.which("diff") is None:
+        print('Missing required "diff" executable')
+        print("Install this using your distribution's package manager")
+        return
+
+    so1 = client_1.get(key)
+    data1 = so1.fp.read()
+    so1.fp.close()
+
+    so2 = client_2.get(key)
+    data2 = so2.fp.read()
+    so2.fp.close()
+
+    fd1, path1 = tempfile.mkstemp()
+    fd2, path2 = tempfile.mkstemp()
+    fd3, path3 = tempfile.mkstemp()
+
+    with open(path1, 'wb') as fp:
+        fp.write(data1)
+    with open(path2, 'wb') as fp:
+        fp.write(data2)
+
+    # This is a lot faster than the difflib found in python
+    with open(path3, 'wb') as fp:
+        exit_code = subprocess.call([
+            'diff', '--line-format', '%L',
+            path1, path2,
+        ], stdout=fp)
+
+    os.close(fd1)
+    os.close(fd2)
+
+    os.remove(path1)
+    os.remove(path2)
+
+    if exit_code == 0:
+        client_1.put(key, SyncObject(fd3, None, time.time()))
+        return '1'
+    else:
+        print("Unsuccessful merge.")
+        print("Check that your diff command supports the --line-format command")
+        return None
 
 
 def show_diff(client_1, client_2, key):
@@ -114,6 +160,7 @@ class SyncWorker(object):
                             '   (1) %s%s updated at %s (%s)\n'
                             '   (2) %s%s updated at %s (%s)\n'
                             '   (d) View difference (requires the diff command)\n'
+                            '   (m) Automerge (requires the diff command)\n'
                             '   (X) Skip this file\n',
                             key,
                             self.client_1.get_uri(),
@@ -121,14 +168,16 @@ class SyncWorker(object):
                             self.client_2.get_uri(),
                             key, action_2.get_remote_datetime(), action_2.state,
                         )
-                        while True:
+                        choice = None
+                        while choice not in ('1', '2'):
                             choice = input('Choice (default=skip): ')
                             self.logger.info('')
 
                             if choice == 'd':
                                 show_diff(self.client_1, self.client_2, key)
-                            else:
-                                break
+                            elif choice == 'm':
+                                import ipdb; ipdb.set_trace()
+                                choice = automerge(self.client_1, self.client_2, key)
                     else:
                         choice = conflict_choice
 
