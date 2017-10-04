@@ -63,17 +63,6 @@ def handle_conflict(key, action_1, client_1, action_2, client_2):
         return sync.get_resolution(key, action_2, client_1, client_2)
 
 
-def get_progress_bar(max_value):
-    return tqdm.tqdm(
-        total=max_value,
-        leave=False,
-        ncols=80,
-        unit='B',
-        unit_scale=True,
-        mininterval=0.2,
-    )
-
-
 def show_diff(client_1, client_2, key):
     if shutil.which("diff") is None:
         print('Missing required "diff" executable.')
@@ -346,6 +335,41 @@ def daemon_command(args, config, logger, terminator=lambda x: False):
             worker.sync(conflict_choice=args.conflicts)
 
 
+class ProgressBar(object):
+    """
+    Singleton wrapper around tqdm
+    """
+    pbar = None
+
+    @classmethod
+    def set_progress_bar(cls, *args, **kwargs):
+        if cls.pbar:
+            cls.pbar.close()
+
+        cls.pbar = tqdm.tqdm(*args, **kwargs)
+        return cls.pbar
+
+    @classmethod
+    def hide(cls):
+        cls.pbar.close()
+
+
+def display_progress_bar(sync_object):
+    pbar = ProgressBar.set_progress_bar(
+        total=sync_object.total_size,
+        leave=False,
+        ncols=80,
+        unit='B',
+        unit_scale=True,
+        mininterval=0.2,
+    )
+    return pbar.update
+
+
+def hide_progress_bar(sync_object):
+    ProgressBar.hide()
+
+
 def sync_command(args, config, logger):
     all_targets = list(config['targets'].keys())
     if not args.targets:
@@ -363,7 +387,12 @@ def sync_command(args, config, logger):
             client_1, client_2 = get_clients(entry)
 
             try:
-                worker = sync.SyncWorker(client_1, client_2)
+                worker = sync.SyncWorker(
+                    client_1,
+                    client_2,
+                    update_callback=display_progress_bar,
+                    complete_callback=hide_progress_bar,
+                )
 
                 logger.info('Syncing %s [%s <=> %s]', name, client_1.get_uri(), client_2.get_uri())
                 worker.sync(
