@@ -53,10 +53,18 @@ def get_resolution(key, action, to_client, from_client):
 
 
 class SyncWorker(object):
-    def __init__(self, client_1, client_2, update_callback=None, complete_callback=None):
+    def __init__(
+            self,
+            client_1,
+            client_2,
+            start_callback=None,
+            update_callback=None,
+            complete_callback=None,
+    ):
         self.client_1 = client_1
         self.client_2 = client_2
         self.logger = logging.getLogger(str(self))
+        self.start_callback = start_callback
         self.update_callback = update_callback
         self.complete_callback = complete_callback
 
@@ -308,14 +316,13 @@ class SyncWorker(object):
     def move_client(self, resolution):
         sync_object = resolution.from_client.get(resolution.key)
 
-        callback = None
-        if self.update_callback is not None:
-            self.update_callback(sync_object)
+        if self.start_callback is not None:
+            self.start_callback(sync_object)
 
         resolution.to_client.put(
             resolution.key,
             sync_object,
-            callback=callback,
+            callback=self.update_callback,
         )
 
         if self.complete_callback is not None:
