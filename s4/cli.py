@@ -347,7 +347,10 @@ class ProgressBar(object):
             cls.pbar.close()
 
         cls.pbar = tqdm.tqdm(*args, **kwargs)
-        return cls.pbar
+
+    @classmethod
+    def update(cls, value):
+        cls.pbar.update(value)
 
     @classmethod
     def hide(cls):
@@ -355,7 +358,7 @@ class ProgressBar(object):
 
 
 def display_progress_bar(sync_object):
-    pbar = ProgressBar.set_progress_bar(
+    ProgressBar.set_progress_bar(
         total=sync_object.total_size,
         leave=False,
         ncols=80,
@@ -363,7 +366,10 @@ def display_progress_bar(sync_object):
         unit_scale=True,
         mininterval=0.2,
     )
-    return pbar.update
+
+
+def update_progress_bar(value):
+    ProgressBar.update(value)
 
 
 def hide_progress_bar(sync_object):
@@ -390,7 +396,8 @@ def sync_command(args, config, logger):
                 worker = sync.SyncWorker(
                     client_1,
                     client_2,
-                    update_callback=display_progress_bar,
+                    start_callback=display_progress_bar,
+                    update_callback=update_progress_bar,
                     complete_callback=hide_progress_bar,
                 )
 
