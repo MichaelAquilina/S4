@@ -35,7 +35,8 @@ CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, 'sync.conf')
 
 def handle_conflict(key, action_1, client_1, action_2, client_2):
     print(
-        '\nConflict for "{}". Which version would you like to keep?\n'
+        '\n'
+        'Conflict for "{}". Which version would you like to keep?\n'
         '   (1) {}{} updated at {} ({})\n'
         '   (2) {}{} updated at {} ({})\n'
         '   (d) View difference (requires the diff command)\n'
