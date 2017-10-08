@@ -9,6 +9,10 @@ from s4.clients import SyncState
 
 
 class Resolution(object):
+    UPDATE = 'UPDATE'
+    CREATE = 'CREATE'
+    DELETE = 'DELETE'
+
     def __init__(self, action, to_client, from_client, key, timestamp):
         self.action = action
         self.to_client = to_client
@@ -40,14 +44,14 @@ class Resolution(object):
 def get_resolution(key, action, to_client, from_client):
     if action.state in (SyncState.UPDATED, SyncState.NOCHANGES):
         return Resolution(
-            'UPDATE', to_client, from_client, key, action.local_timestamp
+            Resolution.UPDATE, to_client, from_client, key, action.local_timestamp
         )
     elif action.state == SyncState.CREATED:
         return Resolution(
-            'CREATE', to_client, from_client, key, action.local_timestamp
+            Resolution.CREATE, to_client, from_client, key, action.local_timestamp
         )
     elif action.state == SyncState.DELETED:
-        return Resolution('DELETE', to_client, None, key, action.remote_timestamp)
+        return Resolution(Resolution.DELETE, to_client, None, key, action.remote_timestamp)
     else:
         raise ValueError('Unknown action provided', action)
 
@@ -131,42 +135,42 @@ class SyncWorker(object):
                     continue
                 elif state_1.remote_timestamp > state_2.remote_timestamp:
                     resolutions[key] = Resolution(
-                        'UPDATE', self.client_2, self.client_1,
+                        Resolution.UPDATE, self.client_2, self.client_1,
                         key, state_1.remote_timestamp
                     )
                 elif state_2.remote_timestamp > state_1.remote_timestamp:
                     resolutions[key] = Resolution(
-                        'UPDATE', self.client_1, self.client_2,
+                        Resolution.UPDATE, self.client_1, self.client_2,
                         key, state_2.remote_timestamp
                     )
 
             elif state_1.state == SyncState.CREATED and state_2.state == SyncState.DOESNOTEXIST:
                 resolutions[key] = Resolution(
-                    'CREATE', self.client_2, self.client_1, key, state_1.local_timestamp
+                    Resolution.CREATE, self.client_2, self.client_1, key, state_1.local_timestamp
                 )
 
             elif state_2.state == SyncState.CREATED and state_1.state == SyncState.DOESNOTEXIST:
                 resolutions[key] = Resolution(
-                    'CREATE', self.client_1, self.client_2, key, state_2.local_timestamp
+                    Resolution.CREATE, self.client_1, self.client_2, key, state_2.local_timestamp
                 )
 
             elif state_1.state == SyncState.NOCHANGES and state_2.state == SyncState.DOESNOTEXIST:
                 resolutions[key] = Resolution(
-                    'CREATE', self.client_2, self.client_1, key, state_1.remote_timestamp
+                    Resolution.CREATE, self.client_2, self.client_1, key, state_1.remote_timestamp
                 )
 
             elif state_2.state == SyncState.NOCHANGES and state_1.state == SyncState.DOESNOTEXIST:
                 resolutions[key] = Resolution(
-                    'CREATE', self.client_1, self.client_2, key, state_2.remote_timestamp
+                    Resolution.CREATE, self.client_1, self.client_2, key, state_2.remote_timestamp
                 )
             elif state_1.state == SyncState.UPDATED and state_2.state == SyncState.DOESNOTEXIST:
                 resolutions[key] = Resolution(
-                    'CREATE', self.client_2, self.client_1, key, state_1.local_timestamp
+                    Resolution.CREATE, self.client_2, self.client_1, key, state_1.local_timestamp
                 )
 
             elif state_2.state == SyncState.UPDATED and state_1.state == SyncState.DOESNOTEXIST:
                 resolutions[key] = Resolution(
-                    'CREATE', self.client_2, self.client_1, key, state_1.local_timestamp
+                    Resolution.CREATE, self.client_2, self.client_1, key, state_1.local_timestamp
                 )
 
             elif (
@@ -182,7 +186,7 @@ class SyncWorker(object):
                 state_1.remote_timestamp == state_2.remote_timestamp
             ):
                 resolutions[key] = Resolution(
-                    'UPDATE', self.client_2, self.client_1, key, state_1.local_timestamp
+                    Resolution.UPDATE, self.client_2, self.client_1, key, state_1.local_timestamp
                 )
 
             elif (
@@ -191,7 +195,7 @@ class SyncWorker(object):
                 state_1.remote_timestamp == state_2.remote_timestamp
             ):
                 resolutions[key] = Resolution(
-                    'UPDATE', self.client_1, self.client_2, key, state_2.local_timestamp
+                    Resolution.UPDATE, self.client_1, self.client_2, key, state_2.local_timestamp
                 )
 
             elif (
@@ -200,7 +204,7 @@ class SyncWorker(object):
                 state_1.remote_timestamp == state_2.remote_timestamp
             ):
                 resolutions[key] = Resolution(
-                    'DELETE', self.client_2, None, key, state_1.remote_timestamp
+                    Resolution.DELETE, self.client_2, None, key, state_1.remote_timestamp
                 )
 
             elif (
@@ -209,7 +213,7 @@ class SyncWorker(object):
                 state_1.remote_timestamp == state_2.remote_timestamp
             ):
                 resolutions[key] = Resolution(
-                    'DELETE', self.client_1, None, key, state_2.remote_timestamp
+                    Resolution.DELETE, self.client_1, None, key, state_2.remote_timestamp
                 )
 
             elif (
@@ -218,7 +222,7 @@ class SyncWorker(object):
                 state_1.remote_timestamp == state_2.remote_timestamp
             ):
                 resolutions[key] = Resolution(
-                    'CREATE', self.client_1, self.client_2, key, state_2.local_timestamp
+                    Resolution.CREATE, self.client_1, self.client_2, key, state_2.local_timestamp
                 )
 
             elif (
@@ -227,7 +231,7 @@ class SyncWorker(object):
                 state_1.remote_timestamp == state_2.remote_timestamp
             ):
                 resolutions[key] = Resolution(
-                    'CREATE', self.client_2, self.client_1, key, state_1.local_timestamp
+                    Resolution.CREATE, self.client_2, self.client_1, key, state_1.local_timestamp
                 )
 
             else:
@@ -244,7 +248,7 @@ class SyncWorker(object):
         try:
             for key in sorted(resolutions.keys()):
                 resolution = resolutions[key]
-                if resolution.action == 'UPDATE':
+                if resolution.action == Resolution.UPDATE:
                     self.logger.info(
                         colored.yellow('Updating %s (%s => %s)'),
                         resolution.key,
@@ -252,7 +256,7 @@ class SyncWorker(object):
                         resolution.to_client.get_uri()
                     )
                     deferred_function = self.move_client
-                elif resolution.action == 'CREATE':
+                elif resolution.action == Resolution.CREATE:
                     self.logger.info(
                         colored.green('Creating %s (%s => %s)'),
                         resolution.key,
@@ -260,7 +264,7 @@ class SyncWorker(object):
                         resolution.to_client.get_uri()
                     )
                     deferred_function = self.move_client
-                elif resolution.action == 'DELETE':
+                elif resolution.action == Resolution.DELETE:
                     self.logger.info(
                         colored.red('Deleting %s on %s'),
                         resolution.key,
