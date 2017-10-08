@@ -60,6 +60,7 @@ class SyncWorker(object):
             start_callback=None,
             update_callback=None,
             complete_callback=None,
+            conflict_handler=None,
     ):
         self.client_1 = client_1
         self.client_2 = client_2
@@ -67,11 +68,12 @@ class SyncWorker(object):
         self.start_callback = start_callback
         self.update_callback = update_callback
         self.complete_callback = complete_callback
+        self.conflict_handler = conflict_handler
 
     def __repr__(self):
         return 'SyncWorker<{}, {}>'.format(self.client_1.get_uri(), self.client_2.get_uri())
 
-    def sync(self, conflict_choice=None, keys=None, conflict_handler=None, dry_run=False):
+    def sync(self, conflict_choice=None, keys=None, dry_run=False):
         self.client_1.lock()
         self.client_2.lock()
         try:
@@ -93,8 +95,8 @@ class SyncWorker(object):
                     resolutions[key] = get_resolution(
                         key, action_2, self.client_1, self.client_2
                     )
-                if conflict_handler is not None:
-                    resolution = conflict_handler(
+                if self.conflict_handler is not None:
+                    resolution = self.conflict_handler(
                         key, action_1, self.client_1, action_2, self.client_2
                     )
                     if resolution is not None:
