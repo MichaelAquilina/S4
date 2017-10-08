@@ -5,32 +5,33 @@ import pytest
 
 from s4 import sync
 from s4.clients import SyncState, local, s3
+from s4.sync import Resolution
 from tests import utils
 
 
 class TestResolution(object):
     def test_equal_wrong_instance(self):
-        resolution = sync.Resolution('CREATE', None, None, 'bar', 23232)
+        resolution = Resolution(Resolution.CREATE, None, None, 'bar', 23232)
         assert resolution != "Not a Resolution"
 
     def test_equal_to_self(self):
-        resolution = sync.Resolution('UPDATE', None, None, 'fffff', 232323)
+        resolution = Resolution(Resolution.UPDATE, None, None, 'fffff', 232323)
         assert resolution == resolution
 
     def test_equal(self):
-        resolution_1 = sync.Resolution('UPDATE', None, None, 'fffff', 232323)
-        resolution_2 = sync.Resolution('UPDATE', None, None, 'fffff', 232323)
+        resolution_1 = Resolution(Resolution.UPDATE, None, None, 'fffff', 232323)
+        resolution_2 = Resolution(Resolution.UPDATE, None, None, 'fffff', 232323)
         assert resolution_1 == resolution_2
 
     def test_not_equal(self):
-        resolution_1 = sync.Resolution('UPDATE', None, None, 'fffff', 232323)
-        resolution_2 = sync.Resolution('DELETE', None, None, 'wew', 3823)
+        resolution_1 = Resolution(Resolution.UPDATE, None, None, 'fffff', 232323)
+        resolution_2 = Resolution(Resolution.DELETE, None, None, 'wew', 3823)
         assert resolution_1 != resolution_2
 
     def test_repr(self):
         s3_client = s3.S3SyncClient(None, 'mortybucket', 'dimensional/portals')
         local_client = local.LocalSyncClient('/home/picklerick')
-        resolution = sync.Resolution('CREATE', s3_client, local_client, 'foo', 20023)
+        resolution = Resolution(Resolution.CREATE, s3_client, local_client, 'foo', 20023)
         expected_repr = (
             "Resolution<action=CREATE, "
             "to=s3://mortybucket/dimensional/portals/, "
@@ -104,17 +105,17 @@ class TestGetSyncStates(object):
             )
         }
         expected_resolutions = {
-            'maltese.txt': sync.Resolution(
-                'UPDATE', local_client, s3_client, 'maltese.txt', 8000
+            'maltese.txt': Resolution(
+                Resolution.UPDATE, local_client, s3_client, 'maltese.txt', 8000
             ),
-            'chemistry.txt': sync.Resolution(
-                'DELETE', s3_client, None, 'chemistry.txt', 9431
+            'chemistry.txt': Resolution(
+                Resolution.DELETE, s3_client, None, 'chemistry.txt', 9431
             ),
-            'history.txt': sync.Resolution(
-                'CREATE', s3_client, local_client, 'history.txt', 5000
+            'history.txt': Resolution(
+                Resolution.CREATE, s3_client, local_client, 'history.txt', 5000
             ),
-            'art.txt': sync.Resolution(
-                'CREATE', local_client, s3_client, 'art.txt', 200000
+            'art.txt': Resolution(
+                Resolution.CREATE, local_client, s3_client, 'art.txt', 200000
             ),
         }
         assert unhandled_events == expected_unhandled_events
@@ -139,7 +140,7 @@ class TestGetSyncStates(object):
         worker = sync.SyncWorker(local_client, s3_client)
         resolutions, unhandled_events = worker.get_sync_states()
         expected_resolutions = {
-            'german.txt': sync.Resolution(
+            'german.txt': Resolution(
                 "UPDATE", local_client, s3_client, 'german.txt', 6000)
         }
         assert resolutions == expected_resolutions
@@ -469,7 +470,7 @@ class TestRunResolutions(object):
         worker = sync.SyncWorker(local_client, s3_client)
         with pytest.raises(ValueError):
             worker.run_resolutions({
-                'foo': sync.Resolution('UNKNOWN', None, None, None, None),
+                'foo': Resolution('UNKNOWN', None, None, None, None),
             })
 
     def test_correct_output(self, local_client, s3_client):
@@ -482,8 +483,8 @@ class TestRunResolutions(object):
         utils.set_local_contents(local_client, 'foo')
         utils.set_s3_contents(s3_client, 'baz', timestamp=2000, data='testing')
         success = worker.run_resolutions({
-            'foo': sync.Resolution('DELETE', local_client, None, 'foo', 1000),
-            'baz': sync.Resolution('CREATE', local_client, s3_client, 'baz', 20),
+            'foo': Resolution(Resolution.DELETE, local_client, None, 'foo', 1000),
+            'baz': Resolution(Resolution.CREATE, local_client, s3_client, 'baz', 20),
         })
         assert sorted(success) == sorted(['foo', 'baz'])
         assert_local_keys(clients, ['baz'])
@@ -495,8 +496,8 @@ class TestMoveClient(object):
 
         worker = sync.SyncWorker(local_client, s3_client)
 
-        resolution = sync.Resolution(
-            action='CREATE',
+        resolution = Resolution(
+            action=Resolution.CREATE,
             to_client=local_client,
             from_client=s3_client,
             key='art.txt',
