@@ -68,10 +68,7 @@ class TestShowDiff(object):
     @mock.patch('shutil.which')
     def test_less_not_found(self, which, capsys, local_client, s3_client):
         def missing_less(value):
-            if value == "less":
-                return None
-            else:
-                return "something"
+            return None if value == 'less' else 'something'
 
         which.side_effect = missing_less
         cli.show_diff(local_client, s3_client, "something")
