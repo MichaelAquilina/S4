@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import mock
 
 import pytest
 
@@ -249,6 +250,22 @@ def TestGetResolution(object):
 
 
 class TestIntegrations(object):
+    def test_dry_run(self, local_client, s3_client):
+        utils.set_s3_contents(s3_client, 'colors/cream', 9999, '#ddeeff')
+
+        utils.set_local_contents(local_client, 'colors/red', 5000, '#ff0000')
+        utils.set_local_contents(local_client, 'colors/green', 3000, '#00ff00')
+        utils.set_local_contents(local_client, 'colors/blue', 2000, '#0000ff')
+
+        local_client.put = mock.MagicMock()
+        s3_client.put = mock.MagicMock()
+
+        worker = sync.SyncWorker(local_client, s3_client)
+        worker.sync(dry_run=True)
+
+        assert not local_client.put.called
+        assert not s3_client.put.called
+
     def test_local_with_s3(self, local_client, s3_client):
         utils.set_s3_contents(s3_client, 'colors/cream', 9999, '#ddeeff')
 
