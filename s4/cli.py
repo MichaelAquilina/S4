@@ -400,13 +400,13 @@ def sync_command(args, config, logger):
                     start_callback=display_progress_bar,
                     update_callback=update_progress_bar,
                     complete_callback=hide_progress_bar,
+                    conflict_handler=handle_conflict,
                 )
 
                 logger.info('Syncing %s [%s <=> %s]', name, client_1.get_uri(), client_2.get_uri())
                 worker.sync(
                     conflict_choice=args.conflicts,
                     dry_run=args.dry_run,
-                    conflict_handler=handle_conflict,
                 )
             except Exception as e:
                 if args.log_level == "DEBUG":
