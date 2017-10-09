@@ -27,6 +27,7 @@ from s4 import VERSION
 from s4 import sync
 from s4 import utils
 from s4.clients import local, s3
+from s4.resolution import Resolution
 
 
 CONFIG_FOLDER_PATH = os.path.expanduser('~/.config/s4')
@@ -50,7 +51,7 @@ def handle_conflict(key, action_1, client_1, action_2, client_2):
         file=sys.stderr,
     )
     while True:
-        choice = input('Choice (default=skip): ')
+        choice = utils.get_input('Choice (default=skip): ')
         print('', file=sys.stderr)
 
         if choice == 'd':
@@ -59,9 +60,9 @@ def handle_conflict(key, action_1, client_1, action_2, client_2):
             break
 
     if choice == '1':
-        return sync.get_resolution(key, action_1, client_2, client_1)
+        return Resolution.get_resolution(key, action_1, client_2, client_1)
     elif choice == '2':
-        return sync.get_resolution(key, action_2, client_1, client_2)
+        return Resolution.get_resolution(key, action_2, client_1, client_2)
 
 
 def show_diff(client_1, client_2, key):
