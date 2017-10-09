@@ -36,16 +36,16 @@ class Resolution(object):
         )
 
     @staticmethod
-    def get_resolution(key, action, to_client, from_client):
-        if action.state in (SyncState.UPDATED, SyncState.NOCHANGES):
+    def get_resolution(key, sync_state, to_client, from_client):
+        if sync_state.state in (SyncState.UPDATED, SyncState.NOCHANGES):
             return Resolution(
-                Resolution.UPDATE, to_client, from_client, key, action.local_timestamp
+                Resolution.UPDATE, to_client, from_client, key, sync_state.local_timestamp
             )
-        elif action.state == SyncState.CREATED:
+        elif sync_state.state == SyncState.CREATED:
             return Resolution(
-                Resolution.CREATE, to_client, from_client, key, action.local_timestamp
+                Resolution.CREATE, to_client, from_client, key, sync_state.local_timestamp
             )
-        elif action.state == SyncState.DELETED:
-            return Resolution(Resolution.DELETE, to_client, None, key, action.remote_timestamp)
+        elif sync_state.state == SyncState.DELETED:
+            return Resolution(Resolution.DELETE, to_client, None, key, sync_state.remote_timestamp)
         else:
-            raise ValueError('Unknown action provided', action)
+            raise ValueError('Unknown action provided', sync_state)

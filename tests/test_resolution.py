@@ -1,6 +1,8 @@
 # -*- encoding: utf-8 -*-
 
-from s4.clients import local, s3
+import pytest
+
+from s4.clients import SyncState, local, s3
 from s4.resolution import Resolution
 
 
@@ -34,3 +36,29 @@ class TestResolution(object):
             "key=foo, timestamp=20023>"
         )
         assert repr(resolution) == expected_repr
+
+    @pytest.mark.parametrize(['state', 'action'], [
+        (SyncState.UPDATED, Resolution.UPDATE),
+        (SyncState.UPDATED, Resolution.UPDATE),
+        (SyncState.CREATED, Resolution.CREATE),
+        (SyncState.DELETED, Resolution.DELETE),
+    ])
+    def test_get_resolution_updated(self, state, action, s3_client, local_client):
+        sync_state = SyncState(state, 1234, 4567)
+        resolution = Resolution.get_resolution(
+            'foo/bar', sync_state, s3_client, local_client
+        )
+        assert resolution.action == action
+        assert resolution.to_client == s3_client
+        assert resolution.key == 'foo/bar'
+        if state != SyncState.DELETED:
+            assert resolution.timestamp == 1234
+            assert resolution.from_client == local_client
+        else:
+            assert resolution.timestamp == 4567
+            assert resolution.from_client is None
+
+    def test_invalid_sync_state(self):
+        with pytest.raises(ValueError) as exc:
+            Resolution.get_resolution('', SyncState('Invalid', None, None), None, None)
+        assert exc.value
