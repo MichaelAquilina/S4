@@ -6,54 +6,7 @@ import traceback
 from clint.textui import colored
 
 from s4.clients import SyncState
-
-
-class Resolution(object):
-    UPDATE = 'UPDATE'
-    CREATE = 'CREATE'
-    DELETE = 'DELETE'
-
-    def __init__(self, action, to_client, from_client, key, timestamp):
-        self.action = action
-        self.to_client = to_client
-        self.from_client = from_client
-        self.key = key
-        self.timestamp = timestamp
-
-    def __eq__(self, other):
-        if not isinstance(other, Resolution):
-            return False
-        return (
-            self.action == other.action and
-            self.to_client == other.to_client and
-            self.from_client == other.from_client and
-            self.key == other.key and
-            self.timestamp == other.timestamp
-        )
-
-    def __repr__(self):
-        return 'Resolution<action={}, to={}, from={}, key={}, timestamp={}>'.format(
-            self.action,
-            self.to_client.get_uri() if self.to_client is not None else None,
-            self.from_client.get_uri() if self.from_client is not None else None,
-            self.key,
-            self.timestamp,
-        )
-
-
-def get_resolution(key, action, to_client, from_client):
-    if action.state in (SyncState.UPDATED, SyncState.NOCHANGES):
-        return Resolution(
-            Resolution.UPDATE, to_client, from_client, key, action.local_timestamp
-        )
-    elif action.state == SyncState.CREATED:
-        return Resolution(
-            Resolution.CREATE, to_client, from_client, key, action.local_timestamp
-        )
-    elif action.state == SyncState.DELETED:
-        return Resolution(Resolution.DELETE, to_client, None, key, action.remote_timestamp)
-    else:
-        raise ValueError('Unknown action provided', action)
+from s4.resolution import Resolution
 
 
 class SyncWorker(object):
@@ -92,11 +45,11 @@ class SyncWorker(object):
             for key in sorted(unhandled_events.keys()):
                 action_1, action_2 = unhandled_events[key]
                 if conflict_choice == '1':
-                    resolutions[key] = get_resolution(
+                    resolutions[key] = Resolution.get_resolution(
                         key, action_1, self.client_2, self.client_1
                     )
                 elif conflict_choice == '2':
-                    resolutions[key] = get_resolution(
+                    resolutions[key] = Resolution.get_resolution(
                         key, action_2, self.client_1, self.client_2
                     )
                 if self.conflict_handler is not None:
