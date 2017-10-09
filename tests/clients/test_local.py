@@ -82,8 +82,6 @@ class TestLocalSyncClient(object):
             callback=mock_callback,
         )
 
-        # size of data is less than buffer so we know only one
-        # callback will occur
         assert mock_callback.call_count == 1
         mock_callback.assert_called_with(5)
 
