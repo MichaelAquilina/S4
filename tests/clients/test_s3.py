@@ -9,6 +9,8 @@ from botocore.exceptions import ClientError
 
 import freezegun
 
+import mock
+
 from moto import mock_s3
 
 import pytest
@@ -101,6 +103,22 @@ class TestS3SyncClient(object):
         )
         assert resp['Body'].read() == data
         assert s3_client.get_remote_timestamp('something/boardgame.rst') == 4000
+
+    def test_put_callback(self, s3_client):
+        # given
+        data = b'eygon of carim'
+        mock_callback = mock.MagicMock()
+
+        # when
+        input_object = SyncObject(io.BytesIO(data), len(data), 4000)
+        s3_client.put(
+            'dark/souls.rst',
+            input_object,
+            callback=mock_callback,
+        )
+
+        assert mock_callback.call_count == 1
+        mock_callback.assert_called_with(len(data))
 
     def test_get(self, s3_client):
         # given
