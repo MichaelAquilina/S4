@@ -12,7 +12,7 @@ import mock
 import pytest
 import pytz
 
-from s4 import cli
+from s4 import cli, sync
 from s4.clients import SyncState
 from s4.resolution import Resolution
 from s4.utils import to_timestamp
@@ -207,6 +207,24 @@ class TestINotifyRecursive(object):
 
         assert events[2].name == 'bong'
         assert result_2[events[2].wd] == str(baz)
+
+
+def test_progressbar_smoketest(s3_client, local_client):
+    # Just test that nothing blows up
+    utils.set_local_contents(
+        local_client, 'history.txt',
+        data='a long long time ago',
+        timestamp=5000,
+    )
+
+    worker = sync.SyncWorker(
+        s3_client,
+        local_client,
+        start_callback=cli.display_progress_bar,
+        update_callback=cli.update_progress_bar,
+        complete_callback=cli.hide_progress_bar,
+    )
+    worker.sync()
 
 
 # TODO: Should catch KeyboardExceptions and raise them again
