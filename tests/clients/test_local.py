@@ -72,6 +72,19 @@ class TestLocalSyncClient(object):
         local_client.lock(timeout=0.01)
         local_client2.unlock()
 
+    def test_put_callback(self, local_client):
+        mock_callback = mock.MagicMock()
+
+        data = b'hello'
+        local_client.put(
+            key='solair/astora',
+            sync_object=SyncObject(io.BytesIO(data), len(data), 7194),
+            callback=mock_callback,
+        )
+
+        assert mock_callback.call_count == 1
+        mock_callback.assert_called_with(5)
+
     def test_put_new(self, local_client):
         data = b'hi'
         local_client.put(

@@ -5,7 +5,10 @@ import datetime
 import json
 import logging
 import os
+import shutil
+import subprocess
 import sys
+import tempfile
 from collections import defaultdict
 
 import boto3
@@ -18,15 +21,95 @@ except ImportError:
     from scandir import scandir
 
 from tabulate import tabulate
+import tqdm
 
 from s4 import VERSION
 from s4 import sync
 from s4 import utils
 from s4.clients import local, s3
+from s4.resolution import Resolution
 
 
 CONFIG_FOLDER_PATH = os.path.expanduser('~/.config/s4')
 CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, 'sync.conf')
+
+
+def handle_conflict(key, action_1, client_1, action_2, client_2):
+    print(
+        '\n'
+        'Conflict for "{}". Which version would you like to keep?\n'
+        '   (1) {}{} updated at {} ({})\n'
+        '   (2) {}{} updated at {} ({})\n'
+        '   (d) View difference (requires the diff command)\n'
+        '   (X) Skip this file\n'.format(
+            key,
+            client_1.get_uri(),
+            key, action_1.get_remote_datetime(), action_1.state,
+            client_2.get_uri(),
+            key, action_2.get_remote_datetime(), action_2.state,
+        ),
+        file=sys.stderr,
+    )
+    while True:
+        choice = utils.get_input('Choice (default=skip): ')
+        print('', file=sys.stderr)
+
+        if choice == 'd':
+            show_diff(client_1, client_2, key)
+        else:
+            break
+
+    if choice == '1':
+        return Resolution.get_resolution(key, action_1, client_2, client_1)
+    elif choice == '2':
+        return Resolution.get_resolution(key, action_2, client_1, client_2)
+
+
+def show_diff(client_1, client_2, key):
+    if shutil.which("diff") is None:
+        print('Missing required "diff" executable.')
+        print("Install this using your distribution's package manager")
+        return
+
+    if shutil.which("less") is None:
+        print('Missing required "less" executable.')
+        print("Install this using your distribution's package manager")
+        return
+
+    so1 = client_1.get(key)
+    data1 = so1.fp.read()
+    so1.fp.close()
+
+    so2 = client_2.get(key)
+    data2 = so2.fp.read()
+    so2.fp.close()
+
+    fd1, path1 = tempfile.mkstemp()
+    fd2, path2 = tempfile.mkstemp()
+    fd3, path3 = tempfile.mkstemp()
+
+    with open(path1, 'wb') as fp:
+        fp.write(data1)
+    with open(path2, 'wb') as fp:
+        fp.write(data2)
+
+    # This is a lot faster than the difflib found in python
+    with open(path3, 'wb') as fp:
+        subprocess.call([
+            'diff', '-u',
+            '--label', client_1.get_uri(key), path1,
+            '--label', client_2.get_uri(key), path2,
+        ], stdout=fp)
+
+    subprocess.call(['less', path3])
+
+    os.close(fd1)
+    os.close(fd2)
+    os.close(fd3)
+
+    os.remove(path1)
+    os.remove(path2)
+    os.remove(path3)
 
 
 def get_s3_client(target, aws_access_key_id, aws_secret_access_key, region_name):
@@ -78,6 +161,7 @@ def main(arguments):
     sync_parser = subparsers.add_parser('sync', help="Synchronise Targets with S3")
     sync_parser.add_argument('targets', nargs='*')
     sync_parser.add_argument('--conflicts', default=None, choices=['1', '2', 'ignore'])
+    sync_parser.add_argument('--dry-run', action='store_true')
 
     edit_parser = subparsers.add_parser('edit', help="Edit Target details")
     edit_parser.add_argument('target')
@@ -253,6 +337,47 @@ def daemon_command(args, config, logger, terminator=lambda x: False):
             worker.sync(conflict_choice=args.conflicts)
 
 
+class ProgressBar(object):
+    """
+    Singleton wrapper around tqdm
+    """
+    pbar = None
+
+    @classmethod
+    def set_progress_bar(cls, *args, **kwargs):
+        if cls.pbar:
+            cls.pbar.close()
+
+        cls.pbar = tqdm.tqdm(*args, **kwargs)
+
+    @classmethod
+    def update(cls, value):
+        cls.pbar.update(value)
+
+    @classmethod
+    def hide(cls):
+        cls.pbar.close()
+
+
+def display_progress_bar(sync_object):
+    ProgressBar.set_progress_bar(
+        total=sync_object.total_size,
+        leave=False,
+        ncols=80,
+        unit='B',
+        unit_scale=True,
+        mininterval=0.2,
+    )
+
+
+def update_progress_bar(value):
+    ProgressBar.update(value)
+
+
+def hide_progress_bar(sync_object):
+    ProgressBar.hide()
+
+
 def sync_command(args, config, logger):
     all_targets = list(config['targets'].keys())
     if not args.targets:
@@ -270,10 +395,20 @@ def sync_command(args, config, logger):
             client_1, client_2 = get_clients(entry)
 
             try:
-                worker = sync.SyncWorker(client_1, client_2)
+                worker = sync.SyncWorker(
+                    client_1,
+                    client_2,
+                    start_callback=display_progress_bar,
+                    update_callback=update_progress_bar,
+                    complete_callback=hide_progress_bar,
+                    conflict_handler=handle_conflict,
+                )
 
                 logger.info('Syncing %s [%s <=> %s]', name, client_1.get_uri(), client_2.get_uri())
-                worker.sync(conflict_choice=args.conflicts)
+                worker.sync(
+                    conflict_choice=args.conflicts,
+                    dry_run=args.dry_run,
+                )
             except Exception as e:
                 if args.log_level == "DEBUG":
                     logger.exception(e)
