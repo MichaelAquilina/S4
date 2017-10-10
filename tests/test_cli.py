@@ -12,7 +12,9 @@ import mock
 import pytest
 import pytz
 
-from s4 import cli
+from s4 import cli, sync
+from s4.clients import SyncState
+from s4.resolution import Resolution
 from s4.utils import to_timestamp
 from tests import utils
 
@@ -53,6 +55,129 @@ def get_timestamp(year, month, day, hour, minute):
     )
 
 
+@mock.patch('s4.utils.get_input')
+class TestHandleConflict(object):
+    def test_first_choice(self, get_input, s3_client, local_client):
+        get_input.return_value = '1'
+
+        action_1 = SyncState(
+            SyncState.UPDATED,
+            1111, 2222
+        )
+        action_2 = SyncState(
+            SyncState.DELETED,
+            3333, 4444
+        )
+
+        result = cli.handle_conflict(
+            'movie',
+            action_1, s3_client,
+            action_2, local_client,
+        )
+        assert result.action == Resolution.UPDATE
+
+    def test_second_choice(self, get_input, s3_client, local_client):
+        get_input.return_value = '2'
+
+        action_1 = SyncState(
+            SyncState.UPDATED,
+            1111, 2222
+        )
+        action_2 = SyncState(
+            SyncState.DELETED,
+            3333, 4444
+        )
+
+        result = cli.handle_conflict(
+            'movie',
+            action_1, s3_client,
+            action_2, local_client,
+        )
+        assert result.action == Resolution.DELETE
+
+    def test_skip(self, get_input, s3_client, local_client):
+        get_input.return_value = 'X'
+
+        action_1 = SyncState(
+            SyncState.UPDATED,
+            1111, 2222
+        )
+        action_2 = SyncState(
+            SyncState.DELETED,
+            3333, 4444
+        )
+
+        result = cli.handle_conflict(
+            'movie',
+            action_1, s3_client,
+            action_2, local_client,
+        )
+        assert result is None
+
+    @mock.patch('s4.cli.show_diff')
+    def test_diff(self, show_diff, get_input, s3_client, local_client):
+        get_input.side_effect = FakeInputStream([
+            'd',
+            'X',
+        ])
+
+        action_1 = SyncState(
+            SyncState.UPDATED,
+            1111, 2222
+        )
+        action_2 = SyncState(
+            SyncState.DELETED,
+            3333, 4444
+        )
+
+        result = cli.handle_conflict(
+            'movie',
+            action_1, s3_client,
+            action_2, local_client,
+        )
+        assert result is None
+        assert show_diff.call_count == 1
+        show_diff.assert_called_with(s3_client, local_client, 'movie')
+
+
+class TestShowDiff(object):
+    @mock.patch('shutil.which')
+    def test_diff_not_found(self, which, capsys, local_client, s3_client):
+        which.return_value = None
+        cli.show_diff(local_client, s3_client, "something")
+
+        out, err = capsys.readouterr()
+        assert out == (
+            'Missing required "diff" executable.\n'
+            "Install this using your distribution's package manager\n"
+        )
+
+    @mock.patch('shutil.which')
+    def test_less_not_found(self, which, capsys, local_client, s3_client):
+        def missing_less(value):
+            return None if value == 'less' else 'something'
+
+        which.side_effect = missing_less
+        cli.show_diff(local_client, s3_client, "something")
+
+        out, err = capsys.readouterr()
+        assert out == (
+            'Missing required "less" executable.\n'
+            "Install this using your distribution's package manager\n"
+        )
+
+    @mock.patch('subprocess.call')
+    def test_diff(self, call, local_client, s3_client):
+        utils.set_local_contents(local_client, "something", 4000, "wow")
+        utils.set_s3_contents(s3_client, "something", 3000, "nice")
+
+        cli.show_diff(local_client, s3_client, "something")
+
+        assert call.call_count == 2
+        assert call.call_args_list[0][0][0][0] == "diff"
+        assert call.call_args_list[1][0][0][0] == "less"
+
+
 class TestINotifyRecursive(object):
     @pytest.mark.timeout(5)
     def test_add_watches(self, tmpdir):
@@ -82,6 +207,24 @@ class TestINotifyRecursive(object):
 
         assert events[2].name == 'bong'
         assert result_2[events[2].wd] == str(baz)
+
+
+def test_progressbar_smoketest(s3_client, local_client):
+    # Just test that nothing blows up
+    utils.set_local_contents(
+        local_client, 'history.txt',
+        data='a long long time ago',
+        timestamp=5000,
+    )
+
+    worker = sync.SyncWorker(
+        s3_client,
+        local_client,
+        start_callback=cli.display_progress_bar,
+        update_callback=cli.update_progress_bar,
+        complete_callback=cli.hide_progress_bar,
+    )
+    worker.sync()
 
 
 # TODO: Should catch KeyboardExceptions and raise them again
@@ -243,14 +386,14 @@ class TestDaemonCommand(object):
 @mock.patch('s4.sync.SyncWorker')
 class TestSyncCommand(object):
     def test_no_targets(self, SyncWorker, capsys):
-        args = argparse.Namespace(targets=None, conflicts=None)
+        args = argparse.Namespace(targets=None, conflicts=None, dry_run=False)
         cli.sync_command(args, {'targets': {}}, create_logger())
         out, err = capsys.readouterr()
         assert out == err == ''
         assert SyncWorker.call_count == 0
 
     def test_wrong_target(self, SyncWorker, capsys):
-        args = argparse.Namespace(targets=['foo', 'bar'], conflicts=None)
+        args = argparse.Namespace(targets=['foo', 'bar'], conflicts=None, dry_run=False)
         cli.sync_command(args, {'targets': {'baz': {}}}, create_logger())
         out, err = capsys.readouterr()
         assert out == ''
@@ -261,7 +404,7 @@ class TestSyncCommand(object):
         assert SyncWorker.call_count == 0
 
     def test_sync_error(self, SyncWorker, capsys):
-        args = argparse.Namespace(targets=None, conflicts=None, log_level="INFO")
+        args = argparse.Namespace(targets=None, conflicts=None, dry_run=False, log_level="INFO")
         config = {
             'targets': {
                 'foo': {
@@ -292,7 +435,7 @@ class TestSyncCommand(object):
         )
 
     def test_sync_error_debug(self, SyncWorker, capsys):
-        args = argparse.Namespace(targets=None, conflicts=None, log_level="DEBUG")
+        args = argparse.Namespace(targets=None, conflicts=None, dry_run=False, log_level="DEBUG")
         config = {
             'targets': {
                 'bar': {
@@ -317,7 +460,7 @@ class TestSyncCommand(object):
         ]
 
     def test_keyboard_interrupt(self, SyncWorker, capsys):
-        args = argparse.Namespace(targets=None, conflicts=None)
+        args = argparse.Namespace(targets=None, conflicts=None, dry_run=False)
         config = {
             'targets': {
                 'foo': {
@@ -347,7 +490,7 @@ class TestSyncCommand(object):
         )
 
     def test_all_targets(self, SyncWorker, capsys):
-        args = argparse.Namespace(targets=None, conflicts=None)
+        args = argparse.Namespace(targets=None, conflicts=None, dry_run=False)
         config = {
             'targets': {
                 'foo': {
