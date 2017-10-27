@@ -13,6 +13,8 @@ from collections import defaultdict
 
 import boto3
 
+from clint.textui import colored
+
 from inotify_simple import INotify, flags
 
 try:
@@ -385,6 +387,28 @@ def sync_command(args, config, logger):
     else:
         targets = args.targets
 
+    def action_callback(resolution):
+        if resolution.action == Resolution.UPDATE:
+            logger.info(
+                colored.yellow('Updating %s (%s => %s)'),
+                resolution.key,
+                resolution.from_client.get_uri(),
+                resolution.to_client.get_uri()
+            )
+        elif resolution.action == Resolution.CREATE:
+            logger.info(
+                colored.green('Creating %s (%s => %s)'),
+                resolution.key,
+                resolution.from_client.get_uri(),
+                resolution.to_client.get_uri()
+            )
+        elif resolution.action == Resolution.DELETE:
+            logger.info(
+                colored.red('Deleting %s on %s'),
+                resolution.key,
+                resolution.to_client.get_uri()
+            )
+
     try:
         for name in sorted(targets):
             if name not in config['targets']:
@@ -402,6 +426,7 @@ def sync_command(args, config, logger):
                     update_callback=update_progress_bar,
                     complete_callback=hide_progress_bar,
                     conflict_handler=handle_conflict,
+                    action_callback=action_callback,
                 )
 
                 logger.info('Syncing %s [%s <=> %s]', name, client_1.get_uri(), client_2.get_uri())
