@@ -3,8 +3,6 @@
 import logging
 import traceback
 
-from clint.textui import colored
-
 from s4.clients import SyncState
 from s4.resolution import Resolution
 
@@ -17,6 +15,7 @@ class SyncWorker(object):
             start_callback=None,
             update_callback=None,
             complete_callback=None,
+            action_callback=None,
             conflict_handler=None,
     ):
         self.client_1 = client_1
@@ -25,6 +24,7 @@ class SyncWorker(object):
         self.start_callback = start_callback
         self.update_callback = update_callback
         self.complete_callback = complete_callback
+        self.action_callback = action_callback
         self.conflict_handler = conflict_handler
 
     def __repr__(self):
@@ -201,28 +201,14 @@ class SyncWorker(object):
         try:
             for key in sorted(resolutions.keys()):
                 resolution = resolutions[key]
+                if self.action_callback is not None:
+                    self.action_callback(resolution)
+
                 if resolution.action == Resolution.UPDATE:
-                    self.logger.info(
-                        colored.yellow('Updating %s (%s => %s)'),
-                        resolution.key,
-                        resolution.from_client.get_uri(),
-                        resolution.to_client.get_uri()
-                    )
                     deferred_function = self.move_client
                 elif resolution.action == Resolution.CREATE:
-                    self.logger.info(
-                        colored.green('Creating %s (%s => %s)'),
-                        resolution.key,
-                        resolution.from_client.get_uri(),
-                        resolution.to_client.get_uri()
-                    )
                     deferred_function = self.move_client
                 elif resolution.action == Resolution.DELETE:
-                    self.logger.info(
-                        colored.red('Deleting %s on %s'),
-                        resolution.key,
-                        resolution.to_client.get_uri()
-                    )
                     deferred_function = self.delete_client
                 else:
                     raise ValueError('Unknown resolution', resolution)

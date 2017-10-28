@@ -235,6 +235,26 @@ class TestIntegrations(object):
         assert not local_client.put.called
         assert not s3_client.put.called
 
+    def test_action_callback(self, local_client, s3_client):
+        utils.set_s3_contents(s3_client, 'colors/cream', 9999)
+
+        utils.set_local_contents(local_client, 'colors/green', 3000)
+        utils.set_local_contents(local_client, 'colors/blue', 2000)
+
+        callback_mock = mock.MagicMock()
+
+        worker = sync.SyncWorker(
+            local_client,
+            s3_client,
+            action_callback=callback_mock
+        )
+        worker.sync()
+
+        assert callback_mock.call_count == 3
+        assert callback_mock.call_args_list[0][0][0].key == 'colors/blue'
+        assert callback_mock.call_args_list[1][0][0].key == 'colors/cream'
+        assert callback_mock.call_args_list[2][0][0].key == 'colors/green'
+
     def test_local_with_s3(self, local_client, s3_client):
         utils.set_s3_contents(s3_client, 'colors/cream', 9999, '#ddeeff')
 
