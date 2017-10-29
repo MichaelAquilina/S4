@@ -121,7 +121,7 @@ Some other subcommands that you could find useful:
 Use the ``--help`` parameter on each subcommand to get more details.
 
 How S4 Works
--------------
+------------
 
 S4 keeps track of changes between files with a ``.index`` file at
 the root of each folder you are syncing. This contains the keys of each
@@ -171,6 +171,32 @@ Here are is a list of open source solutions that I have tried in the past.
 * ``seafile``: suffers from the same problem as owncloud/nextcloud.
 
 * ``duplicity``: great backup tool, but does not provide a sync solution of any kind.
+
+Contributing
+------------
+
+Pull requests are welcome! Make sure you pass all the tests, Travis will tell you if you don't ;)
+
+Running locally
+```````````````
+
+You will need ``libmagic`` installed:
+
+::
+
+    brew install libmagic
+
+``tox`` is used to run the tests locally:
+
+::
+    
+    pip install tox
+
+And then to run the tests locally:
+
+::
+
+    tox
 
 .. |TravisCI| image:: https://travis-ci.org/MichaelAquilina/S4.svg?branch=master
    :target: https://travis-ci.org/MichaelAquilina/S4
