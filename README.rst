@@ -39,6 +39,12 @@ The easiest way to install S4 is through pip:
 
     $ pip install s4
 
+You will need ``libmagic`` installed.
+This is installed by default on most linux distributions but on MacOSX you need to install it with brew as follows:
+
+::
+
+    brew install libmagic
 
 Setup
 -----
@@ -179,12 +185,6 @@ Pull requests are welcome! Make sure you pass all the tests, Travis will tell yo
 
 Running locally
 ```````````````
-
-You will need ``libmagic`` installed:
-
-::
-
-    brew install libmagic
 
 ``tox`` is used to run the tests locally:
 
