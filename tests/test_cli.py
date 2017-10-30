@@ -291,7 +291,7 @@ class TestMain(object):
 class TestGetConfigFile(object):
     @mock.patch('s4.cli.CONFIG_FILE_PATH', '/i/dont/exist')
     def test_no_file(self):
-        assert cli.get_config() == {'targets': []}
+        assert cli.get_config() == {'targets': {}}
 
     def test_correct_output(self, config_file):
         with open(config_file, 'w') as fp:
@@ -624,14 +624,15 @@ class TestAddCommand(object):
         fake_stream = FakeInputStream([
             '/home/user/Documents',
             's3://mybucket/Documents',
+            'eu-west-2',
             'aaaaaaaaaaaaaaaaaaaaaaaa',
             'bbbbbbbbbbbbbbbbbbbbbbbb',
-            'eu-west-2',
             '',
         ])
         get_input.side_effect = fake_stream
+        args = argparse.Namespace(copy_target_credentials=None)
 
-        cli.add_command(None, {}, create_logger())
+        cli.add_command(args, {'targets': {}}, create_logger())
 
         with open(config_file, 'r') as fp:
             new_config = json.load(fp)
@@ -649,18 +650,81 @@ class TestAddCommand(object):
         }
         assert new_config == expected_config
 
+    def test_copy_target_credentials(self, get_input, config_file):
+        fake_stream = FakeInputStream([
+            '/home/user/Animals',
+            's3://mybucket/Zoo',
+            'us-west-2',
+            'Beasts',
+        ])
+        get_input.side_effect = fake_stream
+        args = argparse.Namespace(copy_target_credentials='bar')
+
+        cli.add_command(
+            args,
+            {
+                'targets': {
+                    'bar': {
+                        'aws_secret_access_key': 'bar-secretz',
+                        'aws_access_key_id': 'so-much-bar',
+                    }
+                }
+            },
+            create_logger()
+        )
+
+        with open(config_file, 'r') as fp:
+            new_config = json.load(fp)
+
+        expected_config = {
+            'targets': {
+                'bar': {
+                    'aws_access_key_id': 'so-much-bar',
+                    'aws_secret_access_key': 'bar-secretz',
+                },
+                'Beasts': {
+                    'local_folder': '/home/user/Animals',
+                    's3_uri': 's3://mybucket/Zoo',
+                    'aws_access_key_id': 'so-much-bar',
+                    'aws_secret_access_key': 'bar-secretz',
+                    'region_name': 'us-west-2'
+                }
+            }
+        }
+        assert new_config == expected_config
+
+    def test_copy_target_credentials_bad_target(self, get_input, capsys):
+        fake_stream = FakeInputStream([
+            '/home/user/Animals',
+            's3://mybucket/Zoo',
+            'us-west-2',
+            'Beasts',
+        ])
+        get_input.side_effect = fake_stream
+        args = argparse.Namespace(copy_target_credentials='Foo')
+
+        cli.add_command(args, {'targets': {'bar': {}}}, create_logger())
+
+        out, err = capsys.readouterr()
+        assert out == ''
+        assert err == (
+            '"Foo" is an unknown target\n'
+            'Choices are: [\'bar\']\n'
+        )
+
     def test_custom_target_name(self, get_input, config_file):
         fake_stream = FakeInputStream([
             '/home/user/Music',
             's3://mybucket/Musiccccc',
+            'us-west-1',
             '1234567890',
             'abcdefghij',
-            'us-west-1',
             'Tunes',
         ])
         get_input.side_effect = fake_stream
+        args = argparse.Namespace(copy_target_credentials=None)
 
-        cli.add_command(None, {}, create_logger())
+        cli.add_command(args, {'targets': {}}, create_logger())
 
         with open(config_file, 'r') as fp:
             new_config = json.load(fp)
