@@ -412,9 +412,6 @@ def sync_command(args, config, logger):
 
 
 def targets_command(args, config, logger):
-    if 'targets' not in config:
-        return
-
     for name in sorted(config['targets']):
         entry = config['targets'][name]
         print('{}: [{} <=> {}]'.format(name, entry['local_folder'], entry['s3_uri']))

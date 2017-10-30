@@ -872,7 +872,7 @@ class TestLsCommand(object):
 class TestTargetsCommand(object):
 
     def test_empty(self, capsys):
-        cli.targets_command(None, {}, create_logger())
+        cli.targets_command(None, {'targets': {}}, create_logger())
         out, err = capsys.readouterr()
         assert out == err == ''
 
