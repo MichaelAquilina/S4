@@ -65,8 +65,6 @@ class SyncWorker(object):
 
             self.run_resolutions(resolutions, dry_run)
 
-        except KeyboardInterrupt:
-            self.logger.warning('Session interrupted by Keyboard Interrupt. Aborting....')
         finally:
             self.client_1.unlock()
             self.client_2.unlock()
