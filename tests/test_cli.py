@@ -291,7 +291,7 @@ class TestMain(object):
 class TestGetConfigFile(object):
     @mock.patch('s4.cli.CONFIG_FILE_PATH', '/i/dont/exist')
     def test_no_file(self):
-        assert cli.get_config() == {}
+        assert cli.get_config() == {'targets': []}
 
     def test_correct_output(self, config_file):
         with open(config_file, 'w') as fp:

@@ -235,7 +235,7 @@ def main(arguments):
 
 def get_config():
     if not os.path.exists(CONFIG_FILE_PATH):
-        return {}
+        return {'targets': []}
 
     with open(CONFIG_FILE_PATH, 'r') as fp:
         config = json.load(fp)
