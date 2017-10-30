@@ -158,7 +158,12 @@ def main(arguments):
     daemon_parser.add_argument('--read-delay', default=1000, type=int)
     daemon_parser.add_argument('--conflicts', default='ignore', choices=['1', '2', 'ignore'])
 
-    subparsers.add_parser('add', help="Add a new Target to synchronise")
+    add_parser = subparsers.add_parser('add', help="Add a new Target to synchronise")
+    add_parser.add_argument(
+        '--copy-target-credentials',
+        '-C',
+        help="Copy credentials from an existing target instead of typing them in again"
+    )
 
     sync_parser = subparsers.add_parser('sync', help="Synchronise Targets with S3")
     sync_parser.add_argument('targets', nargs='*')
@@ -235,7 +240,7 @@ def main(arguments):
 
 def get_config():
     if not os.path.exists(CONFIG_FILE_PATH):
-        return {'targets': []}
+        return {'targets': {}}
 
     with open(CONFIG_FILE_PATH, 'r') as fp:
         config = json.load(fp)
@@ -454,13 +459,24 @@ def targets_command(args, config, logger):
 
 
 def add_command(args, config, logger):
-    entry = {}
+    target = args.copy_target_credentials
+    all_targets = list(config['targets'].keys())
+    if target is not None and target not in all_targets:
+        logger.info('"%s" is an unknown target', target)
+        logger.info('Choices are: %s', all_targets)
+        return
 
+    entry = {}
     entry['local_folder'] = os.path.expanduser(utils.get_input('local folder: '))
     entry['s3_uri'] = utils.get_input('s3 uri: ')
-    entry['aws_access_key_id'] = utils.get_input('AWS Access Key ID: ')
-    entry['aws_secret_access_key'] = utils.get_input('AWS Secret Access Key: ', secret=True)
     entry['region_name'] = utils.get_input('region name: ')
+
+    if target is not None:
+        entry['aws_access_key_id'] = config['targets'][target]['aws_access_key_id']
+        entry['aws_secret_access_key'] = config['targets'][target]['aws_secret_access_key']
+    else:
+        entry['aws_access_key_id'] = utils.get_input('AWS Access Key ID: ')
+        entry['aws_secret_access_key'] = utils.get_input('AWS Secret Access Key: ', secret=True)
 
     default_name = os.path.basename(entry['s3_uri'])
     name = utils.get_input('Provide a name for this entry [{}]: '.format(default_name))
