@@ -18,13 +18,13 @@ from clint.textui import colored
 from inotify_simple import flags
 
 from tabulate import tabulate
-import tqdm
 
 from s4 import VERSION
 from s4 import sync
 from s4 import utils
 from s4.clients import local, s3
 from s4.inotify_recursive import INotifyRecursive
+from s4.progressbar import ProgressBar
 from s4.resolution import Resolution
 
 
@@ -328,30 +328,8 @@ def daemon_command(args, config, logger, terminator=lambda x: False):
             worker.sync(conflict_choice=args.conflicts)
 
 
-class ProgressBar(object):
-    """
-    Singleton wrapper around tqdm
-    """
-    pbar = None
-
-    @classmethod
-    def set_progress_bar(cls, *args, **kwargs):
-        if cls.pbar:
-            cls.pbar.close()
-
-        cls.pbar = tqdm.tqdm(*args, **kwargs)
-
-    @classmethod
-    def update(cls, value):
-        cls.pbar.update(value)
-
-    @classmethod
-    def hide(cls):
-        cls.pbar.close()
-
-
 def display_progress_bar(sync_object):
-    ProgressBar.set_progress_bar(
+    ProgressBar(
         total=sync_object.total_size,
         leave=False,
         ncols=80,
@@ -366,7 +344,7 @@ def update_progress_bar(value):
 
 
 def hide_progress_bar(sync_object):
-    ProgressBar.hide()
+    ProgressBar.close()
 
 
 def sync_command(args, config, logger):
