@@ -5,30 +5,24 @@ import datetime
 import json
 import logging
 import os
-import shutil
-import subprocess
 import sys
-import tempfile
 from collections import defaultdict
 
 import boto3
 
 from clint.textui import colored
 
-from inotify_simple import INotify, flags
-
-try:
-    from os import scandir
-except ImportError:
-    from scandir import scandir
+from inotify_simple import flags
 
 from tabulate import tabulate
-import tqdm
 
 from s4 import VERSION
 from s4 import sync
 from s4 import utils
 from s4.clients import local, s3
+from s4.diff import show_diff
+from s4.inotify_recursive import INotifyRecursive
+from s4.progressbar import ProgressBar
 from s4.resolution import Resolution
 
 
@@ -65,53 +59,6 @@ def handle_conflict(key, action_1, client_1, action_2, client_2):
         return Resolution.get_resolution(key, action_1, client_2, client_1)
     elif choice == '2':
         return Resolution.get_resolution(key, action_2, client_1, client_2)
-
-
-def show_diff(client_1, client_2, key):
-    if shutil.which("diff") is None:
-        print('Missing required "diff" executable.')
-        print("Install this using your distribution's package manager")
-        return
-
-    if shutil.which("less") is None:
-        print('Missing required "less" executable.')
-        print("Install this using your distribution's package manager")
-        return
-
-    so1 = client_1.get(key)
-    data1 = so1.fp.read()
-    so1.fp.close()
-
-    so2 = client_2.get(key)
-    data2 = so2.fp.read()
-    so2.fp.close()
-
-    fd1, path1 = tempfile.mkstemp()
-    fd2, path2 = tempfile.mkstemp()
-    fd3, path3 = tempfile.mkstemp()
-
-    with open(path1, 'wb') as fp:
-        fp.write(data1)
-    with open(path2, 'wb') as fp:
-        fp.write(data2)
-
-    # This is a lot faster than the difflib found in python
-    with open(path3, 'wb') as fp:
-        subprocess.call([
-            'diff', '-u',
-            '--label', client_1.get_uri(key), path1,
-            '--label', client_2.get_uri(key), path2,
-        ], stdout=fp)
-
-    subprocess.call(['less', path3])
-
-    os.close(fd1)
-    os.close(fd2)
-    os.close(fd3)
-
-    os.remove(path1)
-    os.remove(path2)
-    os.remove(path3)
 
 
 def get_s3_client(target, aws_access_key_id, aws_secret_access_key, region_name):
@@ -252,7 +199,7 @@ def set_config(config):
         os.makedirs(CONFIG_FOLDER_PATH)
 
     with open(CONFIG_FILE_PATH, 'w') as fp:
-        json.dump(config, fp, indent=4)
+        json.dump(config, fp)
 
 
 def get_clients(entry):
@@ -276,18 +223,6 @@ def get_clients(entry):
 def get_sync_worker(entry):
     client_1, client_2 = get_clients(entry)
     return sync.SyncWorker(client_1, client_2)
-
-
-class INotifyRecursive(INotify):
-    def add_watches(self, path, mask):
-        results = {}
-        results[self.add_watch(path, mask)] = path
-
-        for item in scandir(path):
-            if item.is_dir():
-                results.update(self.add_watches(item.path, mask))
-
-        return results
 
 
 def daemon_command(args, config, logger, terminator=lambda x: False):
@@ -344,30 +279,8 @@ def daemon_command(args, config, logger, terminator=lambda x: False):
             worker.sync(conflict_choice=args.conflicts)
 
 
-class ProgressBar(object):
-    """
-    Singleton wrapper around tqdm
-    """
-    pbar = None
-
-    @classmethod
-    def set_progress_bar(cls, *args, **kwargs):
-        if cls.pbar:
-            cls.pbar.close()
-
-        cls.pbar = tqdm.tqdm(*args, **kwargs)
-
-    @classmethod
-    def update(cls, value):
-        cls.pbar.update(value)
-
-    @classmethod
-    def hide(cls):
-        cls.pbar.close()
-
-
 def display_progress_bar(sync_object):
-    ProgressBar.set_progress_bar(
+    ProgressBar(
         total=sync_object.total_size,
         leave=False,
         ncols=80,
@@ -382,7 +295,7 @@ def update_progress_bar(value):
 
 
 def hide_progress_bar(sync_object):
-    ProgressBar.hide()
+    ProgressBar.close()
 
 
 def sync_command(args, config, logger):
@@ -450,9 +363,6 @@ def sync_command(args, config, logger):
 
 
 def targets_command(args, config, logger):
-    if 'targets' not in config:
-        return
-
     for name in sorted(config['targets']):
         entry = config['targets'][name]
         print('{}: [{} <=> {}]'.format(name, entry['local_folder'], entry['s3_uri']))
