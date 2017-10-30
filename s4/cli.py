@@ -248,7 +248,7 @@ def set_config(config):
         os.makedirs(CONFIG_FOLDER_PATH)
 
     with open(CONFIG_FILE_PATH, 'w') as fp:
-        json.dump(config, fp, indent=4)
+        json.dump(config, fp)
 
 
 def get_clients(entry):
