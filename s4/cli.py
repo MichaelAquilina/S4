@@ -15,12 +15,7 @@ import boto3
 
 from clint.textui import colored
 
-from inotify_simple import INotify, flags
-
-try:
-    from os import scandir
-except ImportError:
-    from scandir import scandir
+from inotify_simple import flags
 
 from tabulate import tabulate
 import tqdm
@@ -29,6 +24,7 @@ from s4 import VERSION
 from s4 import sync
 from s4 import utils
 from s4.clients import local, s3
+from s4.inotify_recursive import INotifyRecursive
 from s4.resolution import Resolution
 
 
@@ -276,18 +272,6 @@ def get_clients(entry):
 def get_sync_worker(entry):
     client_1, client_2 = get_clients(entry)
     return sync.SyncWorker(client_1, client_2)
-
-
-class INotifyRecursive(INotify):
-    def add_watches(self, path, mask):
-        results = {}
-        results[self.add_watch(path, mask)] = path
-
-        for item in scandir(path):
-            if item.is_dir():
-                results.update(self.add_watches(item.path, mask))
-
-        return results
 
 
 def daemon_command(args, config, logger, terminator=lambda x: False):
