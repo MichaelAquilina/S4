@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import json
 import logging
 import os
 import sys
@@ -12,14 +11,11 @@ from inotify_simple import flags
 from s4 import VERSION
 from s4 import sync
 from s4 import utils
+from s4.commands.add_command import AddCommand
 from s4.commands.ls_command import LsCommand
 from s4.commands.sync_command import SyncCommand
 from s4.commands.targets_command import TargetsCommand
 from s4.inotify_recursive import INotifyRecursive
-
-
-CONFIG_FOLDER_PATH = os.path.expanduser('~/.config/s4')
-CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, 'sync.conf')
 
 
 def main(arguments):
@@ -111,7 +107,7 @@ def main(arguments):
     logger = logging.getLogger(__name__)
     logger.setLevel(args.log_level)
 
-    config = get_config()
+    config = utils.get_config()
 
     try:
         if args.command == 'version':
@@ -134,23 +130,6 @@ def main(arguments):
             parser.print_help()
     except KeyboardInterrupt:
         pass
-
-
-def get_config():
-    if not os.path.exists(CONFIG_FILE_PATH):
-        return {'targets': {}}
-
-    with open(CONFIG_FILE_PATH, 'r') as fp:
-        config = json.load(fp)
-    return config
-
-
-def set_config(config):
-    if not os.path.exists(CONFIG_FOLDER_PATH):
-        os.makedirs(CONFIG_FOLDER_PATH)
-
-    with open(CONFIG_FILE_PATH, 'w') as fp:
-        json.dump(config, fp)
 
 
 def get_sync_worker(entry):
@@ -223,37 +202,8 @@ def targets_command(args, config, logger):
 
 
 def add_command(args, config, logger):
-    target = args.copy_target_credentials
-    all_targets = list(config['targets'].keys())
-    if target is not None and target not in all_targets:
-        logger.info('"%s" is an unknown target', target)
-        logger.info('Choices are: %s', all_targets)
-        return
-
-    entry = {}
-    entry['local_folder'] = os.path.expanduser(utils.get_input('local folder: '))
-    entry['s3_uri'] = utils.get_input('s3 uri: ')
-    entry['region_name'] = utils.get_input('region name: ')
-
-    if target is not None:
-        entry['aws_access_key_id'] = config['targets'][target]['aws_access_key_id']
-        entry['aws_secret_access_key'] = config['targets'][target]['aws_secret_access_key']
-    else:
-        entry['aws_access_key_id'] = utils.get_input('AWS Access Key ID: ')
-        entry['aws_secret_access_key'] = utils.get_input('AWS Secret Access Key: ', secret=True)
-
-    default_name = os.path.basename(entry['s3_uri'])
-    name = utils.get_input('Provide a name for this entry [{}]: '.format(default_name))
-
-    if not name:
-        name = default_name
-
-    if 'targets' not in config:
-        config['targets'] = {}
-
-    config['targets'][name] = entry
-
-    set_config(config)
+    command = AddCommand(args, config, logger)
+    command.run()
 
 
 def edit_command(args, config, logger):
@@ -298,7 +248,7 @@ def edit_command(args, config, logger):
 
     config['targets'][args.target] = entry
 
-    set_config(config)
+    utils.set_config(config)
 
 
 def ls_command(args, config, logger):
@@ -317,7 +267,7 @@ def rm_command(args, config, logger):
         return
 
     del config['targets'][args.target]
-    set_config(config)
+    utils.set_config(config)
 
 
 if __name__ == '__main__':
