@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import datetime
 import json
 import logging
 import os
@@ -10,11 +9,10 @@ from collections import defaultdict
 
 from inotify_simple import flags
 
-from tabulate import tabulate
-
 from s4 import VERSION
 from s4 import sync
 from s4 import utils
+from s4.commands.ls_command import LsCommand
 from s4.commands.sync_command import SyncCommand
 from s4.inotify_recursive import INotifyRecursive
 
@@ -304,43 +302,8 @@ def edit_command(args, config, logger):
 
 
 def ls_command(args, config, logger):
-    if 'targets' not in config:
-        logger.info('You have not added any targets yet')
-        logger.info('Use the "add" command to do this')
-        return
-    if args.target not in config['targets']:
-        all_targets = sorted(list(config['targets'].keys()))
-        logger.info('"%s" is an unknown target', args.target)
-        logger.info('Choices are: %s', all_targets)
-        return
-
-    target = config['targets'][args.target]
-    client_1, client_2 = utils.get_clients(target)
-
-    sort_by = args.sort_by.lower()
-    descending = args.descending
-
-    keys = set(client_1.index) | set(client_2.index)
-
-    data = []
-    for key in sorted(keys):
-        entry_1 = client_1.index.get(key, {})
-        entry_2 = client_2.index.get(key, {})
-
-        ts_1 = entry_1.get('local_timestamp')
-        ts_2 = entry_2.get('local_timestamp')
-
-        if args.show_all or ts_1 is not None:
-            data.append((
-                key,
-                datetime.datetime.utcfromtimestamp(int(ts_1)) if ts_1 is not None else '<deleted>',
-                datetime.datetime.utcfromtimestamp(int(ts_2)) if ts_2 is not None else None,
-            ))
-
-    headers = ['key', 'local', 's3']
-    data = sorted(data, reverse=descending, key=lambda x: x[headers.index(sort_by)])
-
-    print(tabulate(data, headers=headers))
+    command = LsCommand(args, config, logger)
+    command.run()
 
 
 def rm_command(args, config, logger):
