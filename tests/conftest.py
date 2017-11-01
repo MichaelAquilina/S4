@@ -20,7 +20,7 @@ from s4.clients.s3 import S3SyncClient
 fake = Faker()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def config_file():
     fd, temp_path = tempfile.mkstemp()
     mocker = mock.patch('s4.utils.CONFIG_FILE_PATH', temp_path)
@@ -31,21 +31,21 @@ def config_file():
     os.remove(temp_path)
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def local_client():
     folder = tempfile.mkdtemp()
     yield LocalSyncClient(folder)
     shutil.rmtree(folder)
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def local_client_2():
     folder = tempfile.mkdtemp()
     yield LocalSyncClient(folder)
     shutil.rmtree(folder)
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def s3_client():
     mock = moto.mock_s3()
     mock.start()
