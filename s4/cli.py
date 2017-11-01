@@ -8,10 +8,6 @@ import os
 import sys
 from collections import defaultdict
 
-import boto3
-
-from clint.textui.colored import ColoredString
-
 from inotify_simple import flags
 
 from tabulate import tabulate
@@ -19,61 +15,12 @@ from tabulate import tabulate
 from s4 import VERSION
 from s4 import sync
 from s4 import utils
-from s4.clients import local, s3
-from s4.diff import show_diff
+from s4.commands.sync_command import SyncCommand
 from s4.inotify_recursive import INotifyRecursive
-from s4.progressbar import ProgressBar
-from s4.resolution import Resolution
 
 
 CONFIG_FOLDER_PATH = os.path.expanduser('~/.config/s4')
 CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, 'sync.conf')
-
-
-def handle_conflict(key, action_1, client_1, action_2, client_2):
-    print(
-        '\n'
-        'Conflict for "{}". Which version would you like to keep?\n'
-        '   (1) {}{} updated at {} ({})\n'
-        '   (2) {}{} updated at {} ({})\n'
-        '   (d) View difference (requires the diff command)\n'
-        '   (X) Skip this file\n'.format(
-            key,
-            client_1.get_uri(),
-            key, action_1.get_remote_datetime(), action_1.state,
-            client_2.get_uri(),
-            key, action_2.get_remote_datetime(), action_2.state,
-        ),
-        file=sys.stderr,
-    )
-    while True:
-        choice = utils.get_input('Choice (default=skip): ')
-        print('', file=sys.stderr)
-
-        if choice == 'd':
-            show_diff(client_1, client_2, key)
-        else:
-            break
-
-    if choice == '1':
-        return Resolution.get_resolution(key, action_1, client_2, client_1)
-    elif choice == '2':
-        return Resolution.get_resolution(key, action_2, client_1, client_2)
-
-
-def get_s3_client(target, aws_access_key_id, aws_secret_access_key, region_name):
-    s3_uri = s3.parse_s3_uri(target)
-    s3_client = boto3.client(
-        's3',
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-        region_name=region_name,
-    )
-    return s3.S3SyncClient(s3_client, s3_uri.bucket, s3_uri.key)
-
-
-def get_local_client(target):
-    return local.LocalSyncClient(target)
 
 
 def main(arguments):
@@ -207,27 +154,14 @@ def set_config(config):
         json.dump(config, fp)
 
 
-def get_clients(entry):
-    target_1 = entry['local_folder']
-    target_2 = entry['s3_uri']
-    aws_access_key_id = entry['aws_access_key_id']
-    aws_secret_access_key = entry['aws_secret_access_key']
-    region_name = entry['region_name']
-
-    # append trailing slashes to prevent incorrect prefix matching on s3
-    if not target_1.endswith('/'):
-        target_1 += '/'
-    if not target_2.endswith('/'):
-        target_2 += '/'
-
-    client_1 = get_local_client(target_1)
-    client_2 = get_s3_client(target_2, aws_access_key_id, aws_secret_access_key, region_name)
-    return client_1, client_2
-
-
 def get_sync_worker(entry):
-    client_1, client_2 = get_clients(entry)
+    client_1, client_2 = utils.get_clients(entry)
     return sync.SyncWorker(client_1, client_2)
+
+
+def sync_command(args, config, logger):
+    command = SyncCommand(args, config, logger)
+    command.run()
 
 
 def daemon_command(args, config, logger, terminator=lambda x: False):
@@ -282,92 +216,6 @@ def daemon_command(args, config, logger, terminator=lambda x: False):
             # Should ideally be setting keys to sync
             logger.info('Syncing {}'.format(worker))
             worker.sync(conflict_choice=args.conflicts)
-
-
-def display_progress_bar(sync_object):
-    ProgressBar(
-        total=sync_object.total_size,
-        leave=False,
-        ncols=80,
-        unit='B',
-        unit_scale=True,
-        mininterval=0.2,
-    )
-
-
-def update_progress_bar(value):
-    ProgressBar.update(value)
-
-
-def hide_progress_bar(sync_object):
-    ProgressBar.close()
-
-
-def sync_command(args, config, logger):
-    all_targets = list(config['targets'].keys())
-    if not args.targets:
-        targets = all_targets
-    else:
-        targets = args.targets
-
-    def action_callback(resolution):
-        if resolution.action == Resolution.UPDATE:
-            logger.info(
-                _colored('YELLOW', 'Updating %s (%s => %s)'),
-                resolution.key,
-                resolution.from_client.get_uri(),
-                resolution.to_client.get_uri()
-            )
-        elif resolution.action == Resolution.CREATE:
-            logger.info(
-                _colored('GREEN', 'Creating %s (%s => %s)'),
-                resolution.key,
-                resolution.from_client.get_uri(),
-                resolution.to_client.get_uri()
-            )
-        elif resolution.action == Resolution.DELETE:
-            logger.info(
-                _colored('RED', 'Deleting %s on %s'),
-                resolution.key,
-                resolution.to_client.get_uri()
-            )
-
-    def _colored(color, text):
-        return text if args.no_colors else ColoredString(color, text)
-
-    try:
-        for name in sorted(targets):
-            if name not in config['targets']:
-                logger.info('"%s" is an unknown target. Choices are: %s', name, all_targets)
-                continue
-
-            entry = config['targets'][name]
-            client_1, client_2 = get_clients(entry)
-
-            try:
-                worker = sync.SyncWorker(
-                    client_1,
-                    client_2,
-                    start_callback=display_progress_bar,
-                    update_callback=update_progress_bar,
-                    complete_callback=hide_progress_bar,
-                    conflict_handler=handle_conflict,
-                    action_callback=action_callback,
-                )
-
-                logger.info('Syncing %s [%s <=> %s]', name, client_1.get_uri(), client_2.get_uri())
-                worker.sync(
-                    conflict_choice=args.conflicts,
-                    dry_run=args.dry_run,
-                )
-            except Exception as e:
-                if args.log_level == "DEBUG":
-                    logger.exception(e)
-                else:
-                    logger.error("There was an error syncing '%s': %s", name, e)
-
-    except KeyboardInterrupt:
-        logger.warning('Quitting due to Keyboard Interrupt...')
 
 
 def targets_command(args, config, logger):
@@ -467,7 +315,7 @@ def ls_command(args, config, logger):
         return
 
     target = config['targets'][args.target]
-    client_1, client_2 = get_clients(target)
+    client_1, client_2 = utils.get_clients(target)
 
     sort_by = args.sort_by.lower()
     descending = args.descending
