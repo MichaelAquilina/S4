@@ -267,7 +267,7 @@ def daemon_command(args, config, logger, terminator=lambda x: False):
             target = watch_map[event.wd]
 
             # Dont bother running for .index
-            if event.name != '.index':
+            if event.name not in ('.index', '.s4lock'):
                 to_run[target].add(event.name)
 
         for target, keys in to_run.items():
