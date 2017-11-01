@@ -3,8 +3,6 @@
 import argparse
 import json
 import logging
-import os
-import tempfile
 from datetime import datetime
 
 from inotify_simple import Event, flags
@@ -15,17 +13,6 @@ import pytz
 from s4 import cli
 from s4.utils import to_timestamp
 from tests import utils
-
-
-@pytest.yield_fixture
-def config_file():
-    fd, temp_path = tempfile.mkstemp()
-    mocker = mock.patch('s4.cli.CONFIG_FILE_PATH', temp_path)
-    mocker.start()
-    yield temp_path
-    mocker.stop()
-    os.close(fd)
-    os.remove(temp_path)
 
 
 def create_logger():
@@ -101,18 +88,6 @@ class TestMain(object):
     def test_add_command(self, add_command):
         cli.main(['add'])
         assert add_command.call_count == 1
-
-
-class TestGetConfigFile(object):
-    @mock.patch('s4.cli.CONFIG_FILE_PATH', '/i/dont/exist')
-    def test_no_file(self):
-        assert cli.get_config() == {'targets': {}}
-
-    def test_correct_output(self, config_file):
-        with open(config_file, 'w') as fp:
-            json.dump({'local_folder': '/home/someone/something'}, fp)
-
-        assert cli.get_config() == {'local_folder': '/home/someone/something'}
 
 
 class FakeINotify(object):

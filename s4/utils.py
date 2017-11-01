@@ -2,11 +2,17 @@
 
 import datetime
 import getpass
+import json
+import os
 
 import boto3
 
 
 from s4.clients import local, s3
+
+
+CONFIG_FOLDER_PATH = os.path.expanduser('~/.config/s4')
+CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, 'sync.conf')
 
 
 def to_timestamp(dt):
@@ -52,3 +58,20 @@ def get_s3_client(target, aws_access_key_id, aws_secret_access_key, region_name)
 
 def get_local_client(target):
     return local.LocalSyncClient(target)
+
+
+def get_config():
+    if not os.path.exists(CONFIG_FILE_PATH):
+        return {'targets': {}}
+
+    with open(CONFIG_FILE_PATH, 'r') as fp:
+        config = json.load(fp)
+    return config
+
+
+def set_config(config):
+    if not os.path.exists(CONFIG_FOLDER_PATH):
+        os.makedirs(CONFIG_FOLDER_PATH)
+
+    with open(CONFIG_FILE_PATH, 'w') as fp:
+        json.dump(config, fp)
