@@ -10,7 +10,7 @@ from collections import defaultdict
 
 import boto3
 
-from clint.textui import colored
+from clint.textui.colored import ColoredString
 
 from inotify_simple import flags
 
@@ -92,6 +92,11 @@ def main(arguments):
         '--log-level',
         default='INFO',
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+    )
+    parser.add_argument(
+        '--no-colors',
+        action='store_true',
+        help='Display without colors',
     )
     parser.add_argument(
         '--timestamps',
@@ -308,24 +313,27 @@ def sync_command(args, config, logger):
     def action_callback(resolution):
         if resolution.action == Resolution.UPDATE:
             logger.info(
-                colored.yellow('Updating %s (%s => %s)'),
+                _colored('YELLOW', 'Updating %s (%s => %s)'),
                 resolution.key,
                 resolution.from_client.get_uri(),
                 resolution.to_client.get_uri()
             )
         elif resolution.action == Resolution.CREATE:
             logger.info(
-                colored.green('Creating %s (%s => %s)'),
+                _colored('GREEN', 'Creating %s (%s => %s)'),
                 resolution.key,
                 resolution.from_client.get_uri(),
                 resolution.to_client.get_uri()
             )
         elif resolution.action == Resolution.DELETE:
             logger.info(
-                colored.red('Deleting %s on %s'),
+                _colored('RED', 'Deleting %s on %s'),
                 resolution.key,
                 resolution.to_client.get_uri()
             )
+
+    def _colored(color, text):
+        return text if args.no_colors else ColoredString(color, text)
 
     try:
         for name in sorted(targets):
