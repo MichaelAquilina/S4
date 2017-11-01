@@ -14,6 +14,7 @@ from s4 import sync
 from s4 import utils
 from s4.commands.ls_command import LsCommand
 from s4.commands.sync_command import SyncCommand
+from s4.commands.targets_command import TargetsCommand
 from s4.inotify_recursive import INotifyRecursive
 
 
@@ -217,9 +218,8 @@ def daemon_command(args, config, logger, terminator=lambda x: False):
 
 
 def targets_command(args, config, logger):
-    for name in sorted(config['targets']):
-        entry = config['targets'][name]
-        print('{}: [{} <=> {}]'.format(name, entry['local_folder'], entry['s3_uri']))
+    command = TargetsCommand(args, config, logger)
+    command.run()
 
 
 def add_command(args, config, logger):
