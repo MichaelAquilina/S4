@@ -10,6 +10,7 @@ from s4.commands.add_command import AddCommand
 from s4.commands.daemon_command import DaemonCommand
 from s4.commands.edit_command import EditCommand
 from s4.commands.ls_command import LsCommand
+from s4.commands.rm_command import RmCommand
 from s4.commands.sync_command import SyncCommand
 from s4.commands.targets_command import TargetsCommand
 
@@ -159,17 +160,8 @@ def ls_command(args, config, logger):
 
 
 def rm_command(args, config, logger):
-    if 'targets' not in config:
-        logger.info('You have not added any targets yet')
-        return
-    if args.target not in config['targets']:
-        all_targets = sorted(list(config['targets'].keys()))
-        logger.info('"%s" is an unknown target', args.target)
-        logger.info('Choices are: %s', all_targets)
-        return
-
-    del config['targets'][args.target]
-    utils.set_config(config)
+    command = RmCommand(args, config, logger)
+    command.run()
 
 
 if __name__ == '__main__':
