@@ -103,7 +103,7 @@ class FakeINotify(object):
 
 
 @mock.patch('s4.sync.SyncWorker')
-@mock.patch('s4.cli.INotifyRecursive')
+@mock.patch('s4.commands.daemon_command.INotifyRecursive')
 class TestDaemonCommand(object):
     def single_term(self, index):
         """Simple terminator for the daemon command"""
