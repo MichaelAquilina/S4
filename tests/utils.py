@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 import datetime
 import json
+import logging
 import os
 
 import freezegun
+
+import pytz
+
+from s4.utils import to_timestamp
 
 
 class FakeInputStream(object):
@@ -42,6 +47,12 @@ def write_local(path, data=''):
         os.makedirs(parent)
     with open(path, 'w') as fp:
         fp.write(data)
+
+
+def get_timestamp(year, month, day, hour, minute):
+    return to_timestamp(
+        datetime.datetime(year, month, day, hour, minute, tzinfo=pytz.UTC)
+    )
 
 
 def get_local_contents(client, key):
@@ -91,3 +102,11 @@ def set_s3_index(s3_client, data):
         Body=json.dumps(data),
     )
     s3_client.reload_index()
+
+
+def create_logger():
+    result = logging.getLogger('create_logger')
+    result.setLevel(logging.INFO)
+    result.handlers = []
+    result.addHandler(logging.StreamHandler())
+    return result

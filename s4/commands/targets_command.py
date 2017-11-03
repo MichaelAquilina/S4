@@ -1,12 +1,9 @@
 #! -*- encoding: utf8 -*-
 
+from s4.commands import Command
 
-class TargetsCommand(object):
-    def __init__(self, args, config, logger):
-        self.args = args
-        self.config = config
-        self.logger = logger
 
+class TargetsCommand(Command):
     def run(self):
         for name in sorted(self.config['targets']):
             entry = self.config['targets'][name]

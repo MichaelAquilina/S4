@@ -2,14 +2,10 @@
 import os
 
 from s4 import utils
+from s4.commands import Command
 
 
-class AddCommand(object):
-    def __init__(self, args, config, logger):
-        self.args = args
-        self.config = config
-        self.logger = logger
-
+class AddCommand(Command):
     def run(self):
         target = self.args.copy_target_credentials
         all_targets = list(self.config['targets'].keys())

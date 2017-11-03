@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import os
 import shutil
 import tempfile
+import uuid
 
 import boto3
 
@@ -18,6 +20,15 @@ from s4.clients.local import LocalSyncClient
 from s4.clients.s3 import S3SyncClient
 
 fake = Faker()
+
+
+@pytest.fixture
+def a_logger():
+    result = logging.getLogger(str(uuid.uuid4()))
+    result.setLevel(logging.INFO)
+    result.handlers = []
+    result.addHandler(logging.StreamHandler())
+    return result
 
 
 @pytest.fixture

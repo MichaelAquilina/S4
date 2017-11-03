@@ -5,29 +5,10 @@ import sys
 from clint.textui.colored import ColoredString
 
 from s4 import sync, utils
-from s4.clients.local import get_local_client
-from s4.clients.s3 import get_s3_client
+from s4.commands import Command
 from s4.diff import show_diff
 from s4.progressbar import ProgressBar
 from s4.resolution import Resolution
-
-
-def get_clients(entry):
-    target_1 = entry['local_folder']
-    target_2 = entry['s3_uri']
-    aws_access_key_id = entry['aws_access_key_id']
-    aws_secret_access_key = entry['aws_secret_access_key']
-    region_name = entry['region_name']
-
-    # append trailing slashes to prevent incorrect prefix matching on s3
-    if not target_1.endswith('/'):
-        target_1 += '/'
-    if not target_2.endswith('/'):
-        target_2 += '/'
-
-    client_1 = get_local_client(target_1)
-    client_2 = get_s3_client(target_2, aws_access_key_id, aws_secret_access_key, region_name)
-    return client_1, client_2
 
 
 def handle_conflict(key, action_1, client_1, action_2, client_2):
@@ -80,12 +61,7 @@ def hide_progress_bar(sync_object):
     ProgressBar.close()
 
 
-class SyncCommand(object):
-    def __init__(self, args, config, logger):
-        self.logger = logger
-        self.args = args
-        self.config = config
-
+class SyncCommand(Command):
     def run(self):
         all_targets = list(self.config['targets'].keys())
         if not self.args.targets:
@@ -103,7 +79,7 @@ class SyncCommand(object):
                     continue
 
                 entry = self.config['targets'][name]
-                client_1, client_2 = get_clients(entry)
+                client_1, client_2 = self.get_clients(entry)
 
                 try:
                     worker = sync.SyncWorker(
