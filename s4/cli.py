@@ -2,7 +2,6 @@
 
 import argparse
 import logging
-import sys
 
 from s4 import VERSION
 from s4 import utils
@@ -107,62 +106,28 @@ def main(arguments):
     config = utils.get_config()
 
     try:
+        command = None
         if args.command == 'version':
             print(VERSION)
+            return
         elif args.command == 'sync':
-            sync_command(args, config, logger)
+            command = SyncCommand(args, config, logger)
         elif args.command == 'targets':
-            targets_command(args, config, logger)
+            command = TargetsCommand(args, config, logger)
         elif args.command == 'add':
-            add_command(args, config, logger)
+            command = AddCommand(args, config, logger)
         elif args.command == 'edit':
-            edit_command(args, config, logger)
+            command = EditCommand(args, config, logger)
         elif args.command == 'ls':
-            ls_command(args, config, logger)
+            command = LsCommand(args, config, logger)
         elif args.command == 'rm':
-            rm_command(args, config, logger)
+            command = RmCommand(args, config, logger)
         elif args.command == 'daemon':
-            daemon_command(args, config, logger)
+            command = DaemonCommand(args, config, logger)
+
+        if command:
+            command.run()
         else:
             parser.print_help()
     except KeyboardInterrupt:
         pass
-
-
-def sync_command(args, config, logger):
-    command = SyncCommand(args, config, logger)
-    command.run()
-
-
-def daemon_command(args, config, logger, terminator=lambda x: False):
-    command = DaemonCommand(args, config, logger)
-    command.run(terminator)
-
-
-def targets_command(args, config, logger):
-    command = TargetsCommand(args, config, logger)
-    command.run()
-
-
-def add_command(args, config, logger):
-    command = AddCommand(args, config, logger)
-    command.run()
-
-
-def edit_command(args, config, logger):
-    command = EditCommand(args, config, logger)
-    command.run()
-
-
-def ls_command(args, config, logger):
-    command = LsCommand(args, config, logger)
-    command.run()
-
-
-def rm_command(args, config, logger):
-    command = RmCommand(args, config, logger)
-    command.run()
-
-
-if __name__ == '__main__':
-    main(sys.argv[1:])

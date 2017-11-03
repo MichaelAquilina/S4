@@ -1,14 +1,10 @@
 #! -*- encoding: utf-8 -*-
 
 from s4 import utils
+from s4.commands import Command
 
 
-class RmCommand(object):
-    def __init__(self, args, config, logger):
-        self.args = args
-        self.config = config
-        self.logger = logger
-
+class RmCommand(Command):
     def run(self):
         if 'targets' not in self.config:
             self.logger.info('You have not added any targets yet')

@@ -2,14 +2,10 @@
 import os
 
 from s4 import utils
+from s4.commands import Command
 
 
-class EditCommand(object):
-    def __init__(self, args, config, logger):
-        self.args = args
-        self.config = config
-        self.logger = logger
-
+class EditCommand(Command):
     def run(self):
         if 'targets' not in self.config:
             self.logger.info('You have not added any targets yet')
