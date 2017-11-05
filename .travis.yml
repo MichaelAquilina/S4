@@ -10,7 +10,8 @@ install: pip install tox-travis codecov flake8
 script:
   - tox
   - flake8 s4 tests
-  - pip install . && s4 version
+  - pip install .
+  - test -n "$(s4 version)"
 after_success:
   - codecov
 cache: pip
