@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import sys
 
 from s4 import VERSION
 from s4 import utils
@@ -131,3 +132,7 @@ def main(arguments):
             parser.print_help()
     except KeyboardInterrupt:
         pass
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
