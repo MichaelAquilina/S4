@@ -24,6 +24,10 @@ from s4.clients import SyncClient, SyncObject
 logger = logging.getLogger(__name__)
 
 
+def get_local_client(target):
+    return LocalSyncClient(target)
+
+
 def traverse(path, ignore_files=None):
     if not os.path.exists(path):
         return
