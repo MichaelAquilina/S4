@@ -127,7 +127,13 @@ def main(arguments):
             command = DaemonCommand(args, config, logger)
 
         if command:
-            command.run()
+            try:
+                command.run()
+            except Exception as e:
+                logger.error('An unhandled error has occurred: %s', e)
+                # Only display a scary stack trace to the user if in DEBUG mode
+                if args.log_level == 'DEBUG':
+                    raise e
         else:
             parser.print_help()
     except KeyboardInterrupt:
