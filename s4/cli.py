@@ -7,6 +7,7 @@ import sys
 from s4 import VERSION
 from s4 import utils
 from s4.commands.add_command import AddCommand
+from s4.commands.autosetup_command import AutoSetupCommand
 from s4.commands.daemon_command import DaemonCommand
 from s4.commands.edit_command import EditCommand
 from s4.commands.ls_command import LsCommand
@@ -68,6 +69,13 @@ def main(arguments):
 
     subparsers.add_parser('version', help="Print S4 Version")
 
+    autosetup_parser = subparsers.add_parser('autosetup', help='Automatically detect and setup targets')
+    autosetup_parser.add_argument(
+        '--copy-target-credentials',
+        '-C',
+        help='Copy credentials from an existing target instead of typing them in again',
+    )
+
     ls_parser = subparsers.add_parser('ls', help="Display list of files for a Target")
     ls_parser.add_argument('target')
     ls_parser.add_argument('--sort-by', '-s', choices=['key', 'local', 's3'], default='key')
@@ -125,6 +133,8 @@ def main(arguments):
             command = RmCommand(args, config, logger)
         elif args.command == 'daemon':
             command = DaemonCommand(args, config, logger)
+        elif args.command == 'autosetup':
+            command = AutoSetupCommand(args, config, logger)
 
         if command:
             command.run()
