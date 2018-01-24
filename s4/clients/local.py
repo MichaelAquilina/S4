@@ -84,7 +84,10 @@ class LocalSyncClient(SyncClient):
         """
         logger.debug("Releasing lock %s", self.lock_file)
         self._lock.release()
-        os.unlink(self.lock_file)
+        try:
+            os.unlink(self.lock_file)
+        except FileNotFoundError:
+            pass
 
     def get_client_name(self):
         return 'local'
