@@ -92,6 +92,9 @@ If you wish to synchronise your targets continiously, use the ``daemon`` command
 
     $ s4 daemon myfolder1
 
+NOTE: This command is only supported on machines that can run INotify. This typically means
+Linux based operating systems.
+
 
 Handling Conflicts
 ------------------
