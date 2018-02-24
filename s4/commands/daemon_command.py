@@ -1,6 +1,7 @@
 #! -*- encoding: utf-8 -*-
 from collections import defaultdict
 
+# Dont crash on import if the underlying operating system does not support INotify
 try:
     from inotify_simple import flags
     from s4.inotify_recursive import INotifyRecursive
