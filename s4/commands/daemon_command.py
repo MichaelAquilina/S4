@@ -1,14 +1,24 @@
 #! -*- encoding: utf-8 -*-
 from collections import defaultdict
 
-from inotify_simple import flags
+# Dont crash on import if the underlying operating system does not support INotify
+try:
+    from inotify_simple import flags
+    from s4.inotify_recursive import INotifyRecursive
+    supported = True
+except OSError:
+    supported = False
 
 from s4.commands import Command
-from s4.inotify_recursive import INotifyRecursive
 
 
 class DaemonCommand(Command):
     def run(self, terminator=lambda x: False):
+        if not supported:
+            self.logger.info('Cannot run INotify on your operating system')
+            self.logger.info('Only Linux machines are officially supported for this command')
+            return
+
         all_targets = list(self.config['targets'].keys())
         if not self.args.targets:
             targets = all_targets
