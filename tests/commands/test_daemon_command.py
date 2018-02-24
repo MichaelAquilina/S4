@@ -31,6 +31,22 @@ class TestDaemonCommand(object):
         """Simple terminator for the daemon command"""
         return index >= 1
 
+    @mock.patch('s4.commands.daemon_command.supported', False)
+    def test_os_not_supported(self, INotifyRecursive, SyncWorker, capsys):
+        args = argparse.Namespace(targets=None, conflicts='ignore', read_delay=0)
+
+        command = DaemonCommand(args, {}, create_logger())
+        command.run(terminator=self.single_term)
+
+        out, err = capsys.readouterr()
+        assert out == ''
+        assert err == (
+            'Cannot run INotify on your operating system\n'
+            'Only Linux machines are officially supported for this command\n'
+        )
+        assert SyncWorker.call_count == 0
+        assert INotifyRecursive.call_count == 0
+
     @pytest.mark.timeout(5)
     def test_no_targets(self, INotifyRecursive, SyncWorker, capsys):
         args = argparse.Namespace(targets=None, conflicts='ignore', read_delay=0)
