@@ -86,7 +86,7 @@ provided during ``add``.
     $ s4 sync myfolder1
 
 
-If you wish to synchronise your targets continiously, use the ``daemon`` command:
+If you wish to synchronise your targets continuously, use the ``daemon`` command:
 
 ::
 
