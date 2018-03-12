@@ -148,6 +148,9 @@ like `zcat`.
     it was never synced before so make sure you *do not* delete it unless
     you know what you are doing.
 
+All information about your configuration (such as targets, your keys etc..) are
+stored in a JSON formatted file under `~/.config/s4/sync.conf`.
+
 Ignoring Files
 --------------
 
