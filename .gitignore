@@ -9,3 +9,4 @@ MANIFEST
 .tox
 .coverage
 _build
+.mypy_cache
