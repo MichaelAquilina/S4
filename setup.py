@@ -26,6 +26,7 @@ setup(
     license='GPLv3',
     author_email='michaelaquilina@gmail.com',
     url='https://github.com/MichaelAquilina/s4',
+    python_requires=">=3.4",
     keywords='aws s3 backup sync',
     scripts=[
         'bin/s4',

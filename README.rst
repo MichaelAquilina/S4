@@ -28,7 +28,7 @@ See it in action here:
 Requirements
 ------------
 
-S4 requires python 3.3+ to work
+S4 requires python 3.4+ to work
 
 Installation
 ------------
@@ -192,7 +192,7 @@ Running locally
 ``tox`` is used to run the tests locally:
 
 ::
-    
+
     pip install tox
 
 And then to run the tests locally:
