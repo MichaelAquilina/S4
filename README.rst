@@ -25,6 +25,17 @@ See it in action here:
 
 |ASCIINEMA|
 
+* Requirements_
+* Installation_
+* Setup_
+* Synchronising_
+* `Handling Conflicts`_
+* `Other Subcommands`_
+* `How S4 Works`_
+* `Ignoring Files`_
+* `Why?`_
+* Contributing_
+
 Requirements
 ------------
 
@@ -117,7 +128,7 @@ will ask you to intervene:
 If you do not wish to fix the issue, you can simply skip the file for
 now.
 
-Other Subommands
+Other Subcommands
 ----------------
 
 Some other subcommands that you could find useful:

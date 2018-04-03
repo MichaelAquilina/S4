@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2.10 - 03-April-2018
+----------------------
+
+* Add sections to the beginning of the README
+* Fix "Other Subcommands" spelling error in README
+
 0.2.9 - 21-March-2018
 ---------------------
 
