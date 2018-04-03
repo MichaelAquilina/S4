@@ -25,6 +25,17 @@ See it in action here:
 
 |ASCIINEMA|
 
+* Requirements_
+* Installation_
+* Setup_
+* Synchronising_
+* `Handling Conflicts`_
+* `Other Subcommands`_
+* `How S4 Works`_
+* `Ignoring Files`_
+* `Why?`_
+* Contributing_
+
 Requirements
 ------------
 
