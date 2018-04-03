@@ -129,7 +129,7 @@ If you do not wish to fix the issue, you can simply skip the file for
 now.
 
 Other Subcommands
-----------------
+-----------------
 
 Some other subcommands that you could find useful:
 
