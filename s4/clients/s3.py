@@ -2,6 +2,7 @@
 import collections
 import copy
 import fnmatch
+import gzip
 import json
 import logging
 import os
@@ -143,6 +144,9 @@ class S3SyncClient(SyncClient):
                 logger.debug('Detected zlib encoding for index')
                 body = zlib.decompress(body)
                 return json.loads(body.decode('utf-8'))
+            elif content_type == 'application/gzip':
+                logger.debug('Detected gzip encoding for index')
+                body = gzip.decompress(body)
             elif content_type == 'application/x-empty':
                 return {}
             else:
@@ -156,8 +160,8 @@ class S3SyncClient(SyncClient):
     def flush_index(self, compressed=True):
         data = json.dumps(self.index).encode('utf-8')
         if compressed:
-            logger.debug('Using zlib encoding for writing index')
-            data = zlib.compress(data)
+            logger.debug('Using gzip encoding for writing index')
+            data = gzip.compress(data)
         else:
             logger.debug('Using plain text encoding for writing index')
 
