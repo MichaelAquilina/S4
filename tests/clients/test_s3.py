@@ -17,6 +17,7 @@ import pytest
 
 from s4.clients import SyncObject, s3
 from s4.utils import to_timestamp
+
 from tests import utils
 
 
