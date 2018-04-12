@@ -212,17 +212,22 @@ class TestS3SyncClient(object):
         })
         assert sorted(s3_client.get_index_keys()) == sorted(['cow', 'chicken'])
 
-    def test_get_index_timestamps(self, s3_client):
+    @pytest.mark.parametrize('compression', [None, 'gzip', 'zlib'])
+    def test_get_index_timestamps(self, s3_client, compression):
         # given
-        utils.set_s3_index(s3_client, {
-            'hello': {
-                'remote_timestamp': 1234,
-                'local_timestamp': 1200,
+        utils.set_s3_index(
+            s3_client,
+            {
+                'hello': {
+                    'remote_timestamp': 1234,
+                    'local_timestamp': 1200,
+                },
+                'world': {
+                    'remote_timestamp': 5000,
+                },
             },
-            'world': {
-                'remote_timestamp': 5000,
-            }
-        })
+            compression=compression,
+        )
 
         # then
         assert s3_client.get_remote_timestamp('hello') == 1234

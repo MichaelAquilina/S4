@@ -144,7 +144,7 @@ class S3SyncClient(SyncClient):
                 logger.debug('Detected zlib encoding for index')
                 body = zlib.decompress(body)
                 return json.loads(body.decode('utf-8'))
-            elif content_type == 'application/x-gzip':
+            elif content_type in ('application/x-gzip', 'application/gzip'):
                 logger.debug('Detected gzip encoding for index')
                 body = gzip.decompress(body)
                 return json.loads(body.decode('utf-8'))
