@@ -3,6 +3,7 @@
 import argparse
 import logging
 import sys
+import traceback
 
 from s4 import VERSION
 from s4 import utils
@@ -127,17 +128,14 @@ def main(arguments):
             command = DaemonCommand(args, config, logger)
 
         if command:
-            try:
-                command.run()
-            except Exception as e:
-                logger.error('An unhandled error has occurred: %s', e)
-                # Only display a scary stack trace to the user if in DEBUG mode
-                if args.log_level == 'DEBUG':
-                    raise e
+            command.run()
         else:
             parser.print_help()
     except KeyboardInterrupt:
-        pass
+        logger.debug("Quitting due to keyboard interrupt")
+    except Exception as e:
+        logger.error('An unhandled error has occurred: %s', e)
+        logger.debug(traceback.format_exc())
 
 
 if __name__ == '__main__':
