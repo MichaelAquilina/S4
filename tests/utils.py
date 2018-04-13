@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import datetime
+import gzip
 import json
 import logging
 import os
+import zlib
 
 import freezegun
 
@@ -95,11 +97,18 @@ def set_s3_contents(s3_client, key, timestamp=None, data=''):
         write_s3(s3_client.boto, s3_client.bucket, os.path.join(s3_client.prefix, key), data)
 
 
-def set_s3_index(s3_client, data):
+def set_s3_index(s3_client, data, compression=None):
+    body = json.dumps(data).encode('utf8')
+
+    if compression == 'gzip':
+        body = gzip.compress(body)
+    elif compression == 'zlib':
+        body = zlib.compress(body)
+
     s3_client.boto.put_object(
         Bucket=s3_client.bucket,
         Key=os.path.join(s3_client.prefix, '.index'),
-        Body=json.dumps(data),
+        Body=body,
     )
     s3_client.reload_index()
 
