@@ -137,17 +137,25 @@ class S3SyncClient(SyncClient):
             )
             body = resp['Body'].read()
             content_type = magic.from_buffer(body, mime=True)
+
             if content_type == 'text/plain':
                 logger.debug('Detected plain text encoding for index')
                 return json.loads(body.decode('utf-8'))
-            elif content_type == 'application/zlib':
-                logger.debug('Detected zlib encoding for index')
-                body = zlib.decompress(body)
-                return json.loads(body.decode('utf-8'))
+
+            # the magic/file command reports gzip differently depending on its version
             elif content_type in ('application/x-gzip', 'application/gzip'):
                 logger.debug('Detected gzip encoding for index')
                 body = gzip.decompress(body)
                 return json.loads(body.decode('utf-8'))
+
+            # Older versions of Ubuntu cannot detect zlib files
+            # assume octet-stream is zlib.
+            # If it isnt, the decompress function will blow up anyway
+            elif content_type in ('application/zlib', 'application/octet-stream'):
+                logger.debug('Detected zlib encoding for index')
+                body = zlib.decompress(body)
+                return json.loads(body.decode('utf-8'))
+
             elif content_type == 'application/x-empty':
                 return {}
             else:
