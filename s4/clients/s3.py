@@ -2,6 +2,7 @@
 import collections
 import copy
 import fnmatch
+import gzip
 import json
 import logging
 import os
@@ -136,13 +137,25 @@ class S3SyncClient(SyncClient):
             )
             body = resp['Body'].read()
             content_type = magic.from_buffer(body, mime=True)
+
             if content_type == 'text/plain':
                 logger.debug('Detected plain text encoding for index')
                 return json.loads(body.decode('utf-8'))
-            elif content_type == 'application/zlib':
+
+            # the magic/file command reports gzip differently depending on its version
+            elif content_type in ('application/x-gzip', 'application/gzip'):
+                logger.debug('Detected gzip encoding for index')
+                body = gzip.decompress(body)
+                return json.loads(body.decode('utf-8'))
+
+            # Older versions of Ubuntu cannot detect zlib files
+            # assume octet-stream is zlib.
+            # If it isnt, the decompress function will blow up anyway
+            elif content_type in ('application/zlib', 'application/octet-stream'):
                 logger.debug('Detected zlib encoding for index')
                 body = zlib.decompress(body)
                 return json.loads(body.decode('utf-8'))
+
             elif content_type == 'application/x-empty':
                 return {}
             else:
@@ -156,8 +169,8 @@ class S3SyncClient(SyncClient):
     def flush_index(self, compressed=True):
         data = json.dumps(self.index).encode('utf-8')
         if compressed:
-            logger.debug('Using zlib encoding for writing index')
-            data = zlib.compress(data)
+            logger.debug('Using gzip encoding for writing index')
+            data = gzip.compress(data)
         else:
             logger.debug('Using plain text encoding for writing index')
 
