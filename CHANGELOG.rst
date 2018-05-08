@@ -3,7 +3,7 @@ Changelog
 
 0.2.13 - 08-May-2018
 --------------------
-* Add short aliaes for most commands
+* Add short aliases for most commands
 
 0.2.12
 ------
