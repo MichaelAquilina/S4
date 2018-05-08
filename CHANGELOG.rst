@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.2.14 - 08-May-2018
+--------------------
+* Fix command short alias for version
+
+
 0.2.13 - 08-May-2018
 --------------------
 * Add short aliases for most commands
