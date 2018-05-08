@@ -1,6 +1,18 @@
 Changelog
 =========
 
+0.2.13 - 08-May-2018
+--------------------
+* Add short aliaes for most commands
+
+0.2.12
+------
+* Fix for older versions of ubuntu which dont support zlib
+
+0.2.11
+------
+* Fix RestructuredText bug on PyPi
+
 0.2.10 - 03-April-2018
 ----------------------
 
