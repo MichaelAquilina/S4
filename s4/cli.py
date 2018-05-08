@@ -108,7 +108,7 @@ def main(arguments):
 
     try:
         command = None
-        if args.command == 'version':
+        if args.command in ('version', 'v'):
             print(VERSION)
             return
         elif args.command in ('sync', 's'):
