@@ -44,29 +44,29 @@ def main(arguments):
     )
     subparsers = parser.add_subparsers(dest='command')
 
-    daemon_parser = subparsers.add_parser('daemon', help="Run S4 sync continiously")
+    daemon_parser = subparsers.add_parser('daemon', help='Run S4 sync continiously', aliases=['d'])
     daemon_parser.add_argument('targets', nargs='*')
     daemon_parser.add_argument('--read-delay', default=1000, type=int)
     daemon_parser.add_argument('--conflicts', default='ignore', choices=['1', '2', 'ignore'])
 
-    add_parser = subparsers.add_parser('add', help="Add a new Target to synchronise")
+    add_parser = subparsers.add_parser('add', help='Add a new Target to synchronise', aliases=['a'])
     add_parser.add_argument(
         '--copy-target-credentials',
         '-C',
         help="Copy credentials from an existing target instead of typing them in again"
     )
 
-    sync_parser = subparsers.add_parser('sync', help="Synchronise Targets with S3")
+    sync_parser = subparsers.add_parser('sync', help='Synchronise Targets with S3', aliases=['s'])
     sync_parser.add_argument('targets', nargs='*')
     sync_parser.add_argument('--conflicts', default=None, choices=['1', '2', 'ignore'])
     sync_parser.add_argument('--dry-run', action='store_true')
 
-    edit_parser = subparsers.add_parser('edit', help="Edit Target details")
+    edit_parser = subparsers.add_parser('edit', help='Edit Target details', aliases=['e'])
     edit_parser.add_argument('target')
 
-    subparsers.add_parser('targets', help="Print available Targets")
+    subparsers.add_parser('targets', help='Print available Targets', aliases=['t'])
 
-    subparsers.add_parser('version', help="Print S4 Version")
+    subparsers.add_parser('version', help='Print S4 Version', aliases=['v'])
 
     ls_parser = subparsers.add_parser('ls', help="Display list of files for a Target")
     ls_parser.add_argument('target')
@@ -111,19 +111,19 @@ def main(arguments):
         if args.command == 'version':
             print(VERSION)
             return
-        elif args.command == 'sync':
+        elif args.command in ('sync', 's'):
             command = SyncCommand(args, config, logger)
-        elif args.command == 'targets':
+        elif args.command in ('targets', 't'):
             command = TargetsCommand(args, config, logger)
-        elif args.command == 'add':
+        elif args.command in ('add', 'a'):
             command = AddCommand(args, config, logger)
-        elif args.command == 'edit':
+        elif args.command in ('edit', 'e'):
             command = EditCommand(args, config, logger)
         elif args.command == 'ls':
             command = LsCommand(args, config, logger)
         elif args.command == 'rm':
             command = RmCommand(args, config, logger)
-        elif args.command == 'daemon':
+        elif args.command in ('daemon', 'd'):
             command = DaemonCommand(args, config, logger)
 
         if command:
