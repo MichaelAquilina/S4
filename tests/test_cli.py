@@ -26,8 +26,9 @@ class TestMain(object):
         assert basicConfig.call_args[1]['format'].startswith('%(levelname)s:%(module)s')
         assert basicConfig.call_args[1]['level'] == 'DEBUG'
 
-    def test_version_command(self, capsys):
-        cli.main(['version'])
+    @pytest.mark.parametrize('command', ['version', 'v'])
+    def test_version_command(self, capsys, command):
+        cli.main([command])
         out, err = capsys.readouterr()
         assert out == '{}\n'.format(cli.VERSION)
 
@@ -36,24 +37,28 @@ class TestMain(object):
         cli.main(['ls', 'foo'])
         assert LsCommand.call_count == 1
 
+    @pytest.mark.parametrize('command', ['daemon', 'd'])
     @mock.patch('s4.cli.DaemonCommand')
-    def test_daemon_command(self, DaemonCommand):
-        cli.main(['daemon'])
+    def test_daemon_command(self, DaemonCommand, command):
+        cli.main([command])
         assert DaemonCommand.call_count == 1
 
+    @pytest.mark.parametrize('command', ['sync', 's'])
     @mock.patch('s4.cli.SyncCommand')
-    def test_sync_command(self, SyncCommand):
-        cli.main(['sync', 'foo'])
+    def test_sync_command(self, SyncCommand, command):
+        cli.main([command, 'foo'])
         assert SyncCommand.call_count == 1
 
+    @pytest.mark.parametrize('command', ['edit', 'e'])
     @mock.patch('s4.cli.EditCommand')
-    def test_edit_command(self, EditCommand):
-        cli.main(['edit', 'foo'])
+    def test_edit_command(self, EditCommand, command):
+        cli.main([command, 'foo'])
         assert EditCommand.call_count == 1
 
+    @pytest.mark.parametrize('command', ['targets', 't'])
     @mock.patch('s4.cli.TargetsCommand')
-    def test_targets_command(self, TargetsCommand):
-        cli.main(['targets'])
+    def test_targets_command(self, TargetsCommand, command):
+        cli.main([command])
         assert TargetsCommand.call_count == 1
 
     @mock.patch('s4.cli.RmCommand')
@@ -61,7 +66,8 @@ class TestMain(object):
         cli.main(['rm', 'foo'])
         assert RmCommand.call_count == 1
 
+    @pytest.mark.parametrize('command', ['add', 'a'])
     @mock.patch('s4.cli.AddCommand')
-    def test_add_command(self, AddCommand):
-        cli.main(['add'])
+    def test_add_command(self, AddCommand, command):
+        cli.main([command])
         assert AddCommand.call_count == 1
