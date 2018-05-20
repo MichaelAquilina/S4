@@ -140,6 +140,5 @@ def main(arguments):
         pass
 
 
-
 def entry_point():
     main(sys.argv[1:])
