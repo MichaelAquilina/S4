@@ -1,3 +1,0 @@
-#! /bin/sh
-
-/usr/bin/env python3 -m s4.cli "$@"
