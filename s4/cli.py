@@ -140,5 +140,5 @@ def main(arguments):
         pass
 
 
-if __name__ == '__main__':
+def entry_point():
     main(sys.argv[1:])
