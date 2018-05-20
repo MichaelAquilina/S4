@@ -16,28 +16,21 @@ with open('requirements.txt') as requirements_file:
     requirements = requirements_file.read().split('\n')
 
 setup(
-    name='s4',
+    name='S4',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     version=VERSION,
-    description='Sync your folders to s3 between multiple machines',
+    description='Fast and cheap synchronisation of files using Amazon S3',
     long_description=readme,
     install_requires=requirements,
     author='Michael Aquilina',
     license='GPLv3',
     author_email='michaelaquilina@gmail.com',
-    url='https://github.com/MichaelAquilina/s4',
+    url='https://github.com/MichaelAquilina/S4',
     python_requires=">=3.4",
     keywords='aws s3 backup sync',
-    scripts=[
-        'bin/s4',
-        's4/cli.py',
-        's4/__init__.py',
-        's4/sync.py',
-        's4/utils.py',
-        's4/clients/__init__.py',
-        's4/clients/local.py',
-        's4/clients/s3.py',
-    ],
+    entry_points={
+        'console_scripts': ['s4=s4.cli:entry_point'],
+    },
     classifiers=[
         'Environment :: Console',
         'Intended Audience :: Developers',
@@ -45,7 +38,6 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
