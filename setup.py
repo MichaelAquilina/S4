@@ -28,16 +28,9 @@ setup(
     url='https://github.com/MichaelAquilina/s4',
     python_requires=">=3.4",
     keywords='aws s3 backup sync',
-    scripts=[
-        'bin/s4',
-        's4/cli.py',
-        's4/__init__.py',
-        's4/sync.py',
-        's4/utils.py',
-        's4/clients/__init__.py',
-        's4/clients/local.py',
-        's4/clients/s3.py',
-    ],
+    entry_points={
+        'console_scripts': ['s4=s4.cli:entry_point'],
+    },
     classifiers=[
         'Environment :: Console',
         'Intended Audience :: Developers',
