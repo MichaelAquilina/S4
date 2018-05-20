@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.2.15 - 20-May-2018
+--------------------
+* Use more reliable console_scripts to generate executable shim
+
 0.2.14 - 08-May-2018
 --------------------
 * Fix command short alias for version
