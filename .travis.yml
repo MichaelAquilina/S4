@@ -5,10 +5,11 @@ python:
   - "3.5"
   - "3.6"
 
-install: pip install tox-travis codecov flake8
+install: pip install tox-travis codecov flake8 black
 script:
   - tox
   - flake8 s4 tests
+  - black --check s4 tests
   - pip install .
   - test -n "$(s4 version)"
 after_success:
