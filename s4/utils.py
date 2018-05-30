@@ -6,8 +6,8 @@ import json
 import os
 
 
-CONFIG_FOLDER_PATH = os.path.expanduser('~/.config/s4')
-CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, 'sync.conf')
+CONFIG_FOLDER_PATH = os.path.expanduser("~/.config/s4")
+CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, "sync.conf")
 
 
 def to_timestamp(dt):
@@ -24,9 +24,9 @@ def get_input(*args, secret=False, **kwargs):
 
 def get_config():
     if not os.path.exists(CONFIG_FILE_PATH):
-        return {'targets': {}}
+        return {"targets": {}}
 
-    with open(CONFIG_FILE_PATH, 'r') as fp:
+    with open(CONFIG_FILE_PATH, "r") as fp:
         config = json.load(fp)
     return config
 
@@ -35,5 +35,5 @@ def set_config(config):
     if not os.path.exists(CONFIG_FOLDER_PATH):
         os.makedirs(CONFIG_FOLDER_PATH)
 
-    with open(CONFIG_FILE_PATH, 'w') as fp:
+    with open(CONFIG_FILE_PATH, "w") as fp:
         json.dump(config, fp)
