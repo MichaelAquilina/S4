@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import fnmatch
+import pathspec
 import gzip
 import json
 import logging
@@ -36,7 +36,9 @@ def traverse(path, ignore_files=None):
         ignore_files = []
 
     for item in scandir(path):
-        if any(fnmatch.fnmatch(item.name, pattern) for pattern in ignore_files):
+        full_path = os.path.join(path, item)
+        spec = pathspec.PathSpec.from_lines(pathspec.patterns.GitWildMatchPattern, ignore_files)
+        if (spec.match_file(full_path)):
             logger.debug('Ignoring %s', item)
             continue
 
