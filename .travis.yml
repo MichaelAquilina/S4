@@ -11,6 +11,7 @@ script:
   - flake8 s4 tests
   - pip install .
   - test -n "$(s4 version)"
+  - [[ "$(s4 version)" = "$(git tag --sort "v:refname" | tail -1)" ]]
 after_success:
   - codecov
 cache: pip
