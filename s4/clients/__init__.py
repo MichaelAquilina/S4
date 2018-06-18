@@ -4,12 +4,12 @@ import datetime
 
 
 class SyncState(object):
-    UPDATED = 'UPDATED'
-    CREATED = 'CREATED'
-    DELETED = 'DELETED'
-    CONFLICT = 'CONFLICT'
-    NOCHANGES = 'NOCHANGES'
-    DOESNOTEXIST = 'DOESNOTEXIST'
+    UPDATED = "UPDATED"
+    CREATED = "CREATED"
+    DELETED = "DELETED"
+    CONFLICT = "CONFLICT"
+    NOCHANGES = "NOCHANGES"
+    DOESNOTEXIST = "DOESNOTEXIST"
 
     def __init__(self, state, local_timestamp, remote_timestamp):
         self.state = state
@@ -32,13 +32,13 @@ class SyncState(object):
         if not isinstance(other, SyncState):
             return False
         return (
-            self.state == other.state and
-            self.local_timestamp == other.local_timestamp and
-            self.remote_timestamp == other.remote_timestamp
+            self.state == other.state
+            and self.local_timestamp == other.local_timestamp
+            and self.remote_timestamp == other.remote_timestamp
         )
 
     def __repr__(self):
-        return 'SyncState<{}, local={}, remote={}>'.format(
+        return "SyncState<{}, local={}, remote={}>".format(
             self.state, self.get_local_datetime(), self.get_remote_datetime()
         )
 
@@ -50,7 +50,7 @@ class SyncObject(object):
         self.timestamp = timestamp
 
     def __repr__(self):
-        return 'SyncObject<{}, {}, {}>'.format(self.fp, self.total_size, self.timestamp)
+        return "SyncObject<{}, {}, {}>".format(self.fp, self.total_size, self.timestamp)
 
 
 def get_sync_state(index_local, real_local, remote):
@@ -72,7 +72,7 @@ def get_sync_state(index_local, real_local, remote):
     elif index_local < real_local:
         return SyncState(SyncState.UPDATED, real_local, remote)
     elif index_local > real_local:
-        return SyncState(SyncState.CONFLICT, index_local, remote)   # corruption?
+        return SyncState(SyncState.CONFLICT, index_local, remote)  # corruption?
     else:
         return SyncState(SyncState.NOCHANGES, real_local, remote)
 
@@ -81,7 +81,7 @@ class SyncClient(object):
     def get_client_name(self):
         raise NotImplementedError()
 
-    def get_uri(self, key=''):
+    def get_uri(self, key=""):
         raise NotImplementedError()
 
     def lock(self, timeout=10):
@@ -140,15 +140,15 @@ class SyncClient(object):
 
         for key in keys:
             index[key] = {
-                'remote_timestamp': self.get_remote_timestamp(key),
-                'local_timestamp': self.get_real_local_timestamp(key),
+                "remote_timestamp": self.get_remote_timestamp(key),
+                "local_timestamp": self.get_real_local_timestamp(key),
             }
         self.index = index
 
     def update_index_entry(self, key):
         self.index[key] = {
-            'remote_timestamp': self.get_remote_timestamp(key),
-            'local_timestamp': self.get_real_local_timestamp(key),
+            "remote_timestamp": self.get_remote_timestamp(key),
+            "local_timestamp": self.get_real_local_timestamp(key),
         }
 
     def flush_index(self):
@@ -162,7 +162,9 @@ class SyncClient(object):
         index_local_timestamp = self.get_index_local_timestamp(key)
         real_local_timestamp = self.get_real_local_timestamp(key)
         remote_timestamp = self.get_remote_timestamp(key)
-        return get_sync_state(index_local_timestamp, real_local_timestamp, remote_timestamp)
+        return get_sync_state(
+            index_local_timestamp, real_local_timestamp, remote_timestamp
+        )
 
     def get_all_actions(self):
         real_local_timestamps = self.get_all_real_local_timestamps()
@@ -178,9 +180,7 @@ class SyncClient(object):
             remote_timestamp = remote_timestamps.get(key)
 
             results[key] = get_sync_state(
-                index_local_timestamp,
-                real_local_timestamp,
-                remote_timestamp,
+                index_local_timestamp, real_local_timestamp, remote_timestamp
             )
 
         return results

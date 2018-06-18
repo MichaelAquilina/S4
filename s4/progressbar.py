@@ -7,6 +7,7 @@ class ProgressBar(object):
     """
     Singleton wrapper around tqdm
     """
+
     pbar = None
 
     def __new__(cls, *args, **kwargs):
