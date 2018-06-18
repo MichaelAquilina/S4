@@ -53,6 +53,23 @@ class TestTraverse(object):
         expected_output = ['bar.md', 'baz/bar', 'baz/zoo', 'foo', 'SomeProject/hello.py']
         assert sorted(actual_output) == sorted(expected_output)
 
+    def test_ignore_subfolder(self):
+        items = [
+            'dev/files/test.txt',
+            'dev/venv/python2.7/pip-selfcheck.json',
+            'dev/venv/python2.7/lib/file',
+            'dev/.git/index',
+            'dev/main.py',
+        ]
+        for item in items:
+            utils.write_local(os.path.join(self.target_folder, item))
+        actual_output = list(local.traverse(
+            self.target_folder,
+            ignore_files={'venv/', '.git/'}
+        ))
+        expected_output = ['dev/main.py', 'dev/files/test.txt']
+        assert sorted(actual_output) == sorted(expected_output)
+
 
 class TestLocalSyncClient(object):
     def test_get_client_name(self, local_client):
