@@ -36,9 +36,11 @@ def traverse(path, ignore_files=None):
 
     for item in scandir(path):
         full_path = os.path.join(path, item.name)
-        spec = pathspec.PathSpec.from_lines(pathspec.patterns.GitWildMatchPattern, ignore_files)
-        if (spec.match_file(full_path)):
-            logger.debug('Ignoring %s', item)
+        spec = pathspec.PathSpec.from_lines(
+            pathspec.patterns.GitWildMatchPattern, ignore_files
+        )
+        if spec.match_file(full_path):
+            logger.debug("Ignoring %s", item)
             continue
 
         if item.is_dir():
@@ -49,8 +51,8 @@ def traverse(path, ignore_files=None):
 
 
 class LocalSyncClient(SyncClient):
-    DEFAULT_IGNORE_FILES = ['.index', '.s4lock']
-    LOCK_FILE_NAME = '.s4lock'
+    DEFAULT_IGNORE_FILES = [".index", ".s4lock"]
+    LOCK_FILE_NAME = ".s4lock"
 
     def __init__(self, path):
         self.path = path
@@ -75,7 +77,7 @@ class LocalSyncClient(SyncClient):
         logger.debug("Locking %s", self.lock_file)
         if not os.path.exists(self.lock_file):
             self.ensure_path(self.lock_file)
-            with open(self.lock_file, 'w'):
+            with open(self.lock_file, "w"):
                 os.utime(self.lock_file)
         self._lock.acquire(timeout=timeout)
 
@@ -91,16 +93,16 @@ class LocalSyncClient(SyncClient):
             pass
 
     def get_client_name(self):
-        return 'local'
+        return "local"
 
     def __repr__(self):
-        return 'LocalSyncClient<{}>'.format(self.path)
+        return "LocalSyncClient<{}>".format(self.path)
 
-    def get_uri(self, key=''):
+    def get_uri(self, key=""):
         return os.path.join(self.path, key)
 
     def index_path(self):
-        return os.path.join(self.path, '.index')
+        return os.path.join(self.path, ".index")
 
     def put(self, key, sync_object, callback=None):
         path = os.path.join(self.path, key)
@@ -110,7 +112,7 @@ class LocalSyncClient(SyncClient):
         fd, temp_path = tempfile.mkstemp()
 
         try:
-            with open(temp_path, 'wb') as fp1:
+            with open(temp_path, "wb") as fp1:
                 while True:
                     data = sync_object.fp.read(BUFFER_SIZE)
                     fp1.write(data)
@@ -130,7 +132,7 @@ class LocalSyncClient(SyncClient):
     def get(self, key):
         path = os.path.join(self.path, key)
         if os.path.exists(path):
-            fp = open(path, 'rb')
+            fp = open(path, "rb")
             stat = os.stat(path)
             return SyncObject(fp, stat.st_size, stat.st_mtime)
         else:
@@ -153,29 +155,29 @@ class LocalSyncClient(SyncClient):
             return {}
 
         content_type = magic.from_file(index_path, mime=True)
-        if content_type == 'text/plain':
-            logger.debug('Detected plaintext encoding for reading index')
+        if content_type == "text/plain":
+            logger.debug("Detected plaintext encoding for reading index")
             method = open
-        elif content_type in ('application/gzip', 'application/x-gzip'):
-            logger.debug('Detected gzip encoding for reading index')
+        elif content_type in ("application/gzip", "application/x-gzip"):
+            logger.debug("Detected gzip encoding for reading index")
             method = gzip.open
         else:
-            raise ValueError('Index is of unknown type', content_type)
+            raise ValueError("Index is of unknown type", content_type)
 
-        with method(index_path, 'rt') as fp:
+        with method(index_path, "rt") as fp:
             data = json.load(fp)
         return data
 
     def flush_index(self, compressed=True):
         if compressed:
-            logger.debug('Using gzip encoding for writing index')
+            logger.debug("Using gzip encoding for writing index")
             method = gzip.open
         else:
-            logger.debug('Using plaintext encoding for writing index')
+            logger.debug("Using plaintext encoding for writing index")
             method = open
 
         fd, temp_path = tempfile.mkstemp()
-        with method(temp_path, 'wt') as fp:
+        with method(temp_path, "wt") as fp:
             json.dump(self.index, fp)
 
         os.close(fd)
@@ -196,7 +198,7 @@ class LocalSyncClient(SyncClient):
         return self.index.keys()
 
     def get_index_local_timestamp(self, key):
-        return self.index.get(key, {}).get('local_timestamp')
+        return self.index.get(key, {}).get("local_timestamp")
 
     def get_all_real_local_timestamps(self):
         result = {}
@@ -205,30 +207,30 @@ class LocalSyncClient(SyncClient):
         return result
 
     def get_all_remote_timestamps(self):
-        return {key: value.get('remote_timestamp') for key, value in self.index.items()}
+        return {key: value.get("remote_timestamp") for key, value in self.index.items()}
 
     def get_all_index_local_timestamps(self):
-        return {key: value.get('local_timestamp') for key, value in self.index.items()}
+        return {key: value.get("local_timestamp") for key, value in self.index.items()}
 
     def set_index_local_timestamp(self, key, timestamp):
         if key not in self.index:
             self.index[key] = {}
-        self.index[key]['local_timestamp'] = timestamp
+        self.index[key]["local_timestamp"] = timestamp
 
     def get_remote_timestamp(self, key):
-        return self.index.get(key, {}).get('remote_timestamp')
+        return self.index.get(key, {}).get("remote_timestamp")
 
     def set_remote_timestamp(self, key, timestamp):
         if key not in self.index:
             self.index[key] = {}
-        self.index[key]['remote_timestamp'] = timestamp
+        self.index[key]["remote_timestamp"] = timestamp
 
     def reload_ignore_files(self):
-        ignore_path = os.path.join(self.path, '.syncignore')
+        ignore_path = os.path.join(self.path, ".syncignore")
 
         if os.path.exists(ignore_path):
-            with open(ignore_path, 'r') as fp:
-                ignore_list = fp.read().split('\n')
+            with open(ignore_path, "r") as fp:
+                ignore_list = fp.read().split("\n")
         else:
             ignore_list = []
 

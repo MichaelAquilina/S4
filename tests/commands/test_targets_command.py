@@ -6,23 +6,22 @@ from tests.utils import create_logger
 
 
 class TestTargetsCommand(object):
-
     def test_empty(self, capsys):
-        command = TargetsCommand(None, {'targets': {}}, create_logger())
+        command = TargetsCommand(None, {"targets": {}}, create_logger())
         command.run()
         out, err = capsys.readouterr()
-        assert out == err == ''
+        assert out == err == ""
 
     def test_correct_output(self, capsys):
         config = {
-            'targets': {
-                'Personal': {
-                    's3_uri': 's3://mybackup/Personal',
-                    'local_folder': '/home/user/Documents',
+            "targets": {
+                "Personal": {
+                    "s3_uri": "s3://mybackup/Personal",
+                    "local_folder": "/home/user/Documents",
                 },
-                'Studies': {
-                    's3_uri': 's3://something/something/Studies',
-                    'local_folder': '/media/backup/Studies',
+                "Studies": {
+                    "s3_uri": "s3://something/something/Studies",
+                    "local_folder": "/media/backup/Studies",
                 },
             }
         }
@@ -31,8 +30,8 @@ class TestTargetsCommand(object):
         command.run()
 
         out, err = capsys.readouterr()
-        assert err == ''
+        assert err == ""
         assert out == (
-            'Personal: [/home/user/Documents <=> s3://mybackup/Personal]\n'
-            'Studies: [/media/backup/Studies <=> s3://something/something/Studies]\n'
+            "Personal: [/home/user/Documents <=> s3://mybackup/Personal]\n"
+            "Studies: [/media/backup/Studies <=> s3://something/something/Studies]\n"
         )
