@@ -11,7 +11,11 @@ script:
   - flake8 s4 tests
   - pip install .
   - test -n "$(s4 version)"
+
+  # Version linting
   - [[ "$(s4 version)" = "$(git tag --sort "v:refname" | tail -1)" ]]
+  - grep "$(s4 version)" CHANGELOG.rst
+
 after_success:
   - codecov
 cache: pip
