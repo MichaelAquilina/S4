@@ -27,11 +27,11 @@ class TestINotifyRecursive(object):
         events = notifier.read()
         assert len(events) == 3
 
-        assert events[0].name == 'hello.txt'
+        assert events[0].name == "hello.txt"
         assert result_2[events[0].wd] == str(bar)
 
-        assert events[1].name == 'fennek.md'
+        assert events[1].name == "fennek.md"
         assert result_1[events[1].wd] == str(foo)
 
-        assert events[2].name == 'bong'
+        assert events[2].name == "bong"
         assert result_2[events[2].wd] == str(baz)
