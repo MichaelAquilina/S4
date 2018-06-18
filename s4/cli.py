@@ -8,7 +8,6 @@ from s4 import VERSION
 from s4 import utils
 from s4.commands.add_command import AddCommand
 from s4.commands.daemon_command import DaemonCommand
-from s4.commands.edit_command import EditCommand
 from s4.commands.ls_command import LsCommand
 from s4.commands.rm_command import RmCommand
 from s4.commands.sync_command import SyncCommand
