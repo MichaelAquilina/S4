@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.2.16 - 18-June-2018
+---------------------
+
+* Use pathspec package for determining patterns for ignoring files
+
 0.2.15 - 20-May-2018
 --------------------
 * Use more reliable console_scripts to generate executable shim
