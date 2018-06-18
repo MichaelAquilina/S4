@@ -21,157 +21,134 @@ class TestGetSyncStates(object):
         assert sync.SyncWorker(local_client, s3_client).get_sync_states() == ({}, {})
 
     def test_correct_output(self, local_client, s3_client):
-        utils.set_local_index(local_client, {
-            'chemistry.txt': {
-                'local_timestamp': 9431,
-                'remote_timestamp': 9431,
+        utils.set_local_index(
+            local_client,
+            {
+                "chemistry.txt": {"local_timestamp": 9431, "remote_timestamp": 9431},
+                "physics.txt": {"local_timestamp": 10000, "remote_timestamp": 10000},
+                "maltese.txt": {"local_timestamp": 7000, "remote_timestamp": 6000},
             },
-            'physics.txt': {
-                'local_timestamp': 10000,
-                'remote_timestamp': 10000,
+        )
+        utils.set_s3_index(
+            s3_client,
+            {
+                "chemistry.txt": {"local_timestamp": 10000, "remote_timestamp": 9431},
+                "physics.txt": {"local_timestamp": 13000, "remote_timestamp": 12000},
+                "maltese.txt": {"local_timestamp": 6000, "remote_timestamp": 6000},
             },
-            'maltese.txt': {
-                'local_timestamp': 7000,
-                'remote_timestamp': 6000,
-            },
-        })
-        utils.set_s3_index(s3_client, {
-            'chemistry.txt': {
-                'local_timestamp': 10000,
-                'remote_timestamp': 9431,
-            },
-            'physics.txt': {
-                'local_timestamp': 13000,
-                'remote_timestamp': 12000,
-            },
-            'maltese.txt': {
-                'local_timestamp': 6000,
-                'remote_timestamp': 6000,
-            },
-        })
+        )
 
-        utils.set_local_contents(local_client, 'history.txt', timestamp=5000)
-        utils.set_s3_contents(s3_client, 'art.txt', timestamp=200000)
-        utils.set_local_contents(local_client, 'english.txt', timestamp=90000)
-        utils.set_s3_contents(s3_client, 'english.txt', timestamp=93000)
-        utils.set_s3_contents(s3_client, 'chemistry.txt', timestamp=10000)
-        utils.set_local_contents(local_client, 'physics.txt', timestamp=11000)
-        utils.set_s3_contents(s3_client, 'physics.txt', timestamp=13000)
-        utils.set_local_contents(local_client, 'maltese.txt', timestamp=7000)
-        utils.set_s3_contents(s3_client, 'maltese.txt', timestamp=8000)
+        utils.set_local_contents(local_client, "history.txt", timestamp=5000)
+        utils.set_s3_contents(s3_client, "art.txt", timestamp=200000)
+        utils.set_local_contents(local_client, "english.txt", timestamp=90000)
+        utils.set_s3_contents(s3_client, "english.txt", timestamp=93000)
+        utils.set_s3_contents(s3_client, "chemistry.txt", timestamp=10000)
+        utils.set_local_contents(local_client, "physics.txt", timestamp=11000)
+        utils.set_s3_contents(s3_client, "physics.txt", timestamp=13000)
+        utils.set_local_contents(local_client, "maltese.txt", timestamp=7000)
+        utils.set_s3_contents(s3_client, "maltese.txt", timestamp=8000)
 
         worker = sync.SyncWorker(local_client, s3_client)
         resolutions, unhandled_events = worker.get_sync_states()
         expected_unhandled_events = {
-            'english.txt': (
+            "english.txt": (
                 SyncState(SyncState.CREATED, 90000, None),
-                SyncState(SyncState.CREATED, 93000, None)
+                SyncState(SyncState.CREATED, 93000, None),
             ),
-            'physics.txt': (
+            "physics.txt": (
                 SyncState(SyncState.UPDATED, 11000, 10000),
                 SyncState(SyncState.NOCHANGES, 13000, 12000),
-            )
+            ),
         }
         expected_resolutions = {
-            'maltese.txt': Resolution(
-                Resolution.UPDATE, local_client, s3_client, 'maltese.txt', 8000
+            "maltese.txt": Resolution(
+                Resolution.UPDATE, local_client, s3_client, "maltese.txt", 8000
             ),
-            'chemistry.txt': Resolution(
-                Resolution.DELETE, s3_client, None, 'chemistry.txt', 9431
+            "chemistry.txt": Resolution(
+                Resolution.DELETE, s3_client, None, "chemistry.txt", 9431
             ),
-            'history.txt': Resolution(
-                Resolution.CREATE, s3_client, local_client, 'history.txt', 5000
+            "history.txt": Resolution(
+                Resolution.CREATE, s3_client, local_client, "history.txt", 5000
             ),
-            'art.txt': Resolution(
-                Resolution.CREATE, local_client, s3_client, 'art.txt', 200000
+            "art.txt": Resolution(
+                Resolution.CREATE, local_client, s3_client, "art.txt", 200000
             ),
         }
         assert unhandled_events == expected_unhandled_events
         assert resolutions == expected_resolutions
 
     def test_nochanges_but_different_remote_timestamps(self, local_client, s3_client):
-        utils.set_local_index(local_client, {
-            'german.txt': {
-                'local_timestamp': 4000,
-                'remote_timestamp': 4000,
-            }
-        })
-        utils.set_s3_index(s3_client, {
-            'german.txt': {
-                'local_timestamp': 6000,
-                'remote_timestamp': 6000,
-            }
-        })
-        utils.set_local_contents(local_client, 'german.txt', timestamp=4000)
-        utils.set_s3_contents(s3_client, 'german.txt', timestamp=6000)
+        utils.set_local_index(
+            local_client,
+            {"german.txt": {"local_timestamp": 4000, "remote_timestamp": 4000}},
+        )
+        utils.set_s3_index(
+            s3_client,
+            {"german.txt": {"local_timestamp": 6000, "remote_timestamp": 6000}},
+        )
+        utils.set_local_contents(local_client, "german.txt", timestamp=4000)
+        utils.set_s3_contents(s3_client, "german.txt", timestamp=6000)
 
         worker = sync.SyncWorker(local_client, s3_client)
         resolutions, unhandled_events = worker.get_sync_states()
         expected_resolutions = {
-            'german.txt': Resolution(
-                "UPDATE", local_client, s3_client, 'german.txt', 6000)
+            "german.txt": Resolution(
+                "UPDATE", local_client, s3_client, "german.txt", 6000
+            )
         }
         assert resolutions == expected_resolutions
         assert unhandled_events == {}
 
     def test_updated_but_different_remote_timestamp(self, local_client, s3_client):
-        utils.set_local_index(local_client, {
-            'biology.txt': {
-                'local_timestamp': 4000,
-                'remote_timestamp': 3000,
-            }
-        })
-        utils.set_s3_index(s3_client, {
-            'biology.txt': {
-                'local_timestamp': 6000,
-                'remote_timestamp': 6000,
-            }
-        })
-        utils.set_local_contents(local_client, 'biology.txt', timestamp=4500)
-        utils.set_s3_contents(s3_client, 'biology.txt', timestamp=6000)
+        utils.set_local_index(
+            local_client,
+            {"biology.txt": {"local_timestamp": 4000, "remote_timestamp": 3000}},
+        )
+        utils.set_s3_index(
+            s3_client,
+            {"biology.txt": {"local_timestamp": 6000, "remote_timestamp": 6000}},
+        )
+        utils.set_local_contents(local_client, "biology.txt", timestamp=4500)
+        utils.set_s3_contents(s3_client, "biology.txt", timestamp=6000)
 
         worker = sync.SyncWorker(local_client, s3_client)
         resolutions, unhandled_events = worker.get_sync_states()
         expected_unhandled_events = {
-            'biology.txt': (
-                SyncState(SyncState.UPDATED, 4500, 3000), SyncState(SyncState.NOCHANGES, 6000, 6000)
+            "biology.txt": (
+                SyncState(SyncState.UPDATED, 4500, 3000),
+                SyncState(SyncState.NOCHANGES, 6000, 6000),
             )
         }
         assert resolutions == {}
         assert unhandled_events == expected_unhandled_events
 
     def test_deleted_but_different_remote_timestamp(self, local_client, s3_client):
-        utils.set_local_index(local_client, {
-            'chemistry.txt': {
-                'local_timestamp': 4000,
-                'remote_timestamp': 3000,
-            }
-        })
-        utils.set_s3_index(s3_client, {
-            'chemistry.txt': {
-                'local_timestamp': 6000,
-                'remote_timestamp': 6000,
-            }
-        })
-        utils.set_s3_contents(s3_client, 'chemistry.txt', timestamp=6000)
+        utils.set_local_index(
+            local_client,
+            {"chemistry.txt": {"local_timestamp": 4000, "remote_timestamp": 3000}},
+        )
+        utils.set_s3_index(
+            s3_client,
+            {"chemistry.txt": {"local_timestamp": 6000, "remote_timestamp": 6000}},
+        )
+        utils.set_s3_contents(s3_client, "chemistry.txt", timestamp=6000)
 
         worker = sync.SyncWorker(local_client, s3_client)
         resolutions, unhandled_events = worker.get_sync_states()
         expected_unhandled_events = {
-            'chemistry.txt': (
-                SyncState(SyncState.DELETED, None, 3000), SyncState(SyncState.NOCHANGES, 6000, 6000)
+            "chemistry.txt": (
+                SyncState(SyncState.DELETED, None, 3000),
+                SyncState(SyncState.NOCHANGES, 6000, 6000),
             )
         }
         assert resolutions == {}
         assert unhandled_events == expected_unhandled_events
 
     def test_deleted_doesnotexist(self, local_client, s3_client):
-        utils.set_local_index(local_client, {
-            'physics.txt': {
-                'local_timestamp': 5000,
-                'remote_timestamp': 4550,
-            }
-        })
+        utils.set_local_index(
+            local_client,
+            {"physics.txt": {"local_timestamp": 5000, "remote_timestamp": 4550}},
+        )
         worker = sync.SyncWorker(local_client, s3_client)
         resolutions, unhandled_events = worker.get_sync_states()
         assert resolutions == {}
@@ -205,10 +182,12 @@ def assert_existence(clients, keys, exists):
 
 class TestSyncWorker(object):
     def test_repr(self):
-        local_client = local.LocalSyncClient('/home/bobs/burgers')
-        s3_client = s3.S3SyncClient(None, 'burgerbucket', 'foozie')
+        local_client = local.LocalSyncClient("/home/bobs/burgers")
+        s3_client = s3.S3SyncClient(None, "burgerbucket", "foozie")
         worker = sync.SyncWorker(local_client, s3_client)
-        assert repr(worker) == 'SyncWorker</home/bobs/burgers/, s3://burgerbucket/foozie/>'
+        assert (
+            repr(worker) == "SyncWorker</home/bobs/burgers/, s3://burgerbucket/foozie/>"
+        )
 
 
 def TestGetResolution(object):
@@ -220,11 +199,11 @@ def TestGetResolution(object):
 
 class TestIntegrations(object):
     def test_dry_run(self, local_client, s3_client):
-        utils.set_s3_contents(s3_client, 'colors/cream', 9999, '#ddeeff')
+        utils.set_s3_contents(s3_client, "colors/cream", 9999, "#ddeeff")
 
-        utils.set_local_contents(local_client, 'colors/red', 5000, '#ff0000')
-        utils.set_local_contents(local_client, 'colors/green', 3000, '#00ff00')
-        utils.set_local_contents(local_client, 'colors/blue', 2000, '#0000ff')
+        utils.set_local_contents(local_client, "colors/red", 5000, "#ff0000")
+        utils.set_local_contents(local_client, "colors/green", 3000, "#00ff00")
+        utils.set_local_contents(local_client, "colors/blue", 2000, "#0000ff")
 
         local_client.put = mock.MagicMock()
         s3_client.put = mock.MagicMock()
@@ -236,100 +215,89 @@ class TestIntegrations(object):
         assert not s3_client.put.called
 
     def test_action_callback(self, local_client, s3_client):
-        utils.set_s3_contents(s3_client, 'colors/cream', 9999)
+        utils.set_s3_contents(s3_client, "colors/cream", 9999)
 
-        utils.set_local_contents(local_client, 'colors/green', 3000)
-        utils.set_local_contents(local_client, 'colors/blue', 2000)
+        utils.set_local_contents(local_client, "colors/green", 3000)
+        utils.set_local_contents(local_client, "colors/blue", 2000)
 
         callback_mock = mock.MagicMock()
 
-        worker = sync.SyncWorker(
-            local_client,
-            s3_client,
-            action_callback=callback_mock
-        )
+        worker = sync.SyncWorker(local_client, s3_client, action_callback=callback_mock)
         worker.sync()
 
         assert callback_mock.call_count == 3
-        assert callback_mock.call_args_list[0][0][0].key == 'colors/blue'
-        assert callback_mock.call_args_list[1][0][0].key == 'colors/cream'
-        assert callback_mock.call_args_list[2][0][0].key == 'colors/green'
+        assert callback_mock.call_args_list[0][0][0].key == "colors/blue"
+        assert callback_mock.call_args_list[1][0][0].key == "colors/cream"
+        assert callback_mock.call_args_list[2][0][0].key == "colors/green"
 
     def test_local_with_s3(self, local_client, s3_client):
-        utils.set_s3_contents(s3_client, 'colors/cream', 9999, '#ddeeff')
+        utils.set_s3_contents(s3_client, "colors/cream", 9999, "#ddeeff")
 
-        utils.set_local_contents(local_client, 'colors/red', 5000, '#ff0000')
-        utils.set_local_contents(local_client, 'colors/green', 3000, '#00ff00')
-        utils.set_local_contents(local_client, 'colors/blue', 2000, '#0000ff')
+        utils.set_local_contents(local_client, "colors/red", 5000, "#ff0000")
+        utils.set_local_contents(local_client, "colors/green", 3000, "#00ff00")
+        utils.set_local_contents(local_client, "colors/blue", 2000, "#0000ff")
 
         worker = sync.SyncWorker(local_client, s3_client)
         worker.sync()
 
         clients = [local_client, s3_client]
-        expected_keys = [
-            'colors/red',
-            'colors/green',
-            'colors/blue',
-            'colors/cream'
-        ]
+        expected_keys = ["colors/red", "colors/green", "colors/blue", "colors/cream"]
         assert_local_keys(clients, expected_keys)
-        assert_contents(clients, 'colors/red', b'#ff0000')
-        assert_contents(clients, 'colors/green', b'#00ff00')
-        assert_contents(clients, 'colors/blue', b'#0000ff')
-        assert_contents(clients, 'colors/cream', b'#ddeeff')
-        assert_remote_timestamp(clients, 'colors/red', 5000)
-        assert_remote_timestamp(clients, 'colors/green', 3000)
-        assert_remote_timestamp(clients, 'colors/blue', 2000)
-        assert_remote_timestamp(clients, 'colors/cream', 9999)
+        assert_contents(clients, "colors/red", b"#ff0000")
+        assert_contents(clients, "colors/green", b"#00ff00")
+        assert_contents(clients, "colors/blue", b"#0000ff")
+        assert_contents(clients, "colors/cream", b"#ddeeff")
+        assert_remote_timestamp(clients, "colors/red", 5000)
+        assert_remote_timestamp(clients, "colors/green", 3000)
+        assert_remote_timestamp(clients, "colors/blue", 2000)
+        assert_remote_timestamp(clients, "colors/cream", 9999)
 
-        utils.delete_local(local_client, 'colors/red')
+        utils.delete_local(local_client, "colors/red")
 
         worker.sync()
-        expected_keys = [
-            'colors/green',
-            'colors/blue',
-            'colors/cream'
-        ]
+        expected_keys = ["colors/green", "colors/blue", "colors/cream"]
         assert_local_keys(clients, expected_keys)
 
     def test_fresh_sync(self, local_client, s3_client):
-        utils.set_local_contents(local_client, 'foo', timestamp=1000)
-        utils.set_local_contents(local_client, 'bar', timestamp=2000)
-        utils.set_s3_contents(s3_client, 'baz', timestamp=3000, data='what is up?')
+        utils.set_local_contents(local_client, "foo", timestamp=1000)
+        utils.set_local_contents(local_client, "bar", timestamp=2000)
+        utils.set_s3_contents(s3_client, "baz", timestamp=3000, data="what is up?")
 
         worker = sync.SyncWorker(local_client, s3_client)
         worker.sync()
 
         clients = [local_client, s3_client]
-        assert_local_keys(clients, ['foo', 'bar', 'baz'])
-        assert_remote_timestamp(clients, 'foo', 1000)
-        assert_remote_timestamp(clients, 'bar', 2000)
-        assert_remote_timestamp(clients, 'baz', 3000)
-        assert_existence(clients, ['foo', 'bar', 'baz'], True)
-        assert_contents(clients, 'baz', b'what is up?')
+        assert_local_keys(clients, ["foo", "bar", "baz"])
+        assert_remote_timestamp(clients, "foo", 1000)
+        assert_remote_timestamp(clients, "bar", 2000)
+        assert_remote_timestamp(clients, "baz", 3000)
+        assert_existence(clients, ["foo", "bar", "baz"], True)
+        assert_contents(clients, "baz", b"what is up?")
 
-        utils.delete_local(local_client, 'foo')
-        utils.set_local_contents(local_client, 'test', timestamp=5000)
-        utils.set_s3_contents(s3_client, 'hello', timestamp=6000)
-        utils.set_s3_contents(s3_client, 'baz', timestamp=8000, data='just syncing some stuff')
+        utils.delete_local(local_client, "foo")
+        utils.set_local_contents(local_client, "test", timestamp=5000)
+        utils.set_s3_contents(s3_client, "hello", timestamp=6000)
+        utils.set_s3_contents(
+            s3_client, "baz", timestamp=8000, data="just syncing some stuff"
+        )
 
         worker.sync()
 
-        assert_existence(clients, ['foo'], False)
-        assert_local_keys(clients, ['test', 'bar', 'baz', 'hello'])
-        assert_remote_timestamp(clients, 'bar', 2000)
-        assert_remote_timestamp(clients, 'foo', 1000)
-        assert_remote_timestamp(clients, 'test', 5000)
-        assert_remote_timestamp(clients, 'hello', 6000)
-        assert_remote_timestamp(clients, 'baz', 8000)
-        assert_contents(clients, 'baz', b'just syncing some stuff')
+        assert_existence(clients, ["foo"], False)
+        assert_local_keys(clients, ["test", "bar", "baz", "hello"])
+        assert_remote_timestamp(clients, "bar", 2000)
+        assert_remote_timestamp(clients, "foo", 1000)
+        assert_remote_timestamp(clients, "test", 5000)
+        assert_remote_timestamp(clients, "hello", 6000)
+        assert_remote_timestamp(clients, "baz", 8000)
+        assert_contents(clients, "baz", b"just syncing some stuff")
 
         worker.sync()
 
     def test_three_way_sync(self, local_client, s3_client, local_client_2):
-        utils.set_local_contents(local_client, 'foo', timestamp=1000)
-        utils.set_s3_contents(s3_client, 'bar', timestamp=2000, data='red')
-        utils.set_local_contents(local_client_2, 'baz', timestamp=3000)
+        utils.set_local_contents(local_client, "foo", timestamp=1000)
+        utils.set_s3_contents(s3_client, "bar", timestamp=2000, data="red")
+        utils.set_local_contents(local_client_2, "baz", timestamp=3000)
 
         worker_1 = sync.SyncWorker(local_client, s3_client)
         worker_2 = sync.SyncWorker(local_client_2, s3_client)
@@ -341,112 +309,106 @@ class TestIntegrations(object):
 
         clients = [local_client, s3_client, local_client_2]
 
-        assert_local_keys(clients, ['foo', 'bar', 'baz'])
-        assert_contents(clients, 'bar', b'red')
-        assert_remote_timestamp(clients, 'foo', 1000)
-        assert_remote_timestamp(clients, 'bar', 2000)
-        assert_remote_timestamp(clients, 'baz', 3000)
+        assert_local_keys(clients, ["foo", "bar", "baz"])
+        assert_contents(clients, "bar", b"red")
+        assert_remote_timestamp(clients, "foo", 1000)
+        assert_remote_timestamp(clients, "bar", 2000)
+        assert_remote_timestamp(clients, "baz", 3000)
 
-        utils.set_s3_contents(s3_client, 'bar', timestamp=8000, data='green')
-
-        worker_1.sync()
-        worker_2.sync()
-        worker_3.sync()
-
-        assert_local_keys(clients, ['foo', 'bar', 'baz'])
-        assert_contents(clients, 'bar', b'green')
-        assert_remote_timestamp(clients, 'foo', 1000)
-        assert_remote_timestamp(clients, 'bar', 8000)
-        assert_remote_timestamp(clients, 'baz', 3000)
-
-        utils.delete_local(local_client_2, 'foo')
+        utils.set_s3_contents(s3_client, "bar", timestamp=8000, data="green")
 
         worker_1.sync()
         worker_2.sync()
         worker_3.sync()
 
-        assert_existence(clients, ['foo'], False)
-        assert_local_keys(clients, ['bar', 'baz'])
-        assert_remote_timestamp(clients, 'foo', 1000)
+        assert_local_keys(clients, ["foo", "bar", "baz"])
+        assert_contents(clients, "bar", b"green")
+        assert_remote_timestamp(clients, "foo", 1000)
+        assert_remote_timestamp(clients, "bar", 8000)
+        assert_remote_timestamp(clients, "baz", 3000)
+
+        utils.delete_local(local_client_2, "foo")
+
+        worker_1.sync()
+        worker_2.sync()
+        worker_3.sync()
+
+        assert_existence(clients, ["foo"], False)
+        assert_local_keys(clients, ["bar", "baz"])
+        assert_remote_timestamp(clients, "foo", 1000)
 
         worker_1.sync()
         worker_2.sync()
         worker_3.sync()
 
     def test_ignore_conflicts(self, local_client, s3_client):
-        utils.set_local_contents(local_client, 'foo', timestamp=2000)
-        utils.set_s3_contents(s3_client, 'foo', timestamp=3000)
-        utils.set_s3_contents(s3_client, 'bar', timestamp=5600, data='usador')
+        utils.set_local_contents(local_client, "foo", timestamp=2000)
+        utils.set_s3_contents(s3_client, "foo", timestamp=3000)
+        utils.set_s3_contents(s3_client, "bar", timestamp=5600, data="usador")
 
         worker = sync.SyncWorker(local_client, s3_client)
-        worker.sync(conflict_choice='ignore')
+        worker.sync(conflict_choice="ignore")
 
         clients = [local_client, s3_client]
-        assert_local_keys(clients, ['foo', 'bar'])
-        assert_remote_timestamp(clients, 'foo', None)
-        assert_remote_timestamp(clients, 'bar', 5600)
-        assert_existence(clients, ['foo', 'bar'], True)
-        assert_contents(clients, 'bar', b'usador')
+        assert_local_keys(clients, ["foo", "bar"])
+        assert_remote_timestamp(clients, "foo", None)
+        assert_remote_timestamp(clients, "bar", 5600)
+        assert_existence(clients, ["foo", "bar"], True)
+        assert_contents(clients, "bar", b"usador")
 
         # Check that none of the files have been modified due to ignore flag
-        assert local_client.get_real_local_timestamp('foo') == 2000
-        assert s3_client.get_real_local_timestamp('foo') == 3000
+        assert local_client.get_real_local_timestamp("foo") == 2000
+        assert s3_client.get_real_local_timestamp("foo") == 3000
 
     def test_conflict_choose_first_client(self, local_client, s3_client):
-        utils.set_local_contents(local_client, 'foo', timestamp=2000, data='abc')
-        utils.set_s3_contents(s3_client, 'foo', timestamp=3000)
+        utils.set_local_contents(local_client, "foo", timestamp=2000, data="abc")
+        utils.set_s3_contents(s3_client, "foo", timestamp=3000)
 
         worker = sync.SyncWorker(local_client, s3_client)
-        worker.sync(conflict_choice='1')
+        worker.sync(conflict_choice="1")
 
         clients = [local_client, s3_client]
-        assert_local_keys(clients, ['foo'])
+        assert_local_keys(clients, ["foo"])
         # Chooses first client
-        assert_remote_timestamp(clients, 'foo', 2000)
-        assert_contents(clients, 'foo', b'abc')
+        assert_remote_timestamp(clients, "foo", 2000)
+        assert_contents(clients, "foo", b"abc")
 
     def test_conflict_choose_second_client(self, local_client, s3_client):
-        utils.set_local_contents(local_client, 'foo', timestamp=2000)
-        utils.set_s3_contents(s3_client, 'foo', timestamp=3000, data='123')
+        utils.set_local_contents(local_client, "foo", timestamp=2000)
+        utils.set_s3_contents(s3_client, "foo", timestamp=3000, data="123")
 
         worker = sync.SyncWorker(local_client, s3_client)
-        worker.sync(conflict_choice='2')
+        worker.sync(conflict_choice="2")
 
         clients = [local_client, s3_client]
-        assert_local_keys(clients, ['foo'])
+        assert_local_keys(clients, ["foo"])
         # Chooses second client
-        assert_remote_timestamp(clients, 'foo', 3000)
-        assert_contents(clients, 'foo', b'123')
+        assert_remote_timestamp(clients, "foo", 3000)
+        assert_contents(clients, "foo", b"123")
 
     def test_previously_deleted_now_created(self, local_client, s3_client):
-        utils.set_s3_index(s3_client, {
-            'foo': {
-                'local_timestamp': None,
-                'remote_timestamp': 4000,
-            }
-        })
-        utils.set_local_index(local_client, {
-            'foo': {
-                'local_timstamp': None,
-                'remote_timestamp': 4000,
-            }
-        })
-        utils.set_local_contents(local_client, 'foo', timestamp=7000)
+        utils.set_s3_index(
+            s3_client, {"foo": {"local_timestamp": None, "remote_timestamp": 4000}}
+        )
+        utils.set_local_index(
+            local_client, {"foo": {"local_timstamp": None, "remote_timestamp": 4000}}
+        )
+        utils.set_local_contents(local_client, "foo", timestamp=7000)
 
         # Will create previously deleted file
         worker = sync.SyncWorker(local_client, s3_client)
         worker.sync()
 
         clients = [local_client, s3_client]
-        assert_local_keys(clients, ['foo'])
-        assert_remote_timestamp(clients, 'foo', 7000)
+        assert_local_keys(clients, ["foo"])
+        assert_remote_timestamp(clients, "foo", 7000)
 
         # delete the file again and check that it is successful
-        utils.delete_local(local_client, 'foo')
+        utils.delete_local(local_client, "foo")
 
         worker.sync()
         assert_local_keys(clients, [])
-        assert_remote_timestamp(clients, 'foo', 7000)
+        assert_remote_timestamp(clients, "foo", 7000)
 
 
 class TestRunResolutions(object):
@@ -457,9 +419,9 @@ class TestRunResolutions(object):
     def test_invalid_action(self, local_client, s3_client):
         worker = sync.SyncWorker(local_client, s3_client)
         with pytest.raises(ValueError):
-            worker.run_resolutions({
-                'foo': Resolution('UNKNOWN', None, None, None, None),
-            })
+            worker.run_resolutions(
+                {"foo": Resolution("UNKNOWN", None, None, None, None)}
+            )
 
     def test_correct_output(self, local_client, s3_client):
         def keyboard_interrupt():
@@ -468,19 +430,23 @@ class TestRunResolutions(object):
         clients = [local_client, s3_client]
         worker = sync.SyncWorker(local_client, s3_client)
 
-        utils.set_local_contents(local_client, 'foo')
-        utils.set_s3_contents(s3_client, 'baz', timestamp=2000, data='testing')
-        success = worker.run_resolutions({
-            'foo': Resolution(Resolution.DELETE, local_client, None, 'foo', 1000),
-            'baz': Resolution(Resolution.CREATE, local_client, s3_client, 'baz', 20),
-        })
-        assert sorted(success) == sorted(['foo', 'baz'])
-        assert_local_keys(clients, ['baz'])
+        utils.set_local_contents(local_client, "foo")
+        utils.set_s3_contents(s3_client, "baz", timestamp=2000, data="testing")
+        success = worker.run_resolutions(
+            {
+                "foo": Resolution(Resolution.DELETE, local_client, None, "foo", 1000),
+                "baz": Resolution(
+                    Resolution.CREATE, local_client, s3_client, "baz", 20
+                ),
+            }
+        )
+        assert sorted(success) == sorted(["foo", "baz"])
+        assert_local_keys(clients, ["baz"])
 
 
 class TestMoveClient(object):
     def test_correct_behaviour(self, local_client, s3_client):
-        utils.set_s3_contents(s3_client, 'art.txt', data='swirly abstract objects')
+        utils.set_s3_contents(s3_client, "art.txt", data="swirly abstract objects")
 
         worker = sync.SyncWorker(local_client, s3_client)
 
@@ -488,10 +454,13 @@ class TestMoveClient(object):
             action=Resolution.CREATE,
             to_client=local_client,
             from_client=s3_client,
-            key='art.txt',
+            key="art.txt",
             timestamp=6000,
         )
         worker.move_client(resolution)
 
-        assert utils.get_local_contents(local_client, 'art.txt') == b'swirly abstract objects'
-        assert local_client.get_remote_timestamp('art.txt') == 6000
+        assert (
+            utils.get_local_contents(local_client, "art.txt")
+            == b"swirly abstract objects"
+        )
+        assert local_client.get_remote_timestamp("art.txt") == 6000
