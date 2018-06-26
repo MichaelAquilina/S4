@@ -2,7 +2,7 @@
 S4 = S3 Syncer
 ==============
 
-|TravisCI| |CodeCov| |Snyk| |PyPi| |GPLv3| |ReadTheDocs|
+|TravisCI| |CodeCov| |Snyk| |PyPi| |GPLv3|
 
 Fast and cheap synchronisation of files using `Amazon
 S3 <https://aws.amazon.com/s3/>`__.
@@ -229,9 +229,6 @@ And then to run the tests locally:
 
 .. |GPLv3| image:: https://img.shields.io/badge/License-GPL%20v3-blue.svg
    :target: https://www.gnu.org/licenses/gpl-3.0
-
-.. |ReadTheDocs| image:: https://readthedocs.org/projects/s4docs/badge/?version=latest
-   :target: https://s4docs.readthedocs.org
 
 .. |ASCIINEMA| image:: https://asciinema.org/a/0GiXLN7YT4ki8qouedF0w8Wbk.png
    :target: https://asciinema.org/a/0GiXLN7YT4ki8qouedF0w8Wbk?autoplay=1
