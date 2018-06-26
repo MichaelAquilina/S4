@@ -2,7 +2,7 @@
 S4 = S3 Syncer
 ==============
 
-|TravisCI| |CodeCov| |PyPi| |GPLv3| |ReadTheDocs|
+|TravisCI| |CodeCov| |Snyk| |PyPi| |GPLv3| |ReadTheDocs|
 
 Fast and cheap synchronisation of files using `Amazon
 S3 <https://aws.amazon.com/s3/>`__.
@@ -223,6 +223,9 @@ And then to run the tests locally:
 
 .. |CodeCov| image:: https://codecov.io/gh/MichaelAquilina/s4/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/MichaelAquilina/s4
+
+.. |Snyk| image:: https://snyk.io/test/github/MichaelAquilina/S4/badge.svg?targetFile=requirements.txt
+   :target: https://snyk.io/test/github/MichaelAquilina/S4?targetFile=requirements.txt
 
 .. |GPLv3| image:: https://img.shields.io/badge/License-GPL%20v3-blue.svg
    :target: https://www.gnu.org/licenses/gpl-3.0
