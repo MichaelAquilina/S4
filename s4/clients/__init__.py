@@ -79,27 +79,61 @@ def get_sync_state(index_local, real_local, remote):
 
 class SyncClient(object):
     def get_client_name(self):
+        """
+        Return a human readable name for the client.
+        """
         raise NotImplementedError()
 
     def get_uri(self, key=""):
+        """
+        Get the full Unique Resource Identifier given a key.
+        """
         raise NotImplementedError()
 
     def lock(self, timeout=10):
+        """
+        Lock the client storage so that any other external access to the client is prevented.
+        """
         raise NotImplementedError()
 
     def unlock(self):
+        """
+        Unlock the client storage for other external access. Will do nothing if nothing
+        was locked in the first place.
+        """
         raise NotImplementedError()
 
     def put(self, key, sync_object):
+        """
+        Put the given SyncObject on the clients storage with the given key.
+        """
         raise NotImplementedError()
 
     def get(self, key):
+        """
+        Get a SyncObject reference for the given key. Returns None if it does
+        not exist on the client's storage.
+        """
         raise NotImplementedError()
 
     def delete(self, key):
+        """
+        Delete the given key from client storage.
+        """
+        raise NotImplementedError()
+
+    def get_size(self, key):
+        """
+        Get the size of the file on the given client.
+        """
         raise NotImplementedError()
 
     def get_local_keys(self):
+        """
+        Get *all* files that exists on the clients local storage. This means that
+        keys outside the index could be returned if they are new. Also keys in the
+        index could not be listed if the file has been deleted.
+        """
         raise NotImplementedError()
 
     def get_real_local_timestamp(self, key):
