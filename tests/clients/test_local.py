@@ -96,6 +96,13 @@ class TestLocalSyncClient(object):
         local_client.lock(timeout=0.01)
         local_client2.unlock()
 
+    def test_get_size_not_exists(self, local_client):
+        assert local_client.get_size("idontexist") == 0
+
+    def test_get_size_exists(self, local_client):
+        utils.write_local(local_client.get_uri("foo"), "test data")
+        assert local_client.get_size("foo") == 9
+
     def test_put_callback(self, local_client):
         mock_callback = mock.MagicMock()
 
