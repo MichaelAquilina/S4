@@ -47,7 +47,9 @@ class TestLsCommand(object):
         out, err = capsys.readouterr()
 
         assert err == ""
-        assert out == ("key    local    s3\n" "-----  -------  ----\n")
+        assert out == (
+            "key    local    s3\n" "-----  -------  ----\n" "Total Size: 0.00Mb\n"
+        )
 
     def test_correct_output_nonempty(self, s3_client, local_client, capsys):
         config = {
@@ -94,6 +96,7 @@ class TestLsCommand(object):
             "honey  2016-11-10 18:40:00  2016-12-12 08:30:00\n"
             "lemon  2017-02-02 08:30:00\n"
             "milk   2016-12-12 08:30:00  1989-10-23 11:30:00\n"
+            "Total Size: 0.00Mb\n"
         )
 
     def test_show_all(self, s3_client, local_client, capsys):
@@ -137,4 +140,5 @@ class TestLsCommand(object):
             "--------  -------------------  -------------------\n"
             "cheese    2017-02-02 08:30:00  2017-12-12 08:30:00\n"
             "crackers  <deleted>\n"
+            "Total Size: 0.00Mb\n"
         )

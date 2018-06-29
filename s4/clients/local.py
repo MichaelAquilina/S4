@@ -217,6 +217,13 @@ class LocalSyncClient(SyncClient):
             self.index[key] = {}
         self.index[key]["local_timestamp"] = timestamp
 
+    def get_size(self, key):
+        path = self.get_uri(key)
+        if os.path.exists(path):
+            return os.stat(path).st_size
+        else:
+            return 0
+
     def get_remote_timestamp(self, key):
         return self.index.get(key, {}).get("remote_timestamp")
 

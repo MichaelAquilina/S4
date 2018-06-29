@@ -55,6 +55,11 @@ class TestSyncClient(object):
         with pytest.raises(NotImplementedError):
             client.unlock()
 
+    def test_get_size(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.get_size("test")
+
     def test_get_client_name(self):
         client = SyncClient()
         with pytest.raises(NotImplementedError):
@@ -109,6 +114,11 @@ class TestSyncClient(object):
         client = SyncClient()
         with pytest.raises(NotImplementedError):
             client.get_remote_timestamp("something")
+
+    def test_set_remote_timestamp(self):
+        client = SyncClient()
+        with pytest.raises(NotImplementedError):
+            client.set_remote_timestamp("test", None)
 
     def test_get_all_remote_timestamps(self):
         client = SyncClient()
