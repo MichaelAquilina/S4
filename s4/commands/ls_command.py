@@ -25,10 +25,13 @@ class LsCommand(Command):
         sort_by = self.args.sort_by.lower()
         descending = self.args.descending
 
-        keys = set(client_1.index) | set(client_2.index)
+        keys = set(client_1.get_index_keys()) | set(client_2.get_index_keys())
+
+        total_size = 0
 
         data = []
         for key in sorted(keys):
+            self.logger.debug("Processing %s", key)
             entry_1 = client_1.index.get(key, {})
             entry_2 = client_2.index.get(key, {})
 
@@ -47,8 +50,12 @@ class LsCommand(Command):
                         else None,
                     )
                 )
+                size = client_1.get_size(key)
+                self.logger.debug("%s size: %s", key, size)
+                total_size += size
 
         headers = ["key", "local", "s3"]
         data = sorted(data, reverse=descending, key=lambda x: x[headers.index(sort_by)])
 
         print(tabulate(data, headers=headers))
+        print("Total Size: {:.2f}Mb".format(total_size / (1024 * 1024)))
