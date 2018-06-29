@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.2.17 - 29-June-2018
+---------------------
+
+* Display Total size in ls command output
+
 0.2.16 - 18-June-2018
 ---------------------
 
