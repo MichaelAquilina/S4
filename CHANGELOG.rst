@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2.18 - 1-July-2018
+--------------------
+
+* Display Total Size in ls outputs
+* skip 0.2.17 due to taging issue
+
 0.2.16 - 18-June-2018
 ---------------------
 
