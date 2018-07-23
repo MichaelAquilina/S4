@@ -224,6 +224,8 @@ class S3SyncClient(SyncClient):
                 key = os.path.relpath(obj["Key"], self.prefix)
                 if not is_ignored_key(key, self.ignore_files):
                     result[key] = utils.to_timestamp(obj["LastModified"])
+                else:
+                    logger.debug("Ignoring %s", key)
 
         return result
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import pprint
 import traceback
 
 from s4.clients import SyncState
@@ -319,6 +320,9 @@ class SyncWorker(object):
     def get_states(self, keys=None):
         client_1_actions = self.client_1.get_all_actions()
         client_2_actions = self.client_2.get_all_actions()
+
+        self.logger.debug("%s actions: %s", self.client_1, pprint.pformat(client_1_actions))
+        self.logger.debug("%s actions: %s", self.client_2, pprint.pformat(client_2_actions))
 
         all_keys = set(client_1_actions) | set(client_2_actions)
         self.logger.debug(
