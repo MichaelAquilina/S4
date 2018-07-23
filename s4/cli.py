@@ -90,7 +90,7 @@ def main(arguments):
     args = parser.parse_args(arguments)
 
     if args.log_level == "DEBUG":
-        log_format = "%(levelname)s:%(module)s:%(lineno)s %(message)s"
+        log_format = "%(levelname)s:%(module)s:%(funcName)s:%(lineno)s %(message)s"
     else:
         log_format = "%(message)s"
 
