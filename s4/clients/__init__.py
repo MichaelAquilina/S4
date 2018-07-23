@@ -205,6 +205,7 @@ class SyncClient(object):
         index_local_timestamps = self.get_all_index_local_timestamps()
         remote_timestamps = self.get_all_remote_timestamps()
 
+        # This is the cause of zombie keys
         keys = set(real_local_timestamps) | set(index_local_timestamps)
 
         results = {}

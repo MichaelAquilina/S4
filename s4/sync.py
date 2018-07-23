@@ -179,11 +179,17 @@ class SyncWorker(object):
                     state_1.local_timestamp,
                 )
 
+            elif state_1.state == state_2.state == SyncState.DELETED:
+                resolutions[key] = Resolution(
+                    Resolution.CLEAN, self.client_1, self.client_2, key, None
+                )
+
             elif state_1.state in (
                 SyncState.DELETED,
                 SyncState.DOESNOTEXIST,
             ) and state_2.state in (SyncState.DELETED, SyncState.DOESNOTEXIST):
                 # nothing to do, they have already both been deleted/do not exist
+                self.logger.debug("No resolution for %s - Ignoring and moving on", key)
                 continue
 
             elif (
@@ -287,6 +293,8 @@ class SyncWorker(object):
                     deferred_function = self.move_client
                 elif resolution.action == Resolution.DELETE:
                     deferred_function = self.delete_client
+                elif resolution.action == Resolution.CLEAN:
+                    deferred_function = self.clean_client
                 else:
                     raise ValueError("Unknown resolution", resolution)
 
@@ -321,8 +329,12 @@ class SyncWorker(object):
         client_1_actions = self.client_1.get_all_actions()
         client_2_actions = self.client_2.get_all_actions()
 
-        self.logger.debug("%s actions: %s", self.client_1, pprint.pformat(client_1_actions))
-        self.logger.debug("%s actions: %s", self.client_2, pprint.pformat(client_2_actions))
+        self.logger.debug(
+            "%s actions: %s", self.client_1, pprint.pformat(client_1_actions)
+        )
+        self.logger.debug(
+            "%s actions: %s", self.client_2, pprint.pformat(client_2_actions)
+        )
 
         all_keys = set(client_1_actions) | set(client_2_actions)
         self.logger.debug(
@@ -343,6 +355,10 @@ class SyncWorker(object):
             action_1 = client_1_actions.get(key, DOES_NOT_EXIST)
             action_2 = client_2_actions.get(key, DOES_NOT_EXIST)
             yield key, action_1, action_2
+
+    def clean_client(self, resolution):
+        self.logger.debug("Cleaning %s from client indexes", resolution.key)
+        # TODO: clean key from the index here
 
     def move_client(self, resolution):
         sync_object = resolution.from_client.get(resolution.key)

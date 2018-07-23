@@ -4,9 +4,10 @@ from s4.clients import SyncState
 
 
 class Resolution(object):
-    UPDATE = "UPDATE"
-    CREATE = "CREATE"
-    DELETE = "DELETE"
+    UPDATE = "UPDATE"  # Key needs to be updated on a target client
+    CREATE = "CREATE"  # Key needs to be created on a target client
+    DELETE = "DELETE"  # Key needs to be deleted on a target client
+    CLEAN = "CLEAN"  # Key needs to be cleaned from the index
 
     def __init__(self, action, to_client, from_client, key, timestamp):
         self.action = action
