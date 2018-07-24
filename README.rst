@@ -2,7 +2,7 @@
 S4 = S3 Syncer
 ==============
 
-|TravisCI| |CodeCov| |Snyk| |PyPi| |GPLv3|
+|CircleCI| |CodeCov| |Snyk| |PyPi| |GPLv3|
 
 Fast and cheap synchronisation of files using `Amazon
 S3 <https://aws.amazon.com/s3/>`__.
@@ -215,8 +215,8 @@ And then to run the tests locally:
 
     tox
 
-.. |TravisCI| image:: https://travis-ci.org/MichaelAquilina/S4.svg?branch=master
-   :target: https://travis-ci.org/MichaelAquilina/S4
+.. |CircleCI| image:: https://circleci.com/gh/MichaelAquilina/S4.svg?style=svg
+   :target: https://circleci.com/gh/MichaelAquilina/S4
 
 .. |PyPi| image:: https://badge.fury.io/py/s4.svg
    :target: https://badge.fury.io/py/s4
