@@ -52,9 +52,8 @@ jobs:
       - run:
           name: version lint
           command: |
-            poetry install
-            test "$(s4 version)" = "$(git tag --sort "v:refname" | tail -1)"
-            grep "$(s4 version)" CHANGELOG.rst
+            test "$(poetry run s4 version)" = "$(git tag --sort "v:refname" | tail -1)"
+            grep "$(poetry run s4 version)" CHANGELOG.rst
 
   test-3.7:
     docker:
