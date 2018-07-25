@@ -52,8 +52,12 @@ jobs:
       - run:
           name: version lint
           command: |
-            test "$(poetry run s4 version)" = "$(git tag --sort "v:refname" | tail -1)"
-            grep "$(poetry run s4 version)" CHANGELOG.rst
+            CLIENT_VERSION="$(poetry run s4 version)"
+            GIT_VERSION="$(git tag --sort "v:refname" | tail -1)"
+
+            echo "$CLIENT_VERSION $GIT_VERSION"
+            test "$CLIENT_VERSION" = "$GIT_VERSION"
+            grep "$CLIENT_VERSION" CHANGELOG.rst
 
   test-3.7:
     docker:
