@@ -52,7 +52,7 @@ jobs:
       - run:
           name: version lint
           command: |
-            poetry install
+            poetry install --no-dev
             CLIENT_VERSION="$(poetry run s4 version)"
             GIT_VERSION="$(git tag --sort "v:refname" | tail -1)"
 
