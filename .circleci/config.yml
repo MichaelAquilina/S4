@@ -7,8 +7,11 @@ test: &test
         name: install less pager dependency
         command: apt-get update && apt-get install -y less
     - run:
+        name: install poetry
+        command: curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+    - run:
         name: install python dependencies
-        command: pip install -r requirements.txt -r dev-requirements.txt
+        command: poetry install
     - run:
         name: run pytest
         command: |
