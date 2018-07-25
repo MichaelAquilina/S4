@@ -55,9 +55,12 @@ jobs:
             poetry install --no-dev
             CLIENT_VERSION="$(poetry run s4 version)"
             GIT_VERSION="$(git tag --sort "v:refname" | tail -1)"
+            PYPROJECT_VERSION="$(grep version pyproject.toml | cut -d" " -f 3)"
+            PYPROJECT_VERSION="${PYPROJECT_VERSION//\"/}"
 
-            echo "$CLIENT_VERSION $GIT_VERSION"
+            echo "$CLIENT_VERSION $GIT_VERSION $PYPROJECT_VERSION"
             test "$CLIENT_VERSION" = "$GIT_VERSION"
+            test "$CLIENT_VERSION" = "$PYPROJECT_VERSION"
             grep "$CLIENT_VERSION" CHANGELOG.rst
 
   test-3.7:
