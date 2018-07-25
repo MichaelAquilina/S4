@@ -1,0 +1,11 @@
+[tool.poetry]
+name = "s4"
+version = "0.2.18"
+license = "GPL-3.0"
+description = "ast and cheap synchronisation of files using Amazon S3"
+authors = ["Michael Aquilina <michaelaquilina@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "3.5+"
+
+[tool.poetry.dev-dependencies]
