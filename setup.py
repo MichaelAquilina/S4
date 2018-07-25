@@ -26,7 +26,7 @@ setup(
     license='GPLv3',
     author_email='michaelaquilina@gmail.com',
     url='https://github.com/MichaelAquilina/S4',
-    python_requires=">=3.4",
+    python_requires=">=3.5",
     keywords='aws s3 backup sync',
     entry_points={
         'console_scripts': ['s4=s4.cli:entry_point'],
@@ -38,7 +38,6 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: Implementation :: CPython',
