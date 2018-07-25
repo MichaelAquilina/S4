@@ -9,7 +9,7 @@ homepage = "https://github.com/MichaelAquilina/S4"
 keywords = ["aws", "s3", "backup", "sync"]
 
 [tool.poetry.dependencies]
-python = "3.5+"
+python = ">=3.5"
 boto3 = "^1.7"
 clint = "^0.5.1"
 filelock = "^3.0"
