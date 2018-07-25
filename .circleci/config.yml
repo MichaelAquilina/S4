@@ -16,7 +16,7 @@ test: &test
         name: run pytest
         command: |
           mkdir -p /tmp/test-results
-          PYTHONPATH="." pytest --cov=s4 --cov=tests --cov-report xml --junitxml=/tmp/test-results/pytest-results.xml
+          PYTHONPATH="." poetry run pytest --cov=s4 --cov=tests --cov-report xml --junitxml=/tmp/test-results/pytest-results.xml
 
           # Only upload for python 3.7 instead of uploading multiple
           if [[ "$CIRCLE_JOB" == "test-3.7" ]]; then
