@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.2.19 - 25-July-2018
+---------------------
+
+* Drop support for python 3.4
+* Remove enum34 and scandir as requirements
+* use poetry package manager
+* Migrate to CircleCI 2.0
+
 0.2.18 - 1-July-2018
 --------------------
 
