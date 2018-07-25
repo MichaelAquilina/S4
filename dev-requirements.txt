@@ -1,7 +1,0 @@
-Faker
-freezegun
-moto
-pytest
-pytest-cov
-pytest-timeout
-pytz
