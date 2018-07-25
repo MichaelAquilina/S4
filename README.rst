@@ -200,20 +200,6 @@ Contributing
 
 Pull requests are welcome! Make sure you pass all the tests, Travis will tell you if you don't ;)
 
-Running locally
-```````````````
-
-``tox`` is used to run the tests locally:
-
-::
-
-    pip install tox
-
-And then to run the tests locally:
-
-::
-
-    tox
 
 .. |CircleCI| image:: https://circleci.com/gh/MichaelAquilina/S4.svg?style=svg
    :target: https://circleci.com/gh/MichaelAquilina/S4
