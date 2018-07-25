@@ -4,7 +4,5 @@ filelock>=2.0.12
 python-magic>=0.4.12
 tabulate>=0.7.7
 tqdm>=4.8.4
-scandir>=1.5
 inotify-simple>=1.1.7
-enum34>=1.1.6
 pathspec>=0.5.6

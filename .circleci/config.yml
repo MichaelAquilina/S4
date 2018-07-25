@@ -64,18 +64,12 @@ jobs:
       - image: "python:3.5-stretch"
     <<: *test
 
-  test-3.4:
-    docker:
-      - image: "python:3.4-stretch"
-    <<: *test
-
 
 workflows:
   version: 2
   s4_test:
     jobs:
       - lint
-      - test-3.4
       - test-3.5
       - test-3.6
       - test-3.7
