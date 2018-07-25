@@ -46,9 +46,13 @@ jobs:
             black s4 tests --check
 
       - run:
+          name: install poetry
+          command: curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+
+      - run:
           name: version lint
           command: |
-            pip install .
+            poetry install
             test "$(s4 version)" = "$(git tag --sort "v:refname" | tail -1)"
             grep "$(s4 version)" CHANGELOG.rst
 
