@@ -39,7 +39,7 @@ See it in action here:
 Requirements
 ------------
 
-S4 requires python 3.4+ to work
+S4 requires python 3.5+ to work
 
 Installation
 ------------
