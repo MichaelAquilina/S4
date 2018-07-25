@@ -67,6 +67,20 @@ jobs:
 
 workflows:
   version: 2
+  monthly_test:
+    triggers:
+      - schedule:
+          cron: "0 0 1 * *"
+          filters:
+            branches:
+              only:
+              - master
+    jobs:
+      - lint
+      - test-3.5
+      - test-3.6
+      - test-3.7
+
   s4_test:
     jobs:
       - lint
