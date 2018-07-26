@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import mock
-
 import pytest
 
 from s4 import sync
 from s4.clients import SyncState, local, s3
 from s4.sync import Resolution
+
 from tests import utils
 
 

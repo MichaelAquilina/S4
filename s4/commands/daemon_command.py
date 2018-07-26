@@ -1,6 +1,8 @@
 #! -*- encoding: utf-8 -*-
 from collections import defaultdict
 
+from s4.commands import Command
+
 # Dont crash on import if the underlying operating system does not support INotify
 try:
     from inotify_simple import flags
@@ -9,8 +11,6 @@ try:
     supported = True
 except OSError:
     supported = False
-
-from s4.commands import Command
 
 
 class DaemonCommand(Command):

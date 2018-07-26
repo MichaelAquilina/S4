@@ -9,14 +9,11 @@ import os
 import zlib
 
 import boto3
-
-from botocore.exceptions import ClientError
-
 import magic
+from botocore.exceptions import ClientError
 
 from s4 import utils
 from s4.clients import SyncClient, SyncObject
-
 
 logger = logging.getLogger(__name__)
 

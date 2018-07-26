@@ -6,6 +6,7 @@ import json
 import mock
 
 from s4.commands.add_command import AddCommand
+
 from tests import utils
 
 

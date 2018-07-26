@@ -4,6 +4,7 @@ import argparse
 import json
 
 from s4.commands.rm_command import RmCommand
+
 from tests.utils import create_logger
 
 
