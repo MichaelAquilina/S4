@@ -5,7 +5,6 @@ import getpass
 import json
 import os
 
-
 CONFIG_FOLDER_PATH = os.path.expanduser("~/.config/s4")
 CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, "sync.conf")
 

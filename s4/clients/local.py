@@ -1,23 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import pathspec
 import gzip
 import json
 import logging
 import os
 import shutil
 import tempfile
-
-# Use the built-in version of scandir/walk if possible, otherwise
-# use the scandir module version
-try:
-    from os import scandir
-except ImportError:
-    from scandir import scandir
+from os import scandir
 
 import filelock
-
 import magic
+import pathspec
 
 from s4.clients import SyncClient, SyncObject
 

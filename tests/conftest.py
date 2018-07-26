@@ -5,14 +5,10 @@ import shutil
 import tempfile
 
 import boto3
-
-from faker import Faker
-
 import mock
-
 import moto
-
 import pytest
+from faker import Faker
 
 from s4.clients.local import LocalSyncClient
 from s4.clients.s3 import S3SyncClient

@@ -4,8 +4,7 @@ import argparse
 import logging
 import sys
 
-from s4 import VERSION
-from s4 import utils
+from s4 import VERSION, utils
 from s4.commands.add_command import AddCommand
 from s4.commands.daemon_command import DaemonCommand
 from s4.commands.edit_command import EditCommand

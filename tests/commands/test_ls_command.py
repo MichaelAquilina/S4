@@ -3,6 +3,7 @@
 import argparse
 
 from s4.commands.ls_command import LsCommand
+
 from tests.utils import create_logger, get_timestamp, set_local_index, set_s3_index
 
 
