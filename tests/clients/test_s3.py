@@ -4,16 +4,11 @@ import io
 import os
 
 import boto3
-
-from botocore.exceptions import ClientError
-
 import freezegun
-
 import mock
-
-from moto import mock_s3
-
 import pytest
+from botocore.exceptions import ClientError
+from moto import mock_s3
 
 from s4.clients import SyncObject, s3
 from s4.utils import to_timestamp

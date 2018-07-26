@@ -7,7 +7,6 @@ import os
 import zlib
 
 import freezegun
-
 import pytz
 
 from s4.utils import to_timestamp

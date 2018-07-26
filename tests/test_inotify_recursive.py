@@ -1,7 +1,6 @@
 #! -*- encoding: utf8 -*-
-from inotify_simple import flags
-
 import pytest
+from inotify_simple import flags
 
 from s4.inotify_recursive import INotifyRecursive
 

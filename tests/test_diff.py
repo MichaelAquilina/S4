@@ -3,6 +3,7 @@
 import mock
 
 from s4 import diff
+
 from tests import utils
 
 

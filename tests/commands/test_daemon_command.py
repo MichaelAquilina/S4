@@ -2,13 +2,12 @@
 
 import argparse
 
+import mock
+import pytest
 from inotify_simple import Event, flags
 
-import mock
-
-import pytest
-
 from s4.commands.daemon_command import DaemonCommand
+
 from tests.utils import create_logger
 
 

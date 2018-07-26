@@ -243,6 +243,20 @@ version = "3.0.4"
 
 [[package]]
 category = "dev"
+description = "the modular source code checker: pep8, pyflakes and co"
+name = "flake8"
+optional = false
+platform = "*"
+python-versions = "*"
+version = "3.5.0"
+
+[package.dependencies]
+mccabe = ">=0.6.0,<0.7.0"
+pycodestyle = ">=2.0.0,<2.4.0"
+pyflakes = ">=1.5.0,<1.7.0"
+
+[[package]]
+category = "dev"
 description = "Let your Python tests travel through time"
 name = "freezegun"
 optional = false
@@ -280,6 +294,15 @@ optional = false
 platform = "*"
 python-versions = "*"
 version = "1.1.7"
+
+[[package]]
+category = "dev"
+description = "A Python utility / library to sort Python imports."
+name = "isort"
+optional = false
+platform = "*"
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "4.3.4"
 
 [[package]]
 category = "dev"
@@ -328,6 +351,15 @@ optional = false
 platform = "UNKNOWN"
 python-versions = "*"
 version = "1.0"
+
+[[package]]
+category = "dev"
+description = "McCabe checker, plugin for flake8"
+name = "mccabe"
+optional = false
+platform = "*"
+python-versions = "*"
+version = "0.6.1"
 
 [[package]]
 category = "dev"
@@ -433,12 +465,30 @@ PyYAML = "*"
 
 [[package]]
 category = "dev"
+description = "Python style guide checker"
+name = "pycodestyle"
+optional = false
+platform = "*"
+python-versions = "*"
+version = "2.3.1"
+
+[[package]]
+category = "dev"
 description = "C parser in Python"
 name = "pycparser"
 optional = false
 platform = "Cross Platform"
 python-versions = "*"
 version = "2.18"
+
+[[package]]
+category = "dev"
+description = "passive checker of Python programs"
+name = "pyflakes"
+optional = false
+platform = "*"
+python-versions = "*"
+version = "1.6.0"
 
 [[package]]
 category = "dev"
@@ -679,7 +729,7 @@ python-versions = "*"
 version = "0.11.0"
 
 [metadata]
-content-hash = "92fdf5e02e960ca9436b51da037d3f9bbb586db507eb3b8068b7fe7910941c65"
+content-hash = "28e65d05123f9ce6316086073f4a32c3db12e8d9e676272c54ccd11e66ed4917"
 platform = "*"
 python-versions = ">=3.5"
 
@@ -705,15 +755,18 @@ docker-pycreds = ["0a941b290764ea7286bd77f54c0ace43b86a8acd6eb9ead3de9840af52384
 docutils = ["02aec4bd92ab067f6ff27a38a38a41173bf01bed8f89157768c1573f53e474a6", "51e64ef2ebfb29cae1faa133b3710143496eca21c530f3f71424d77687764274", "7a4bd47eaf6596e1295ecb11361139febe29b084a87bf005bf899f9a42edc3c6"]
 faker = ["0e9a1227a3a0f3297a485715e72ee6eb77081b17b629367042b586e38c03c867", "b4840807a94a3bad0217d6ed3f9b65a1cc6e1db1c99e1184673056ae2c0a4c4d"]
 filelock = ["011327d4ed939693a5b28c0fdf2fd9bda1f68614c1d6d0643a89382ce9843a71"]
+flake8 = ["7253265f7abd8b313e3892944044a365e3f4ac3fcdcfb4298f55ee9ddf188ba0", "c7841163e2b576d435799169b78703ad6ac1bbb0f199994fc05f700b2a90ea37"]
 freezegun = ["703caac155dcaad61f78de4cb0666dca778d854dfb90b3699930adee0559a622", "94c59d69bb99c9ec3ca5a3adb41930d3ea09d2a9756c23a02d89fa75646e78dd"]
 futures = ["51ecb45f0add83c806c68e4b06106f90db260585b25ef2abfcda0bd95c0132fd", "c4884a65654a7c45435063e14ae85280eb1f111d94e542396717ba9828c4337f"]
 idna = ["156a6814fb5ac1fc6850fb002e0852d56c0c8d2531923a51032d1b70760e186e", "684a38a6f903c1d71d6d5fac066b58d7768af4de2b832e426ec79c30daa94a16"]
 inotify-simple = ["98edd756c5d876ef2296649209b17a474dfcd75fe611ae33e9e47a46d0dd71cb"]
+isort = ["1153601da39a25b14ddc54955dbbacbb6b2d19135386699e2ad58517953b34af", "b9c40e9750f3d77e6e4d441d8b0266cf555e7cdabdcff33c4fd06366ca761ef8", "ec9ef8f4a9bc6f71eec99e1806bfa2de401650d996c59330782b89a5555c1497"]
 jinja2 = ["74c935a1b8bb9a3947c50a54766a969d4846290e1e788ea44c1392163723c3bd", "f84be1bb0040caca4cea721fcbbbbd61f9be9464ca236387158b0feea01914a4"]
 jmespath = ["6a81d4c9aa62caf061cb517b4d9ad1dd300374cd4706997aff9cd6aedd61fc64", "f11b4461f425740a1d908e9a3f7365c3d2e569f6ca68a2ff8bc5bcd9676edd63"]
 jsondiff = ["2d0437782de9418efa34e694aa59f43d7adb1899bd9a793f063867ddba8f7893"]
 jsonpickle = ["545b3bee0d65e1abb4baa1818edcc9ec239aa9f2ffbfde8084d71c056180054f"]
 markupsafe = ["a6be69091dac236ea9c6bc7d012beab42010fa914c459791d627dad4910eb665"]
+mccabe = ["ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42", "dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"]
 mock = ["5ce3c71c5545b472da17b72268978914d0252980348636840bd34a00b5cc96c1", "b158b6df76edd239b8208d481dc46b6afd45a846b7812ff0ce58971cf5bc8bba"]
 more-itertools = ["2b6b9893337bfd9166bee6a62c2b0c9fe7735dcf85948b387ec8cba30e85d8e8", "6703844a52d3588f951883005efcf555e49566a48afd4db4e965d69b883980d3", "a18d870ef2ffca2b8463c0070ad17b5978056f403fb64e3f15fe62a52db21cc0"]
 moto = ["45d14aca2b06b0083d5e82cfd770ebca0ba77b5070aec6928670240939a78681", "ee71b515ba34d64c5f625950fc995594040f793a4a106614ff108ae02c1a2896"]
@@ -722,7 +775,9 @@ pbr = ["1b8be50d938c9bb75d0eaf7eda111eec1bf6dc88a62a6412e33bf077457e0f45", "b486
 pluggy = ["7f8ae7f5bdf75671a718d2daf0a64b7885f74510bcd98b1a0bb420eb9a9d0cff", "d345c8fe681115900d6da8d048ba67c25df42973bda370783cd58826442dcd7c", "e160a7fcf25762bb60efc7e171d4497ff1d8d2d75a3d0df7a21b76821ecbf5c5"]
 py = ["3fd59af7435864e1a243790d322d763925431213b6b8529c6ca71081ace3bbf7", "e31fb2767eb657cbde86c454f02e99cb846d3cd9d61b318525140214fdc0e98e"]
 pyaml = ["66623c52f34d83a2c0fc963e08e8b9d0c13d88404e3b43b1852ef71eda19afa3", "f83fc302c52c6b83a15345792693ae0b5bc07ad19f59e318b7617d7123d62990"]
+pycodestyle = ["682256a5b318149ca0d2a9185d365d8864a768a28db66a84a2ea946bcc426766", "6c4245ade1edfad79c3446fadfc96b0de2759662dc29d07d80a6f27ad1ca6ba9"]
 pycparser = ["99a8ca03e29851d96616ad0404b4aad7d9ee16f25c9f9708a11faf2810f7b226"]
+pyflakes = ["08bd6a50edf8cffa9fa09a463063c425ecaaf10d1eb0335a7e8b1401aef89e6f", "8d616a382f243dbf19b54743f280b80198be0bca3a5396f1d2e1fca6223e8805"]
 pypiwin32 = ["0cece5cf12ae7f4b32764db8a12cdb1a8b27184be681e0cfbd2996f0cc07376f", "ceacd1b853fd9f521808d52554a1dcf1231d63c0e7409898ca6502e73e447b6b", "06d478295c89dbdd4187e1ac099bb8eab93c29e298bded4e2fbc77009287fa44", "0b8f74a48021d71c8645d4a9de5426dcd800976a96d9a3bfb90136b24b9318a6", "34fd396098d5b29b2a1ae71db5ca9ba91e1c6c5b7fb7fbff1296e0d45f0b103f", "44217c51c54b1dd0de31bdad270d5e18dab0c8fa8c121ddf63fa86fa5991787f", "5618522ad9c2b229d8a9a1c5175d135a397bf70d6db1d352adf0131aa5321258", "5e0101cb712a3b90ee1ccdf8b90ae48958c78e8f1584e958db85bb1a403a91d2", "5e64895aed07c7124b57ff21e48ee0ca4caa9d1f85042b1e7c35eecd0e2f01be", "69f63942403f5a6262f05602106ef4921db582df83c59b1a3571995652a6c762", "74ac5855269b3d67458815a709f083e74961fd5d558a4b9e1307eaa6c832d827", "794150d9e0c1fc61a9f5845d88028d24ffdf78253f03d7d623e0e1c103b5d92b", "ca375fdf0adb961d1988786aa2bcb54aac23fd1a647b591ccf44e0965a6dc51f", "ec4b285e1a58dc6eeaa331d5d278dbc6e9da3fa2675cbb803a9c88d2b9c43f79", "f226481dade2c075e7f488485b6e18a279367b94a019baf71493fab475f3a4b8", "f811d494040e91e38f01ef1e127177bbb9fdc350126a11cd65ac5db6cad2b92e", "fbe640e946e2fcd983048e2c40bee28eba884a9e0178fb1cf03e1d365abd8e3f"]
 pytest = ["0453c8676c2bee6feb0434748b068d5510273a916295fd61d306c4f22fbfd752", "4b208614ae6d98195430ad6bde03641c78553acee7c83cec2e85d613c0cd383d"]
 pytest-cov = ["03aa752cf11db41d281ea1d807d954c4eda35cfa1b21d6971966cc041bbf6e2d", "890fe5565400902b0c78b5357004aab1c814115894f4f21370e2433256a3eeec"]
