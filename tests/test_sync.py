@@ -415,9 +415,6 @@ class TestRunResolutions(object):
             )
 
     def test_correct_output(self, local_client, s3_client):
-        def keyboard_interrupt():
-            raise KeyboardInterrupt()
-
         clients = [local_client, s3_client]
         worker = sync.SyncWorker(local_client, s3_client)
 
