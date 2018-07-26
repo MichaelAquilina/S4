@@ -23,15 +23,6 @@ fake = Faker()
 
 
 @pytest.fixture
-def a_logger():
-    result = logging.getLogger(str(uuid.uuid4()))
-    result.setLevel(logging.INFO)
-    result.handlers = []
-    result.addHandler(logging.StreamHandler())
-    return result
-
-
-@pytest.fixture
 def config_file():
     fd, temp_path = tempfile.mkstemp()
     mocker = mock.patch("s4.utils.CONFIG_FILE_PATH", temp_path)
