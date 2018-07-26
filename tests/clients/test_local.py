@@ -12,6 +12,7 @@ import mock
 import pytest
 
 from s4.clients import SyncObject, local
+
 from tests import utils
 
 

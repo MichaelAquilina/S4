@@ -40,6 +40,12 @@ jobs:
             flake8 s4 tests
 
       - run:
+          name: check isort ordering
+          command: |
+            pip install isort
+            isort s4 tests --diff
+
+      - run:
           name: check black formatting
           command: |
             pip install black
