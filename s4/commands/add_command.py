@@ -40,9 +40,6 @@ class AddCommand(Command):
         if not name:
             name = default_name
 
-        if "targets" not in self.config:
-            self.config["targets"] = {}
-
         self.config["targets"][name] = entry
 
         utils.set_config(self.config)
