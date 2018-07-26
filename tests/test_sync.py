@@ -155,13 +155,11 @@ class TestGetSyncStates(object):
         assert unhandled_events == {}
 
 
-def assert_contents(clients, key, data=None, timestamp=None):
+def assert_contents(clients, key, data=None):
     for client in clients:
         sync_object = client.get(key)
         if data is not None:
             assert sync_object.fp.read() == data
-        if timestamp is not None:
-            assert sync_object.timestamp == timestamp
 
 
 def assert_remote_timestamp(clients, key, expected_timestamp):
@@ -188,13 +186,6 @@ class TestSyncWorker(object):
         assert (
             repr(worker) == "SyncWorker</home/bobs/burgers/, s3://burgerbucket/foozie/>"
         )
-
-
-def TestGetResolution(object):
-    def test_unknown(self, local_client, s3_client):
-        state = SyncState("unkonwn state", None, None)
-        with pytest.raises(ValueError):
-            sync.get_resolution("test", state, local_client, s3_client)
 
 
 class TestIntegrations(object):
