@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import logging
 import os
 import shutil
 import tempfile
-import uuid
 
 import boto3
 
