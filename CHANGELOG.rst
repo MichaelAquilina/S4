@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.2.20 - 26-July-2018
+---------------------
+
+* Add missing README entry to pypi
+
 0.2.19 - 25-July-2018
 ---------------------
 
