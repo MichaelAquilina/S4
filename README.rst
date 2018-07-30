@@ -2,7 +2,7 @@
 S4 = S3 Syncer
 ==============
 
-|CircleCI| |CodeCov| |PyPi| |GPLv3|
+|CircleCI| |CodeCov| |Black| |PyPi| |GPLv3|
 
 Fast and cheap synchronisation of files using `Amazon
 S3 <https://aws.amazon.com/s3/>`__.
@@ -215,3 +215,6 @@ Pull requests are welcome! Make sure you pass all the tests, Travis will tell yo
 
 .. |ASCIINEMA| image:: https://asciinema.org/a/0GiXLN7YT4ki8qouedF0w8Wbk.png
    :target: https://asciinema.org/a/0GiXLN7YT4ki8qouedF0w8Wbk?autoplay=1
+
+.. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/ambv/black
