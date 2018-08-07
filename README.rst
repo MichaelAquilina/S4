@@ -21,10 +21,6 @@ You can also take advantage of other cool features that S3 provides like
 Everytime you sync a version of a new file, you will now have the
 ability to easily rollback to any previous version.
 
-See it in action here:
-
-|ASCIINEMA|
-
 * Requirements_
 * Installation_
 * Setup_
@@ -35,6 +31,10 @@ See it in action here:
 * `Ignoring Files`_
 * `Why?`_
 * Contributing_
+
+See it in action here:
+
+|ASCIINEMA|
 
 Requirements
 ------------
@@ -152,8 +152,8 @@ This is compressed (currently using gzip) to save space and increase
 performance when loading.
 
 If you are curious, you can view the contents of an index file using the
-`s4 ls` subcommand or you can view the file directly using a command
-like `zcat`.
+``s4 ls`` subcommand or you can view the file directly using a command
+like ``zcat``.
 
     NOTE: Deleting this file will result in that folder being treated as if
     it was never synced before so make sure you *do not* delete it unless
@@ -198,7 +198,7 @@ Here are is a list of open source solutions that I have tried in the past.
 Contributing
 ------------
 
-Pull requests are welcome! Make sure you pass all the tests, Travis will tell you if you don't ;)
+Pull requests are welcome! Make sure you pass all the tests, CircleCI will tell you if you don't ;)
 
 
 .. |CircleCI| image:: https://circleci.com/gh/MichaelAquilina/S4.svg?style=svg
