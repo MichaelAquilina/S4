@@ -9,9 +9,17 @@ test: &test
     - run:
         name: install poetry
         command: curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+    - restore_cache:
+        keys:
+          - pip-dependencies-{{ checksum "pyproject.lock" }}-{{ .Environment.CIRCLE_JOB }}
     - run:
         name: install python dependencies
         command: poetry install
+    - save_cache:
+        key: pip-dependencies-{{ checksum "pyproject.lock" }}-{{ .Environment.CIRCLE_JOB }}
+        paths:
+        - ~/.cache/pip
+
     - run:
         name: run pytest
         command: |
