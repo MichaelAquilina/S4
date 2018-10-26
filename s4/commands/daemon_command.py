@@ -11,6 +11,8 @@ try:
     supported = True
 except OSError:
     supported = False
+except ModuleNotFoundError:
+    supported = False
 
 
 class DaemonCommand(Command):

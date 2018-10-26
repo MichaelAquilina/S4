@@ -47,8 +47,12 @@ def handle_conflict(key, action_1, client_1, action_2, client_2):
 
 
 def display_progress_bar(sync_object):
+    if hasattr(sync_object, 'total_size'):
+        total_size = sync_object.total_size 
+    else:
+        total_size = 0
     ProgressBar(
-        total=sync_object.total_size,
+        total=total_size,
         leave=False,
         ncols=80,
         unit="B",

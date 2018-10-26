@@ -12,6 +12,8 @@ import boto3
 import magic
 from botocore.exceptions import ClientError
 
+import posixpath
+
 from s4 import utils
 from s4.clients import SyncClient, SyncObject
 
@@ -20,6 +22,11 @@ logger = logging.getLogger(__name__)
 
 S3Uri = collections.namedtuple("S3Uri", ["bucket", "key"])
 
+python_ignore = os.environ.get('PYTHONWARNINGS')
+if python_ignore == 'ignore:Unverified HTTPS request':
+    verifySSL = False
+else:
+    verifySSL = True
 
 def get_s3_client(target, aws_access_key_id, aws_secret_access_key, region_name):
     s3_uri = parse_s3_uri(target)
@@ -28,6 +35,7 @@ def get_s3_client(target, aws_access_key_id, aws_secret_access_key, region_name)
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,
         region_name=region_name,
+        verify=verifySSL
     )
     return S3SyncClient(s3_client, s3_uri.bucket, s3_uri.key)
 
@@ -79,10 +87,10 @@ class S3SyncClient(SyncClient):
         return "S3SyncClient<{}, {}>".format(self.bucket, self.prefix)
 
     def get_uri(self, key=""):
-        return "s3://{}/{}".format(self.bucket, os.path.join(self.prefix, key))
+        return "s3://{}/{}".format(self.bucket, posixpath.join(self.prefix, key))
 
     def index_path(self):
-        return os.path.join(self.prefix, ".index")
+        return posixpath.join(self.prefix, ".index")
 
     @property
     def index(self):
@@ -97,7 +105,7 @@ class S3SyncClient(SyncClient):
     def put(self, key, sync_object, callback=None):
         self.boto.upload_fileobj(
             Bucket=self.bucket,
-            Key=os.path.join(self.prefix, key),
+            Key=posixpath.join(self.prefix, key),
             Fileobj=sync_object.fp,
             Callback=callback,
         )
@@ -106,7 +114,7 @@ class S3SyncClient(SyncClient):
     def get(self, key):
         try:
             resp = self.boto.get_object(
-                Bucket=self.bucket, Key=os.path.join(self.prefix, key)
+                Bucket=self.bucket, Key=posixpath.join(self.prefix, key)
             )
             return SyncObject(
                 resp["Body"],
@@ -119,7 +127,7 @@ class S3SyncClient(SyncClient):
     def delete(self, key):
         resp = self.boto.delete_objects(
             Bucket=self.bucket,
-            Delete={"Objects": [{"Key": os.path.join(self.prefix, key)}]},
+            Delete={"Objects": [{"Key": posixpath.join(self.prefix, key)}]},
         )
         return "Deleted" in resp
 
@@ -187,7 +195,7 @@ class S3SyncClient(SyncClient):
     def get_real_local_timestamp(self, key):
         try:
             response = self.boto.head_object(
-                Bucket=self.bucket, Key=os.path.join(self.prefix, key)
+                Bucket=self.bucket, Key=posixpath.join(self.prefix, key)
             )
             return utils.to_timestamp(response["LastModified"])
         except ClientError:
@@ -240,7 +248,7 @@ class S3SyncClient(SyncClient):
         self._ignore_files = copy.copy(self.DEFAULT_IGNORE_FILES)
         try:
             response = self.boto.get_object(
-                Bucket=self.bucket, Key=os.path.join(self.prefix, ".syncignore")
+                Bucket=self.bucket, Key=posixpath.join(self.prefix, ".syncignore")
             )
             data = response["Body"].read()
             data = data.decode("utf8")
