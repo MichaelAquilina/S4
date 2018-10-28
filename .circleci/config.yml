@@ -80,6 +80,11 @@ jobs:
       - image: "python:3.5-stretch"
     <<: *test
 
+  test-osx:
+    macos:
+      xcode: "9.0"
+    <<: *test
+
 
 workflows:
   version: 2
@@ -96,6 +101,7 @@ workflows:
       - test-3.5
       - test-3.6
       - test-3.7
+      - test-osx
 
   s4_test:
     jobs:
@@ -103,3 +109,4 @@ workflows:
       - test-3.5
       - test-3.6
       - test-3.7
+      - test-osx
