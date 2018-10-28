@@ -31,7 +31,7 @@ class TestEditCommand(object):
         assert err == ('"idontexist" is an unknown target\n' "Choices are: ['foo']\n")
 
     def test_no_changes(self, get_input, config_file):
-        fake_stream = utils.FakeInputStream(["", "", "", "", ""])
+        fake_stream = utils.FakeInputStream(["", "", "", "", "", ""])
         get_input.side_effect = fake_stream
 
         args = argparse.Namespace(target="foo")
@@ -39,6 +39,7 @@ class TestEditCommand(object):
             "targets": {
                 "foo": {
                     "local_folder": "/home/mark/documents",
+                    "endpoint_url": "https://customurl.com",
                     "s3_uri": "s3://buckets/mybackup",
                     "aws_access_key_id": "23123123123313",
                     "aws_secret_access_key": "edwdadwadwadwdd",
@@ -56,6 +57,7 @@ class TestEditCommand(object):
             "targets": {
                 "foo": {
                     "local_folder": "/home/mark/documents",
+                    "endpoint_url": "https://customurl.com",
                     "s3_uri": "s3://buckets/mybackup",
                     "aws_access_key_id": "23123123123313",
                     "aws_secret_access_key": "edwdadwadwadwdd",
@@ -69,6 +71,7 @@ class TestEditCommand(object):
         fake_stream = utils.FakeInputStream(
             [
                 "/home/user/Documents",
+                "https://example.com",
                 "s3://buckets/mybackup222",
                 "9999999999",
                 "bbbbbbbbbbbbbbbbbbbbbbbb",
@@ -82,6 +85,7 @@ class TestEditCommand(object):
             "targets": {
                 "foo": {
                     "local_folder": "/home/mark/documents",
+                    "endpoint_url": "",
                     "s3_uri": "s3://buckets/mybackup",
                     "aws_access_key_id": "23123123123313",
                     "aws_secret_access_key": "edwdadwadwadwdd",
@@ -99,6 +103,7 @@ class TestEditCommand(object):
             "targets": {
                 "foo": {
                     "local_folder": "/home/user/Documents",
+                    "endpoint_url": "https://example.com",
                     "s3_uri": "s3://buckets/mybackup222",
                     "aws_access_key_id": "9999999999",
                     "aws_secret_access_key": "bbbbbbbbbbbbbbbbbbbbbbbb",
