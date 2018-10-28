@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 
 import mock
 
@@ -16,6 +17,7 @@ class TestAddCommand(object):
         fake_stream = utils.FakeInputStream(
             [
                 "/home/user/Documents",
+                None,
                 "s3://mybucket/Documents",
                 "eu-west-2",
                 "aaaaaaaaaaaaaaaaaaaaaaaa",
@@ -36,6 +38,7 @@ class TestAddCommand(object):
             "targets": {
                 "Documents": {
                     "local_folder": "/home/user/Documents",
+                    "endpoint_url": None,
                     "s3_uri": "s3://mybucket/Documents",
                     "aws_access_key_id": "aaaaaaaaaaaaaaaaaaaaaaaa",
                     "aws_secret_access_key": "bbbbbbbbbbbbbbbbbbbbbbbb",
@@ -45,9 +48,32 @@ class TestAddCommand(object):
         }
         assert new_config == expected_config
 
+    def test_default_local_folder(self, get_input, config_file):
+        fake_stream = utils.FakeInputStream(
+            [
+                None,
+                None,
+                "s3://mybucket/Documents",
+                "eu-west-2",
+                "aaaaaaaaaaaaaaaaaaaaaaaa",
+                "bbbbbbbbbbbbbbbbbbbbbbbb",
+                "",
+            ]
+        )
+        get_input.side_effect = fake_stream
+        args = argparse.Namespace(copy_target_credentials=None)
+
+        command = AddCommand(args, {"targets": {}}, utils.create_logger())
+        command.run()
+
+        with open(config_file, "r") as fp:
+            config = json.load(fp)
+
+        assert config["targets"]["Documents"]["local_folder"] == os.getcwd()
+
     def test_copy_target_credentials(self, get_input, config_file):
         fake_stream = utils.FakeInputStream(
-            ["/home/user/Animals", "s3://mybucket/Zoo", "us-west-2", "Beasts"]
+            ["/home/user/Animals", None, "s3://mybucket/Zoo", "us-west-2", "Beasts"]
         )
         get_input.side_effect = fake_stream
         args = argparse.Namespace(copy_target_credentials="bar")
@@ -77,6 +103,7 @@ class TestAddCommand(object):
                 },
                 "Beasts": {
                     "local_folder": "/home/user/Animals",
+                    "endpoint_url": None,
                     "s3_uri": "s3://mybucket/Zoo",
                     "aws_access_key_id": "so-much-bar",
                     "aws_secret_access_key": "bar-secretz",
@@ -88,7 +115,7 @@ class TestAddCommand(object):
 
     def test_copy_target_credentials_bad_target(self, get_input, capsys):
         fake_stream = utils.FakeInputStream(
-            ["/home/user/Animals", "s3://mybucket/Zoo", "us-west-2", "Beasts"]
+            ["/home/user/Animals", "", "s3://mybucket/Zoo", "us-west-2", "Beasts"]
         )
         get_input.side_effect = fake_stream
         args = argparse.Namespace(copy_target_credentials="Foo")
@@ -104,6 +131,7 @@ class TestAddCommand(object):
         fake_stream = utils.FakeInputStream(
             [
                 "/home/user/Music",
+                None,
                 "s3://mybucket/Musiccccc",
                 "us-west-1",
                 "1234567890",
@@ -124,6 +152,7 @@ class TestAddCommand(object):
             "targets": {
                 "Tunes": {
                     "local_folder": "/home/user/Music",
+                    "endpoint_url": None,
                     "s3_uri": "s3://mybucket/Musiccccc",
                     "aws_access_key_id": "1234567890",
                     "aws_secret_access_key": "abcdefghij",

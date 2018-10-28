@@ -14,8 +14,18 @@ class AddCommand(Command):
             self.logger.info("Choices are: %s", all_targets)
             return
 
+        self.logger.info("To add a new target, please enter the following\n")
+
         entry = {}
-        entry["local_folder"] = os.path.expanduser(utils.get_input("local folder: "))
+        local_folder = utils.get_input(
+            "local folder (leave blank for current folder): "
+        )
+        if not local_folder:
+            local_folder = os.getcwd()
+
+        entry["local_folder"] = os.path.expanduser(local_folder)
+
+        entry["endpoint_url"] = utils.get_input("endpoint url (leave blank for AWS): ")
         entry["s3_uri"] = utils.get_input("s3 uri: ")
         entry["region_name"] = utils.get_input("region name: ")
 

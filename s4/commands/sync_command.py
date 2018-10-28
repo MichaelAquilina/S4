@@ -109,7 +109,7 @@ class SyncCommand(Command):
                         self.logger.exception(e)
                     else:
                         self.logger.error(
-                            "There was an error syncing '%s': %s", name, e
+                            "There was an error syncing '%s':\n%s", name, e
                         )
 
         except KeyboardInterrupt:
