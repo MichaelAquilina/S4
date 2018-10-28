@@ -21,6 +21,7 @@ class Command(object):
         target_2 = entry["s3_uri"]
         aws_access_key_id = entry["aws_access_key_id"]
         aws_secret_access_key = entry["aws_secret_access_key"]
+        endpoint_url = entry.get("endpoint_url", None)
         region_name = entry["region_name"]
 
         # append trailing slashes to prevent incorrect prefix matching on s3
@@ -31,6 +32,10 @@ class Command(object):
 
         client_1 = get_local_client(target_1)
         client_2 = get_s3_client(
-            target_2, aws_access_key_id, aws_secret_access_key, region_name
+            target_2,
+            aws_access_key_id,
+            aws_secret_access_key,
+            endpoint_url,
+            region_name,
         )
         return client_1, client_2

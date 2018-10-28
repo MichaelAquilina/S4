@@ -18,7 +18,9 @@ def get_input(*args, secret=False, **kwargs):
     if secret:
         return getpass.getpass(*args, **kwargs)
     else:
-        return input(*args, **kwargs)
+        value = input(*args, **kwargs)
+        # Normalise empty inputs to None
+        return value if value else None
 
 
 def get_config():
@@ -35,4 +37,4 @@ def set_config(config):
         os.makedirs(CONFIG_FOLDER_PATH)
 
     with open(CONFIG_FILE_PATH, "w") as fp:
-        json.dump(config, fp)
+        json.dump(config, fp, indent=5)
