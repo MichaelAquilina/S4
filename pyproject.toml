@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "s4"
-version = "0.2.20"
+version = "0.2.21"
 license = "GPL-3.0"
 description = "Fast and cheap synchronisation of files using Amazon S3"
 authors = ["Michael Aquilina <michaelaquilina@gmail.com>"]
