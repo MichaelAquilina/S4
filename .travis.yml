@@ -1,0 +1,5 @@
+os: windows
+language: bash
+
+before_install:
+  - choco install pip
