@@ -130,8 +130,8 @@ class TestSyncCommand(object):
         assert SyncWorker.call_count == 2
         assert out == ""
         assert err == (
-            "There was an error syncing 'bar': something bad happened\n"
-            "There was an error syncing 'foo': something bad happened\n"
+            "There was an error syncing 'bar':\nsomething bad happened\n"
+            "There was an error syncing 'foo':\nsomething bad happened\n"
         )
 
     def test_sync_error_debug(self, SyncWorker, capsys):

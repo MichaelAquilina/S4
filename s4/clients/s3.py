@@ -21,13 +21,16 @@ logger = logging.getLogger(__name__)
 S3Uri = collections.namedtuple("S3Uri", ["bucket", "key"])
 
 
-def get_s3_client(target, aws_access_key_id, aws_secret_access_key, region_name):
+def get_s3_client(
+    target, aws_access_key_id, aws_secret_access_key, endpoint_url, region_name
+):
     s3_uri = parse_s3_uri(target)
     s3_client = boto3.client(
         "s3",
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,
         region_name=region_name,
+        endpoint_url=endpoint_url,
     )
     return S3SyncClient(s3_client, s3_uri.bucket, s3_uri.key)
 
