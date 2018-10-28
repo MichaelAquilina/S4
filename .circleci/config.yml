@@ -8,7 +8,7 @@ test: &test
         command: apt-get update && apt-get install -y less
     - run:
         name: install poetry
-        command: curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+        command: pip install poetry
     - run:
         name: install python dependencies
         command: poetry install
@@ -17,11 +17,7 @@ test: &test
         command: |
           mkdir -p /tmp/test-results
           PYTHONPATH="." poetry run pytest --cov=s4 --cov=tests --cov-report xml --junitxml=/tmp/test-results/pytest-results.xml
-
-          # Only upload for python 3.7 instead of uploading multiple
-          if [[ "$CIRCLE_JOB" == "test-3.7" ]]; then
-            bash <(curl -s https://codecov.io/bash)
-          fi
+          bash <(curl -s https://codecov.io/bash)
 
     - store_test_results:
         path: /tmp/test-results
@@ -53,7 +49,7 @@ jobs:
 
       - run:
           name: install poetry
-          command: curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+          command: pip install poetry
 
       - run:
           name: version lint
