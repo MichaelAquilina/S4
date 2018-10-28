@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.3.0 - 28-October-2018
+-----------------------
+
+* Support alternative services like Minio (Resolves #134)
+
+
 0.2.21 - 28-October-2018
 ------------------------
 
