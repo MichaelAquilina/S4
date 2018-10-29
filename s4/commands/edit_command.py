@@ -21,12 +21,14 @@ class EditCommand(Command):
         entry = self.config["targets"][self.args.target]
 
         local_folder = entry.get("local_folder", "")
+        endpoint_url = entry.get("endpoint_url")
         s3_uri = entry.get("s3_uri", "")
         aws_access_key_id = entry.get("aws_access_key_id")
         aws_secret_access_key = entry.get("aws_secret_access_key")
         region_name = entry.get("region_name")
 
         new_local_folder = utils.get_input("local folder [{}]: ".format(local_folder))
+        new_endpoint_url = utils.get_input("endpoint url [{}]: ".format(endpoint_url))
         new_s3_uri = utils.get_input("s3 uri [{}]: ".format(s3_uri))
         new_aws_access_key_id = utils.get_input(
             "AWS Access Key ID [{}]: ".format(aws_access_key_id)
@@ -45,6 +47,8 @@ class EditCommand(Command):
             entry["aws_access_key_id"] = new_aws_access_key_id
         if new_aws_secret_access_key:
             entry["aws_secret_access_key"] = new_aws_secret_access_key
+        if new_endpoint_url:
+            entry["endpoint_url"] = new_endpoint_url
         if new_region_name:
             entry["region_name"] = new_region_name
 

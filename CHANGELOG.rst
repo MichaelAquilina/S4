@@ -1,6 +1,18 @@
 Changelog
 =========
 
+0.3.0 - 28-October-2018
+-----------------------
+
+* Support alternative services like Minio (Resolves #134)
+
+
+0.2.21 - 28-October-2018
+------------------------
+
+* Fix crash on windows due to not supporting inotify
+
+
 0.2.20 - 26-July-2018
 ---------------------
 

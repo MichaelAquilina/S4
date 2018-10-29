@@ -299,7 +299,7 @@ class SyncWorker(object):
                     success.append(key)
                 except Exception as e:
                     self.logger.error(
-                        "An error occurred while trying to update %s: %s", key, e
+                        "An error occurred while trying to update %s:\n%s", key, e
                     )
                     self.logger.debug(traceback.format_exc())
         except KeyboardInterrupt:
