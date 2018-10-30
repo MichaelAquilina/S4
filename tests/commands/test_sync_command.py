@@ -14,7 +14,7 @@ from s4.commands.sync_command import (
 from s4.resolution import Resolution
 from s4.sync import SyncWorker
 
-from tests.utils import FakeInputStream, create_logger, set_local_contents
+from tests.utils import create_logger, set_local_contents
 
 
 @mock.patch("s4.utils.get_input")
@@ -48,7 +48,7 @@ class TestHandleConflict(object):
 
     @mock.patch("s4.commands.sync_command.show_diff")
     def test_diff(self, show_diff, get_input, s3_client, local_client):
-        get_input.side_effect = FakeInputStream(["d", "X"])
+        get_input.side_effect = ["d", "X"]
 
         action_1 = SyncState(SyncState.UPDATED, 1111, 2222)
         action_2 = SyncState(SyncState.DELETED, 3333, 4444)
