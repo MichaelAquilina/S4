@@ -18,16 +18,24 @@ class AddCommand(Command):
 
         entry = {}
         local_folder = utils.get_input(
-            "local folder (leave blank for current folder): "
+            "local folder path to sync (leave blank for current folder): "
         )
         if not local_folder:
             local_folder = os.getcwd()
 
-        entry["local_folder"] = os.path.expanduser(local_folder)
+        local_folder = os.path.expanduser(local_folder)
+        local_folder = os.path.abspath(local_folder)
+
+        entry["local_folder"] = local_folder
 
         entry["endpoint_url"] = utils.get_input("endpoint url (leave blank for AWS): ")
-        entry["s3_uri"] = utils.get_input("s3 uri: ")
-        entry["region_name"] = utils.get_input("region name: ")
+
+        bucket = utils.get_input("S3 Bucket (required): ", required=True)
+        path = utils.get_input("S3 Path (required): ", required=True)
+
+        entry["s3_uri"] = "s3://{}/{}".format(bucket, path)
+
+        entry["region_name"] = utils.get_input("region name (leave blank if unknown): ")
 
         if target is not None:
             entry["aws_access_key_id"] = self.config["targets"][target][
@@ -37,18 +45,26 @@ class AddCommand(Command):
                 "aws_secret_access_key"
             ]
         else:
-            entry["aws_access_key_id"] = utils.get_input("AWS Access Key ID: ")
+            entry["aws_access_key_id"] = utils.get_input(
+                "AWS Access Key ID (required): ", required=True
+            )
             entry["aws_secret_access_key"] = utils.get_input(
-                "AWS Secret Access Key: ", secret=True
+                "AWS Secret Access Key (required): ", secret=True, required=True
             )
 
         default_name = os.path.basename(entry["s3_uri"])
         name = utils.get_input(
-            "Provide a name for this entry [{}]: ".format(default_name)
+            "Provide a name for this entry (leave blank to default to '{}'): ".format(
+                default_name
+            )
         )
 
         if not name:
             name = default_name
+
+        self.logger.info(
+            "\nYou can edit anything you have entered here using the 'edit' command"
+        )
 
         self.config["targets"][name] = entry
 
