@@ -12,17 +12,6 @@ import pytz
 from s4.utils import to_timestamp
 
 
-class FakeInputStream(object):
-    def __init__(self, results):
-        self.results = results
-        self.index = 0
-
-    def __call__(self, *args, **kwargs):
-        output = self.results[self.index]
-        self.index += 1
-        return output
-
-
 class InterruptedBytesIO(object):
     """
     Test helper class that imitates a BytesIO stream. Will return a stream of 0s for
