@@ -100,8 +100,8 @@ class SyncCommand(Command):
                     self.logger.info(
                         "Syncing %s [%s <=> %s]",
                         name,
-                        client_1.get_uri(),
-                        client_2.get_uri(),
+                        client_1.get_uri_local(),
+                        client_2.get_uri_local(),
                     )
                     worker.sync(
                         conflict_choice=self.args.conflicts, dry_run=self.args.dry_run
