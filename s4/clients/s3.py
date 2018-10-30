@@ -22,11 +22,12 @@ logger = logging.getLogger(__name__)
 
 S3Uri = collections.namedtuple("S3Uri", ["bucket", "key"])
 
-python_ignore = os.environ.get('PYTHONWARNINGS')
-if python_ignore == 'ignore:Unverified HTTPS request':
+ssl_cert = os.environ.get('REQUESTS_CA_BUNDLE', '')
+verifySSL = True
+if ssl_cert != '':
+    verifySSL = ssl_cert
+if ssl_cert == 'IGNORE':
     verifySSL = False
-else:
-    verifySSL = True
 
 def get_s3_client(
     target, aws_access_key_id, aws_secret_access_key, endpoint_url, region_name
@@ -92,6 +93,9 @@ class S3SyncClient(SyncClient):
     def get_uri(self, key=""):
         return "s3://{}/{}".format(self.bucket, posixpath.join(self.prefix, key))
 
+    def get_uri_local(self, key=""):
+        return self.get_uri(key)
+		
     def index_path(self):
         return posixpath.join(self.prefix, ".index")
 
@@ -187,7 +191,7 @@ class S3SyncClient(SyncClient):
                 return results
 
             for obj in page["Contents"]:
-                key = os.path.relpath(obj["Key"], self.prefix)
+                key = posixpath.relpath(obj["Key"], self.prefix)
                 if not is_ignored_key(key, self.ignore_files):
                     results.append(key)
                 else:
@@ -229,7 +233,7 @@ class S3SyncClient(SyncClient):
         page_iterator = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
         for page in page_iterator:
             for obj in page.get("Contents", []):
-                key = os.path.relpath(obj["Key"], self.prefix)
+                key = posixpath.relpath(obj["Key"], self.prefix)
                 if not is_ignored_key(key, self.ignore_files):
                     result[key] = utils.to_timestamp(obj["LastModified"])
 
