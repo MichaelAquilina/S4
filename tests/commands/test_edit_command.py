@@ -31,7 +31,7 @@ class TestEditCommand(object):
         assert err == ('"idontexist" is an unknown target\n' "Choices are: ['foo']\n")
 
     def test_no_changes(self, get_input, config_file):
-        fake_stream = utils.FakeInputStream(["", "", "", "", "", ""])
+        fake_stream = ["", "", "", "", "", ""]
         get_input.side_effect = fake_stream
 
         args = argparse.Namespace(target="foo")
@@ -68,16 +68,14 @@ class TestEditCommand(object):
         assert expected_config == config
 
     def test_correct_output(self, get_input, config_file):
-        fake_stream = utils.FakeInputStream(
-            [
-                "/home/user/Documents",
-                "https://example.com",
-                "s3://buckets/mybackup222",
-                "9999999999",
-                "bbbbbbbbbbbbbbbbbbbbbbbb",
-                "eu-west-2",
-            ]
-        )
+        fake_stream = [
+            "/home/user/Documents",
+            "https://example.com",
+            "s3://buckets/mybackup222",
+            "9999999999",
+            "bbbbbbbbbbbbbbbbbbbbbbbb",
+            "eu-west-2",
+        ]
         get_input.side_effect = fake_stream
 
         args = argparse.Namespace(target="foo")
