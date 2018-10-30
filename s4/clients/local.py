@@ -32,31 +32,44 @@ def posix2local(path):
     else:
         return "."
 
+def local2posix(path):
+    parts = list(pathlib.Path(path).parts)
+    if len(parts) > 0:
+        if parts[0] == "\\":
+            parts[0] = "/"
+        res = pathlib.PurePosixPath(parts[0])
+        for part in parts[1:]:
+            res = res / part
+        return str(res)
+    else:
+        return "."
+
 def get_local_client(target):
     return LocalSyncClient(target)
 
-
-def traverse(path, ignore_files=None):
-    path = posix2local(path)
+def traverse(posixpath, ignore_files=None):
+    return _traverse(posix2local(posixpath), ignore_files)
+    
+def _traverse(path, ignore_files=None, relative_path = ""):
     if not os.path.exists(path):
         return
     if ignore_files is None:
         ignore_files = []
 
-    for item in scandir(path):
-        full_path = posixpath.join(path, item.name)
+    for item in scandir(os.path.join(path, relative_path)):
+        full_path = os.path.join(path, item.name)
         spec = pathspec.PathSpec.from_lines(
             pathspec.patterns.GitWildMatchPattern, ignore_files
         )
+
         if spec.match_file(full_path):
             logger.debug("Ignoring %s", item)
             continue
 
         if item.is_dir():
-            for result in traverse(item.path, ignore_files):
-                yield posixpath.join(item.name, result)
+            yield from _traverse(path, ignore_files, os.path.join(relative_path, item.name))
         else:
-            yield item.name
+            yield local2posix(os.path.join(relative_path, item.name))
 
 
 class LocalSyncClient(SyncClient):
@@ -64,7 +77,7 @@ class LocalSyncClient(SyncClient):
     LOCK_FILE_NAME = ".s4lock"
 
     def __init__(self, path):
-        self.path = path
+        self.path = local2posix(path)
         self.reload_index()
         self.reload_ignore_files()
         self._lock = filelock.FileLock(self.lock_file)
@@ -111,6 +124,9 @@ class LocalSyncClient(SyncClient):
     def get_uri(self, key=""):
         return posixpath.join(self.path, key)
 
+    def get_uri_local(self, key=""):
+        return posix2local(self.get_uri(key))
+
     def index_path(self):
         return posixpath.join(self.path, ".index")
 
@@ -132,9 +148,10 @@ class LocalSyncClient(SyncClient):
                         break
             shutil.move(temp_path, path)
         except Exception:
+            os.close(fd)
             os.remove(temp_path)
             raise
-        finally:
+        else:
             os.close(fd)
 
         self.set_remote_timestamp(key, sync_object.timestamp)
