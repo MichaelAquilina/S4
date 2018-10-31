@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.4.0 - 30-October-2018
+-----------------------
+
+* Major improvements to the add command
+* Add "Running from Source" section to README
+
+
 0.3.0 - 28-October-2018
 -----------------------
 

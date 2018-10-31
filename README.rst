@@ -30,6 +30,7 @@ ability to easily rollback to any previous version.
 * `How S4 Works`_
 * `Ignoring Files`_
 * `Why?`_
+* `Running from Source`_
 * Contributing_
 
 See it in action here:
@@ -195,11 +196,36 @@ Here are is a list of open source solutions that I have tried in the past.
 
 * ``duplicity``: great backup tool, but does not provide a sync solution of any kind.
 
+Running from Source
+-------------------
+
+S4 uses `poetry <https://github.com/sdispater/poetry>`__ for package management. Please
+follow the installation instructions from the poetry repo first.
+
+Once poetry is installed, you can install S4's depedencies as follows:
+
+::
+
+    poetry install
+
+You can then run S4 as follows:
+
+::
+
+    poetry run s4
+
+Tests for S4 can be run using pytest:
+
+::
+
+    poetry run pytest
+
 Contributing
 ------------
 
 Pull requests are welcome! Make sure you pass all the tests, CircleCI will tell you if you don't ;)
 
+When opening a pull request, please make sure it is from a separate branch in your fork.
 
 .. |CircleCI| image:: https://circleci.com/gh/MichaelAquilina/S4.svg?style=svg
    :target: https://circleci.com/gh/MichaelAquilina/S4

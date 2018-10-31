@@ -14,18 +14,16 @@ from tests import utils
 @mock.patch("s4.utils.get_input")
 class TestAddCommand(object):
     def test_correct_behaviour(self, get_input, config_file):
-        fake_stream = utils.FakeInputStream(
-            [
-                "/home/user/Documents",
-                None,
-                "s3://mybucket/Documents",
-                "eu-west-2",
-                "aaaaaaaaaaaaaaaaaaaaaaaa",
-                "bbbbbbbbbbbbbbbbbbbbbbbb",
-                "",
-            ]
-        )
-        get_input.side_effect = fake_stream
+        get_input.side_effect = [
+            "/home/user/Documents",
+            None,
+            "mybucket",
+            "Documents",
+            "eu-west-2",
+            "aaaaaaaaaaaaaaaaaaaaaaaa",
+            "bbbbbbbbbbbbbbbbbbbbbbbb",
+            "",
+        ]
         args = argparse.Namespace(copy_target_credentials=None)
 
         command = AddCommand(args, {"targets": {}}, utils.create_logger())
@@ -49,18 +47,16 @@ class TestAddCommand(object):
         assert new_config == expected_config
 
     def test_default_local_folder(self, get_input, config_file):
-        fake_stream = utils.FakeInputStream(
-            [
-                None,
-                None,
-                "s3://mybucket/Documents",
-                "eu-west-2",
-                "aaaaaaaaaaaaaaaaaaaaaaaa",
-                "bbbbbbbbbbbbbbbbbbbbbbbb",
-                "",
-            ]
-        )
-        get_input.side_effect = fake_stream
+        get_input.side_effect = [
+            None,
+            None,
+            "mybucket",
+            "Documents",
+            "eu-west-2",
+            "aaaaaaaaaaaaaaaaaaaaaaaa",
+            "bbbbbbbbbbbbbbbbbbbbbbbb",
+            "",
+        ]
         args = argparse.Namespace(copy_target_credentials=None)
 
         command = AddCommand(args, {"targets": {}}, utils.create_logger())
@@ -72,10 +68,14 @@ class TestAddCommand(object):
         assert config["targets"]["Documents"]["local_folder"] == os.getcwd()
 
     def test_copy_target_credentials(self, get_input, config_file):
-        fake_stream = utils.FakeInputStream(
-            ["/home/user/Animals", None, "s3://mybucket/Zoo", "us-west-2", "Beasts"]
-        )
-        get_input.side_effect = fake_stream
+        get_input.side_effect = [
+            "/home/user/Animals",
+            None,
+            "mybucket",
+            "Zoo",
+            "us-west-2",
+            "Beasts",
+        ]
         args = argparse.Namespace(copy_target_credentials="bar")
 
         command = AddCommand(
@@ -114,10 +114,14 @@ class TestAddCommand(object):
         assert new_config == expected_config
 
     def test_copy_target_credentials_bad_target(self, get_input, capsys):
-        fake_stream = utils.FakeInputStream(
-            ["/home/user/Animals", "", "s3://mybucket/Zoo", "us-west-2", "Beasts"]
-        )
-        get_input.side_effect = fake_stream
+        get_input.side_effect = [
+            "/home/user/Animals",
+            "",
+            "mybucket",
+            "Zoo",
+            "us-west-2",
+            "Beasts",
+        ]
         args = argparse.Namespace(copy_target_credentials="Foo")
 
         command = AddCommand(args, {"targets": {"bar": {}}}, utils.create_logger())
@@ -128,18 +132,16 @@ class TestAddCommand(object):
         assert err == ('"Foo" is an unknown target\n' "Choices are: ['bar']\n")
 
     def test_custom_target_name(self, get_input, config_file):
-        fake_stream = utils.FakeInputStream(
-            [
-                "/home/user/Music",
-                None,
-                "s3://mybucket/Musiccccc",
-                "us-west-1",
-                "1234567890",
-                "abcdefghij",
-                "Tunes",
-            ]
-        )
-        get_input.side_effect = fake_stream
+        get_input.side_effect = [
+            "/home/user/Music",
+            None,
+            "mybucket",
+            "Musiccccc",
+            "us-west-1",
+            "1234567890",
+            "abcdefghij",
+            "Tunes",
+        ]
         args = argparse.Namespace(copy_target_credentials=None)
 
         command = AddCommand(args, {"targets": {}}, utils.create_logger())
