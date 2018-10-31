@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 S3Uri = collections.namedtuple("S3Uri", ["bucket", "key"])
 
+# add support for specifying a certificate to validate the SSL connection
 ssl_cert = os.environ.get('REQUESTS_CA_BUNDLE', '')
 verifySSL = True
 if ssl_cert != '':
