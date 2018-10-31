@@ -23,6 +23,12 @@ logger = logging.getLogger(__name__)
 
 S3Uri = collections.namedtuple("S3Uri", ["bucket", "key"])
 
+ssl_cert = os.environ.get('REQUESTS_CA_BUNDLE', '')
+verifySSL = True
+if ssl_cert != '':
+    verifySSL = ssl_cert
+if ssl_cert == 'IGNORE':
+    verifySSL = False
 
 def get_s3_client(
     target, aws_access_key_id, aws_secret_access_key, endpoint_url, region_name
@@ -34,6 +40,7 @@ def get_s3_client(
         aws_secret_access_key=aws_secret_access_key,
         region_name=region_name,
         endpoint_url=endpoint_url,
+        verify=verifySSL
     )
     return S3SyncClient(s3_client, s3_uri.bucket, s3_uri.key)
 
@@ -89,7 +96,7 @@ class S3SyncClient(SyncClient):
 
     def get_uri_local(self, key=""):
         return self.get_uri(key)
-
+		
     def index_path(self):
         return posixpath.join(self.prefix, ".index")
 

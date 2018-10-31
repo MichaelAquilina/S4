@@ -23,6 +23,7 @@ ability to easily rollback to any previous version.
 
 * Requirements_
 * Installation_
+* Installation in Windows_
 * Setup_
 * Synchronising_
 * `Handling Conflicts`_
@@ -57,6 +58,27 @@ This is installed by default on most linux distributions but on MacOSX you need 
 ::
 
     brew install libmagic
+
+Installation  in Windows
+------------------------
+
+While there is no official support on Windows machines, it works if some other steps are made durin the instalation.
+
+After installing with PIP, you should install the binary libmagic package using the command:
+
+C:\...> pip install python-magic-bin
+
+If you use poetry to configura a virtualenvironment for the project, you should install this packages as well inside the poetry shell.
+
+C:\S4>poetry shell
+Spawning shell within C:\S4
+-py3.7
+Microsoft Windows [versão 6.1.7601]
+Copyright (c) 2009 Microsoft Corporation. Todos os direitos reservados.
+
+C:\S4>python -m pip install --upgrade pip
+(....)
+C:\S4>pip install python-magic-bin
 
 Setup
 -----
@@ -244,3 +266,4 @@ When opening a pull request, please make sure it is from a separate branch in yo
 
 .. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/ambv/black
+   

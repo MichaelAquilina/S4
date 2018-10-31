@@ -49,7 +49,7 @@ def get_local_client(target):
 
 def traverse(posixpath, ignore_files=None):
     return _traverse(posix2local(posixpath), ignore_files)
- 
+    
 def _traverse(path, ignore_files=None, relative_path = ""):
     if not os.path.exists(path):
         return
@@ -146,13 +146,13 @@ class LocalSyncClient(SyncClient):
                         callback(len(data))
                     if len(data) < BUFFER_SIZE:
                         break
-            shutil.move(temp_path, path)
         except Exception:
             os.close(fd)
             os.remove(temp_path)
             raise
         else:
             os.close(fd)
+            shutil.move(temp_path, path)
 
         self.set_remote_timestamp(key, sync_object.timestamp)
 
