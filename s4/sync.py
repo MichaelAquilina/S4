@@ -325,9 +325,9 @@ class SyncWorker(object):
             "%s keys in total (%s for %s and %s for %s)",
             len(all_keys),
             len(client_1_actions),
-            self.client_1.get_uri_local(),
+            self.client_1.get_uri(),
             len(client_2_actions),
-            self.client_2.get_uri_local(),
+            self.client_2.get_uri(),
         )
         if keys is None:
             target_keys = sorted(all_keys)
@@ -342,6 +342,7 @@ class SyncWorker(object):
 
     def move_client(self, resolution):
         sync_object = resolution.from_client.get(resolution.key)
+
         if self.start_callback is not None:
             self.start_callback(sync_object)
 

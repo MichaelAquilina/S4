@@ -12,8 +12,6 @@ import boto3
 import magic
 from botocore.exceptions import ClientError
 
-import posixpath
-
 from s4 import utils
 from s4.clients import SyncClient, SyncObject
 
@@ -22,12 +20,6 @@ logger = logging.getLogger(__name__)
 
 S3Uri = collections.namedtuple("S3Uri", ["bucket", "key"])
 
-ssl_cert = os.environ.get('REQUESTS_CA_BUNDLE', '')
-verifySSL = True
-if ssl_cert != '':
-    verifySSL = ssl_cert
-if ssl_cert == 'IGNORE':
-    verifySSL = False
 
 def get_s3_client(
     target, aws_access_key_id, aws_secret_access_key, endpoint_url, region_name
@@ -39,7 +31,6 @@ def get_s3_client(
         aws_secret_access_key=aws_secret_access_key,
         region_name=region_name,
         endpoint_url=endpoint_url,
-        verify=verifySSL
     )
     return S3SyncClient(s3_client, s3_uri.bucket, s3_uri.key)
 
@@ -91,13 +82,10 @@ class S3SyncClient(SyncClient):
         return "S3SyncClient<{}, {}>".format(self.bucket, self.prefix)
 
     def get_uri(self, key=""):
-        return "s3://{}/{}".format(self.bucket, posixpath.join(self.prefix, key))
+        return "s3://{}/{}".format(self.bucket, os.path.join(self.prefix, key))
 
-    def get_uri_local(self, key=""):
-        return self.get_uri(key)
-		
     def index_path(self):
-        return posixpath.join(self.prefix, ".index")
+        return os.path.join(self.prefix, ".index")
 
     @property
     def index(self):
@@ -112,7 +100,7 @@ class S3SyncClient(SyncClient):
     def put(self, key, sync_object, callback=None):
         self.boto.upload_fileobj(
             Bucket=self.bucket,
-            Key=posixpath.join(self.prefix, key),
+            Key=os.path.join(self.prefix, key),
             Fileobj=sync_object.fp,
             Callback=callback,
         )
@@ -121,7 +109,7 @@ class S3SyncClient(SyncClient):
     def get(self, key):
         try:
             resp = self.boto.get_object(
-                Bucket=self.bucket, Key=posixpath.join(self.prefix, key)
+                Bucket=self.bucket, Key=os.path.join(self.prefix, key)
             )
             return SyncObject(
                 resp["Body"],
@@ -134,7 +122,7 @@ class S3SyncClient(SyncClient):
     def delete(self, key):
         resp = self.boto.delete_objects(
             Bucket=self.bucket,
-            Delete={"Objects": [{"Key": posixpath.join(self.prefix, key)}]},
+            Delete={"Objects": [{"Key": os.path.join(self.prefix, key)}]},
         )
         return "Deleted" in resp
 
@@ -191,7 +179,7 @@ class S3SyncClient(SyncClient):
                 return results
 
             for obj in page["Contents"]:
-                key = posixpath.relpath(obj["Key"], self.prefix)
+                key = os.path.relpath(obj["Key"], self.prefix)
                 if not is_ignored_key(key, self.ignore_files):
                     results.append(key)
                 else:
@@ -202,7 +190,7 @@ class S3SyncClient(SyncClient):
     def get_real_local_timestamp(self, key):
         try:
             response = self.boto.head_object(
-                Bucket=self.bucket, Key=posixpath.join(self.prefix, key)
+                Bucket=self.bucket, Key=os.path.join(self.prefix, key)
             )
             return utils.to_timestamp(response["LastModified"])
         except ClientError:
@@ -233,7 +221,7 @@ class S3SyncClient(SyncClient):
         page_iterator = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
         for page in page_iterator:
             for obj in page.get("Contents", []):
-                key = posixpath.relpath(obj["Key"], self.prefix)
+                key = os.path.relpath(obj["Key"], self.prefix)
                 if not is_ignored_key(key, self.ignore_files):
                     result[key] = utils.to_timestamp(obj["LastModified"])
 
@@ -255,7 +243,7 @@ class S3SyncClient(SyncClient):
         self._ignore_files = copy.copy(self.DEFAULT_IGNORE_FILES)
         try:
             response = self.boto.get_object(
-                Bucket=self.bucket, Key=posixpath.join(self.prefix, ".syncignore")
+                Bucket=self.bucket, Key=os.path.join(self.prefix, ".syncignore")
             )
             data = response["Body"].read()
             data = data.decode("utf8")
