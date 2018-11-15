@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.4.1 - 15-November-2018
+------------------------
+* Fix bug where leaving region blank would result in broken target
+
 0.4.0 - 30-October-2018
 -----------------------
 
