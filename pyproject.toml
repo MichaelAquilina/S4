@@ -33,3 +33,6 @@ isort = "^4.3"
 
 [tool.poetry.scripts]
 s4 = "s4.cli:entry_point"
+
+[tool.black]
+skip-numeric-underscore-normalization = true
