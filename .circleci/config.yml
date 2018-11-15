@@ -44,7 +44,7 @@ jobs:
       - run:
           name: check black formatting
           command: |
-            pip install black
+            pip install black==18.9b0
             black s4 tests --check
 
       - run:
