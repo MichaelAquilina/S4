@@ -14,8 +14,8 @@ class EditCommand(Command):
 
         if self.args.target not in self.config["targets"]:
             all_targets = sorted(list(self.config["targets"].keys()))
-            self.logger.info('"%s" is an unknown target', self.args.target)
-            self.logger.info("Choices are: %s", all_targets)
+            self.logger.info(f'"{self.args.target}" is an unknown target')
+            self.logger.info(f"Choices are: {all_targets}")
             return
 
         entry = self.config["targets"][self.args.target]
@@ -27,14 +27,13 @@ class EditCommand(Command):
         aws_secret_access_key = entry.get("aws_secret_access_key")
         region_name = entry.get("region_name")
 
-        new_local_folder = utils.get_input("local folder [{}]: ".format(local_folder))
-        new_endpoint_url = utils.get_input("endpoint url [{}]: ".format(endpoint_url))
-        new_s3_uri = utils.get_input("s3 uri [{}]: ".format(s3_uri))
+        new_local_folder = utils.get_input(f"local folder [{local_folder}]: ")
+        new_endpoint_url = utils.get_input(f"endpoint url [{endpoint_url}]: ")
+        new_s3_uri = utils.get_input(f"s3 uri [{s3_uri}]: ")
         new_aws_access_key_id = utils.get_input(
-            "AWS Access Key ID [{}]: ".format(aws_access_key_id)
+            f"AWS Access Key ID [{aws_access_key_id}]: "
         )
-
-        secret_key_prompt = "AWS Secret Access Key [{}]: ".format(aws_secret_access_key)
+        secret_key_prompt = f"AWS Secret Access Key [{aws_secret_access_key}]: "
         new_aws_secret_access_key = utils.get_input(secret_key_prompt, secret=True)
 
         new_region_name = utils.get_input("region name [{}]: ".format(region_name))

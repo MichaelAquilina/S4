@@ -48,10 +48,9 @@ class AddCommand(Command):
 
         default_name = os.path.basename(path)
         name = utils.get_input(
-            "Provide a name for this entry [leave blank to default to '{}']: ".format(
-                default_name
-            )
+            f"Provide a name for this entry [leave blank to default to '{default_name}']: "
         )
+
         name = name or default_name
         if not local_folder:
             local_folder = os.getcwd()
