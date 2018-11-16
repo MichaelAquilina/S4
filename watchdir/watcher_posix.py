@@ -45,9 +45,6 @@ class WatchDir(AbstractWatchDir):
         del self._datas[index]
 
     def read(self, timeout=None, read_delay=None):
-        return readAll(timeout, read_delay)
-
-    def readAll(self, timeout=None, read_delay=None):
         res = self.inotify.read(timeout, read_delay)
 
         if res is []:
@@ -57,5 +54,8 @@ class WatchDir(AbstractWatchDir):
         name = res.name
         index = self._paths.index(xd) 
 
-        return (self._paths[index], self._data[index], name)
+        return WatchEvent(index=index,
+                path=self._paths[index], 
+                data=self._data[index], 
+                fullname=name)
 

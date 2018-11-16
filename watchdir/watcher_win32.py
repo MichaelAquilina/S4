@@ -9,7 +9,6 @@ import queue
 from . import AbstractWatchDir, WatchEvent
 
 def log(text):
-    pass
     print("DEBUG: %s" % text)
 
 ACTIONS = {
@@ -81,7 +80,7 @@ class WatchDir(AbstractWatchDir):
         pass
 
     def add_watch(self, path, recursive = False, data = None):
-        log("WatchDir: add_watch(%s, %r, %r)" % (path, recursive, data))
+        #log("WatchDir: add_watch(%s, %r, %r)" % (path, recursive, data))
         self.watchers.append(Watcher(path, recursive, data, self.files_changed))
         return len(self.watchers)
 

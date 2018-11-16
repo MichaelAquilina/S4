@@ -68,9 +68,9 @@ class AbstractWatchDir(ABC):
 
 if os.name == 'nt':
     #from .watcher_win32_FindFirstChangeNotification import WatchDir
-    from .watcher_win32_ReadDirectoryChanges import WatchDir
+    from .watcher_win32 import WatchDir
 else:
-    from .watcher_posix_INotify import WatchDir
+    from .watcher_posix import WatchDir
 
 
 __all__ = ['WatchDir', 'WatchEvent']
