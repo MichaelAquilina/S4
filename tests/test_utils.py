@@ -10,6 +10,26 @@ from s4 import utils
 @mock.patch("getpass.getpass")
 @mock.patch("builtins.input")
 class TestGetInput:
+    def test_validator(self, input_fn, getpass, capsys):
+        def exactly_8_chars(value):
+            valid = len(value) == 8
+            message = None if valid else "must be exactly 8 characters"
+            return valid, message
+
+        input_fn.side_effect = ["", "foo", "*" * 8]
+
+        result = utils.get_input("some value", validator=exactly_8_chars)
+
+        captured = capsys.readouterr()
+
+        assert result == "********"
+        assert input_fn.call_count == 3
+        assert captured.out.split("\n") == [
+            "must be exactly 8 characters",
+            "must be exactly 8 characters",
+            "",
+        ]
+
     def test_required(self, input_fn, getpass):
         input_fn.side_effect = ["", "", "something"]
 
