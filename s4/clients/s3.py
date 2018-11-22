@@ -64,6 +64,7 @@ def is_ignored_key(key, ignore_files):
 def s3_path(*args):
     return os.path.normpath("/".join(args))
 
+
 class S3SyncClient(SyncClient):
     DEFAULT_IGNORE_FILES = [".index", ".s4lock"]
 
