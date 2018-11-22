@@ -184,7 +184,7 @@ class TestSyncWorker(object):
         s3_client = s3.S3SyncClient(None, "burgerbucket", "foozie")
         worker = sync.SyncWorker(local_client, s3_client)
         assert (
-            repr(worker) == "SyncWorker</home/bobs/burgers/, s3://burgerbucket/foozie/>"
+            repr(worker) == "SyncWorker</home/bobs/burgers/, s3://burgerbucket/foozie>"
         )
 
 
