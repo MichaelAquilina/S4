@@ -149,7 +149,7 @@ class LocalSyncClient(SyncClient):
 
         content_type = magic.from_file(index_path, mime=True)
         if content_type in ("application/json", "text/plain"):
-            logger.debug("Detected plaintext encoding for reading index")
+            logger.debug("Detected %s encoding for reading index", content_type)
             method = open
         elif content_type in ("application/gzip", "application/x-gzip"):
             logger.debug("Detected gzip encoding for reading index")

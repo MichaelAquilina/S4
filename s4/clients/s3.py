@@ -133,7 +133,7 @@ class S3SyncClient(SyncClient):
             content_type = magic.from_buffer(body, mime=True)
 
             if content_type in ("application/json", "text/plain"):
-                logger.debug("Detected plain text encoding for index")
+                logger.debug("Detected %s encoding for index", content_type)
                 return json.loads(body.decode("utf-8"))
 
             # the magic/file command reports gzip differently depending on its version
