@@ -219,7 +219,7 @@ class TestSyncCommand(object):
         out, err = capsys.readouterr()
         assert out == ""
         assert err == (
-            "Syncing bar [/home/mike/barmil/ <=> s3://foobar/barrel/]\n"
-            "Syncing foo [/home/mike/docs/ <=> s3://foobar/docs/]\n"
+            "Syncing bar [/home/mike/barmil/ <=> s3://foobar/barrel]\n"
+            "Syncing foo [/home/mike/docs/ <=> s3://foobar/docs]\n"
         )
         assert SyncWorker.call_count == 2
