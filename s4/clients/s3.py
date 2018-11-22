@@ -132,7 +132,7 @@ class S3SyncClient(SyncClient):
             body = resp["Body"].read()
             content_type = magic.from_buffer(body, mime=True)
 
-            if content_type == "text/plain":
+            if content_type in ("application/json", "text/plain"):
                 logger.debug("Detected plain text encoding for index")
                 return json.loads(body.decode("utf-8"))
 
