@@ -60,7 +60,9 @@ jobs:
             PYPROJECT_VERSION="$(grep version pyproject.toml | cut -d" " -f 3)"
             PYPROJECT_VERSION="${PYPROJECT_VERSION//\"/}"
 
-            echo "$CLIENT_VERSION $GIT_VERSION $PYPROJECT_VERSION"
+            echo "CLIENT=${CLIENT_VERSION}"
+            echo "GIT=${GIT_VERSION}"
+            echo "PYPROJECT=${PYPROJECT_VERSION}"
             test "$CLIENT_VERSION" = "$GIT_VERSION"
             test "$CLIENT_VERSION" = "$PYPROJECT_VERSION"
             grep "$CLIENT_VERSION" CHANGELOG.rst
