@@ -8,7 +8,8 @@ test: &test
         command: apt-get update && apt-get install -y less
     - run:
         name: install poetry
-        command: pip install poetry
+        # bug in 0.12.9 (https://github.com/sdispater/poetry/commit/c2c6f3bec35e3aaa209efd044ac04e7984b0a4a0)
+        command: pip install poetry==0.12.5
     - run:
         name: install python dependencies
         command: poetry install
@@ -49,7 +50,8 @@ jobs:
 
       - run:
           name: install poetry
-          command: pip install poetry
+          # bug in 0.12.9 (https://github.com/sdispater/poetry/commit/c2c6f3bec35e3aaa209efd044ac04e7984b0a4a0)
+          command: pip install poetry==0.12.5
 
       - run:
           name: version lint
