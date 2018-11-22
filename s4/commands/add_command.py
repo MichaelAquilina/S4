@@ -34,7 +34,9 @@ class AddCommand(Command):
         )
         bucket = utils.get_input("S3 Bucket [required]: ", required=True)
         path = utils.get_input("S3 Path: ")
-        region_name = utils.get_input("region name [leave blank if unknown]: ")
+        region_name = utils.get_input(
+            "region name [leave blank if unknown]: ", blank=True
+        )
 
         if aws_access_key_id is None:
             aws_access_key_id = utils.get_input(
