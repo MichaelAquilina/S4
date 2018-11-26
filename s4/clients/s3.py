@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import zlib
+import posixpath
 
 import boto3
 import magic
@@ -62,7 +63,7 @@ def is_ignored_key(key, ignore_files):
 # This is because on Windows the path separator used (\\) does
 # not generate correct paths on s3
 def s3_path(*args):
-    return os.path.normpath("/".join(args))
+    return posixpath.normpath("/".join(args))
 
 
 class S3SyncClient(SyncClient):
@@ -185,7 +186,7 @@ class S3SyncClient(SyncClient):
                 return results
 
             for obj in page["Contents"]:
-                key = os.path.relpath(obj["Key"], self.prefix)
+                key = posixpath.relpath(obj["Key"], self.prefix)
                 if not is_ignored_key(key, self.ignore_files):
                     results.append(key)
                 else:
@@ -227,7 +228,7 @@ class S3SyncClient(SyncClient):
         page_iterator = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
         for page in page_iterator:
             for obj in page.get("Contents", []):
-                key = os.path.relpath(obj["Key"], self.prefix)
+                key = posixpath.relpath(obj["Key"], self.prefix)
                 if not is_ignored_key(key, self.ignore_files):
                     result[key] = utils.to_timestamp(obj["LastModified"])
 

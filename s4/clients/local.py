@@ -113,12 +113,13 @@ class LocalSyncClient(SyncClient):
                         callback(len(data))
                     if len(data) < BUFFER_SIZE:
                         break
-            shutil.move(temp_path, path)
         except Exception:
+            os.close(fd)
             os.remove(temp_path)
             raise
-        finally:
+        else:
             os.close(fd)
+            shutil.move(temp_path, path)
 
         self.set_remote_timestamp(key, sync_object.timestamp)
 
