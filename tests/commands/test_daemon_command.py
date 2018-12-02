@@ -4,7 +4,14 @@ import argparse
 
 import mock
 import pytest
-from inotify_simple import Event, flags
+
+try:
+    from inotify_simple import Event, flags
+except ImportError:
+    # Skip running these tests on windows and mac
+    skip = True
+else:
+    skip = False
 
 from s4.commands.daemon_command import DaemonCommand
 
@@ -23,6 +30,7 @@ class FakeINotify(object):
         return self.events
 
 
+@pytest.mark.skipif(skip, reason="Daemon command not supported on this OS")
 @mock.patch("s4.sync.SyncWorker")
 @mock.patch("s4.commands.daemon_command.INotifyRecursive")
 class TestDaemonCommand(object):

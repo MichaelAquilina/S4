@@ -1,10 +1,16 @@
 #! -*- encoding: utf8 -*-
 import pytest
-from inotify_simple import flags
 
-from s4.inotify_recursive import INotifyRecursive
+try:
+    from inotify_simple import flags
+    from s4.inotify_recursive import INotifyRecursive
+except ImportError:
+    skip = True
+else:
+    skip = False
 
 
+@pytest.mark.skipif(skip, reason="INotify not supported on this OS")
 class TestINotifyRecursive(object):
     @pytest.mark.timeout(5)
     def test_add_watches(self, tmpdir):

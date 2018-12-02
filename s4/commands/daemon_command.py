@@ -9,7 +9,7 @@ try:
     from s4.inotify_recursive import INotifyRecursive
 
     supported = True
-except (OSError, ModuleNotFoundError):
+except (OSError, ImportError):
     supported = False
 
 
