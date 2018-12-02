@@ -7,17 +7,13 @@ test: &test
         name: install less pager dependency
         command: apt-get update && apt-get install -y less
     - run:
-        name: install poetry
-        # bug in 0.12.9 (https://github.com/sdispater/poetry/commit/c2c6f3bec35e3aaa209efd044ac04e7984b0a4a0)
-        command: pip install poetry==0.12.5
-    - run:
         name: install python dependencies
-        command: poetry install
+        command: pip install -r requirements.txt -r dev-requirements.txt
     - run:
         name: run pytest
         command: |
           mkdir -p /tmp/test-results
-          PYTHONPATH="." poetry run pytest --cov=s4 --cov=tests --cov-report xml --junitxml=/tmp/test-results/pytest-results.xml
+          PYTHONPATH="." pytest --cov=s4 --cov=tests --cov-report xml --junitxml=/tmp/test-results/pytest-results.xml
           bash <(curl -s https://codecov.io/bash)
 
     - store_test_results:
@@ -49,24 +45,16 @@ jobs:
             black s4 tests --check
 
       - run:
-          name: install poetry
-          # bug in 0.12.9 (https://github.com/sdispater/poetry/commit/c2c6f3bec35e3aaa209efd044ac04e7984b0a4a0)
-          command: pip install poetry==0.12.5
-
-      - run:
           name: version lint
           command: |
-            poetry install --no-dev
-            CLIENT_VERSION="$(poetry run s4 version)"
+            pip install .
+
+            CLIENT_VERSION="$(s4 version)"
             GIT_VERSION="$(git tag --sort "v:refname" | tail -1)"
-            PYPROJECT_VERSION="$(grep version pyproject.toml | cut -d" " -f 3)"
-            PYPROJECT_VERSION="${PYPROJECT_VERSION//\"/}"
 
             echo "CLIENT=${CLIENT_VERSION}"
             echo "GIT=${GIT_VERSION}"
-            echo "PYPROJECT=${PYPROJECT_VERSION}"
             test "$CLIENT_VERSION" = "$GIT_VERSION"
-            test "$CLIENT_VERSION" = "$PYPROJECT_VERSION"
             grep "$CLIENT_VERSION" CHANGELOG.rst
 
   test-3.7:

@@ -196,30 +196,6 @@ Here are is a list of open source solutions that I have tried in the past.
 
 * ``duplicity``: great backup tool, but does not provide a sync solution of any kind.
 
-Running from Source
--------------------
-
-S4 uses `poetry <https://github.com/sdispater/poetry>`__ for package management. Please
-follow the installation instructions from the poetry repo first.
-
-Once poetry is installed, you can install S4's depedencies as follows:
-
-::
-
-    poetry install
-
-You can then run S4 as follows:
-
-::
-
-    poetry run s4
-
-Tests for S4 can be run using pytest:
-
-::
-
-    poetry run pytest
-
 Contributing
 ------------
 
