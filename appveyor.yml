@@ -1,0 +1,20 @@
+environment:
+
+  matrix:
+    - PYTHON: "C:\\Python35-x64"
+    - PYTHON: "C:\\Python36-x64"
+    - PYTHON: "C:\\Python37-x64"
+
+install:
+  # We need wheel installed to build wheels
+  - "%PYTHON%\\python.exe -m pip install wheel"
+  - "%PYTHON%\\python.exe -m pip install python-magic-bin"
+  - "%PYTHON%\\python.exe -m pip install -r requirements.txt -r dev-requirements.txt"
+
+build: off
+
+test_script:
+  - "%PYTHON%\\python.exe -m pytest"
+
+after_test:
+  - "%PYTHON%\\python.exe setup.py bdist_wheel"
