@@ -1,4 +1,4 @@
-boto3>=1.4.0
+boto3>=1.9
 clint>=0.5.1
 filelock>=2.0.12
 python-magic>=0.4.12
