@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.4.2 - 06 May 2019
+-------------------
+* Upgrade boto3 minimum requirement to fix a vulnerability in a urllib3 dependency
+
 0.4.1 - 15-November-2018
 ------------------------
 * Fix bug where leaving region blank would result in broken target
