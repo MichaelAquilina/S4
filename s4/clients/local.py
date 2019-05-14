@@ -12,13 +12,15 @@ import filelock
 import magic
 import pathspec
 
+from s4.utils import CONFIG_FOLDER_PATH
+
 from s4.clients import SyncClient, SyncObject
 
 logger = logging.getLogger(__name__)
 
 
-def get_local_client(target):
-    return LocalSyncClient(target)
+def get_local_client(target, name, read_only):
+    return LocalSyncClient(target, name, read_only)
 
 
 def traverse(path, ignore_files=None):
@@ -47,15 +49,20 @@ class LocalSyncClient(SyncClient):
     DEFAULT_IGNORE_FILES = [".index", ".s4lock"]
     LOCK_FILE_NAME = ".s4lock"
 
-    def __init__(self, path):
+    def __init__(self, path, name, read_only):
+        self.name = name
         self.path = path
+        self.read_only = read_only
         self.reload_index()
         self.reload_ignore_files()
         self._lock = filelock.FileLock(self.lock_file)
 
     @property
     def lock_file(self):
-        return self.get_uri(self.LOCK_FILE_NAME)
+        if self.read_only:
+            return os.path.join(CONFIG_FOLDER_PATH, self.name, self.LOCK_FILE_NAME)
+        else:
+            return self.get_uri(self.LOCK_FILE_NAME)
 
     def ensure_path(self, path):
         parent = os.path.dirname(path)
@@ -95,7 +102,10 @@ class LocalSyncClient(SyncClient):
         return os.path.join(self.path, key)
 
     def index_path(self):
-        return os.path.join(self.path, ".index")
+        if self.read_only:
+            return os.path.join(CONFIG_FOLDER_PATH, self.name,  ".index")
+        else:
+            return os.path.join(self.path, ".index")
 
     def put(self, key, sync_object, callback=None):
         path = os.path.join(self.path, key)
@@ -235,3 +245,14 @@ class LocalSyncClient(SyncClient):
             ignore_list = []
 
         self.ignore_files = self.DEFAULT_IGNORE_FILES + ignore_list
+
+        if self.read_only:
+            ignore_path = os.path.join(CONFIG_FOLDER_PATH, self.name, ".syncignore")
+
+            if os.path.exists(ignore_path):
+                with open(ignore_path, "r") as fp:
+                    ignore_list = fp.read().split("\n")
+            else:
+                ignore_list = []
+
+            self.ignore_files = self.ignore_files + ignore_list

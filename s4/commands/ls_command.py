@@ -20,7 +20,7 @@ class LsCommand(Command):
             return
 
         target = self.config["targets"][self.args.target]
-        client_1, client_2 = self.get_clients(target)
+        client_1, client_2 = self.get_clients(target, self.args.target)
 
         sort_by = self.args.sort_by.lower()
         descending = self.args.descending

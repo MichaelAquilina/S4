@@ -82,7 +82,7 @@ class SyncCommand(Command):
                     continue
 
                 entry = self.config["targets"][name]
-                client_1, client_2 = self.get_clients(entry)
+                client_1, client_2 = self.get_clients(entry, name)
 
                 try:
                     worker = sync.SyncWorker(

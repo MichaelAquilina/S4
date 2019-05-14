@@ -21,6 +21,7 @@ class EditCommand(Command):
         entry = self.config["targets"][self.args.target]
 
         local_folder = entry.get("local_folder", "")
+        read_only = entry.get("read_only", False)
         endpoint_url = entry.get("endpoint_url")
         s3_uri = entry.get("s3_uri", "")
         aws_access_key_id = entry.get("aws_access_key_id")
@@ -28,6 +29,7 @@ class EditCommand(Command):
         region_name = entry.get("region_name")
 
         new_local_folder = utils.get_input("local folder [{}]: ".format(local_folder))
+        new_read_only = utils.get_input("read only [{}]: ".format(read_only), boolean=True)
         new_endpoint_url = utils.get_input("endpoint url [{}]: ".format(endpoint_url))
         new_s3_uri = utils.get_input("s3 uri [{}]: ".format(s3_uri))
         new_aws_access_key_id = utils.get_input(
@@ -41,6 +43,8 @@ class EditCommand(Command):
 
         if new_local_folder:
             entry["local_folder"] = os.path.expanduser(new_local_folder)
+        if not new_read_only == entry.get("read_only", False):
+            entry["read_only"] = new_read_only
         if new_s3_uri:
             entry["s3_uri"] = new_s3_uri
         if new_aws_access_key_id:

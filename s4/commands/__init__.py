@@ -16,8 +16,10 @@ class Command(object):
         client_1, client_2 = self.get_clients(entry)
         return sync.SyncWorker(client_1, client_2)
 
-    def get_clients(self, entry):
+    def get_clients(self, entry, name):
         target_1 = entry["local_folder"]
+        target_1_read_only = entry["read_only"]
+        name = name
         target_2 = entry["s3_uri"]
         aws_access_key_id = entry["aws_access_key_id"]
         aws_secret_access_key = entry["aws_secret_access_key"]
@@ -30,7 +32,7 @@ class Command(object):
         if not target_2.endswith("/"):
             target_2 += "/"
 
-        client_1 = get_local_client(target_1)
+        client_1 = get_local_client(target_1, name, target_1_read_only)
         client_2 = get_s3_client(
             target_2,
             aws_access_key_id,

@@ -29,6 +29,9 @@ class AddCommand(Command):
         local_folder = utils.get_input(
             "local folder path to sync [leave blank for current folder]: "
         )
+        read_only = utils.get_input(
+            "is local folder path read only? [false]: ", boolean=True
+        )
         endpoint_url = utils.get_input(
             "endpoint url [leave blank for AWS]: ", blank=True
         )
@@ -66,6 +69,7 @@ class AddCommand(Command):
             "region_name": region_name,
             "aws_access_key_id": aws_access_key_id,
             "aws_secret_access_key": aws_secret_access_key,
+            "read_only": read_only
         }
         utils.set_config(self.config)
 

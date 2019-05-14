@@ -14,7 +14,7 @@ def to_timestamp(dt):
     return (dt - epoch) / datetime.timedelta(seconds=1)
 
 
-def get_input(*args, secret=False, required=False, blank=False, **kwargs):
+def get_input(*args, secret=False, required=False, blank=False, boolean=False, **kwargs):
     """
     secret: Don't show user input when they are typing.
     required: Keep prompting if the user enters an empty value.
@@ -26,6 +26,13 @@ def get_input(*args, secret=False, required=False, blank=False, **kwargs):
             value = getpass.getpass(*args, **kwargs)
         else:
             value = input(*args, **kwargs)
+
+        if boolean:
+            if value in ['true', '1', 't', 'y', 'yes']:
+                value = True
+            else:
+                value = False
+            break
 
         if blank:
             value = value if value else None
