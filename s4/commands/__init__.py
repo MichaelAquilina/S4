@@ -13,7 +13,7 @@ class Command(object):
 
     def get_sync_worker(self, target):
         entry = self.config["targets"][target]
-        client_1, client_2 = self.get_clients(entry)
+        client_1, client_2 = self.get_clients(entry, target)
         return sync.SyncWorker(client_1, client_2)
 
     def get_clients(self, entry, name):
