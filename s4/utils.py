@@ -28,11 +28,7 @@ def get_input(*args, secret=False, required=False, blank=False, boolean=False, *
             value = input(*args, **kwargs)
 
         if boolean:
-            if value in ['true', '1', 't', 'y', 'yes']:
-                value = True
-            else:
-                value = False
-            break
+            return value.lower() in ['true', '1', 't', 'y', 'yes']
 
         if blank:
             value = value if value else None
