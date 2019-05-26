@@ -30,7 +30,6 @@ ability to easily rollback to any previous version.
 * `How S4 Works`_
 * `Ignoring Files`_
 * `Why?`_
-* `Running from Source`_
 * Contributing_
 
 See it in action here:
