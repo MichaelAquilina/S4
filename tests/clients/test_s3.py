@@ -194,24 +194,38 @@ class TestS3SyncClient(object):
         )
         assert sorted(s3_client.get_index_keys()) == sorted(["cow", "chicken"])
 
-    @pytest.mark.parametrize("compression", [None, "gzip", "zlib"])
-    def test_get_index_timestamps(self, s3_client, compression):
-        # given
-        utils.set_s3_index(
-            s3_client,
-            {
-                "hello": {"remote_timestamp": 1234, "local_timestamp": 1200},
-                "world": {"remote_timestamp": 5000},
-            },
-            compression=compression,
-        )
+    @pytest.mark.parametrize(
+        ("magic_result", "compression"),
+        [
+            ("text/plain", None),
+            ("application/json", None),
+            ("application/gzip", "gzip"),
+            ("application/x-gzip", "gzip"),
+            ("application/zlib", "zlib"),
+            ("application/octet-stream", "gzip"),
+            ("application/octet-stream", "zlib"),
+        ],
+    )
+    def test_get_index_timestamps(self, s3_client, compression, magic_result):
+        with mock.patch("magic.from_buffer") as from_buffer:
+            # given
+            from_buffer.return_value = magic_result
 
-        # then
-        assert s3_client.get_remote_timestamp("hello") == 1234
-        assert s3_client.get_index_local_timestamp("hello") == 1200
+            utils.set_s3_index(
+                s3_client,
+                {
+                    "hello": {"remote_timestamp": 1234, "local_timestamp": 1200},
+                    "world": {"remote_timestamp": 5000},
+                },
+                compression=compression,
+            )
 
-        assert s3_client.get_remote_timestamp("world") == 5000
-        assert s3_client.get_index_local_timestamp("world") is None
+            # then
+            assert s3_client.get_remote_timestamp("hello") == 1234
+            assert s3_client.get_index_local_timestamp("hello") == 1200
+
+            assert s3_client.get_remote_timestamp("world") == 5000
+            assert s3_client.get_index_local_timestamp("world") is None
 
     def test_get_all_index_timestamps(self, s3_client):
         # given
