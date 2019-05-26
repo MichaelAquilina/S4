@@ -4,9 +4,25 @@ import datetime
 import getpass
 import json
 import os
+import gzip
+import zlib
 
 CONFIG_FOLDER_PATH = os.path.expanduser("~/.config/s4")
 CONFIG_FILE_PATH = os.path.join(CONFIG_FOLDER_PATH, "sync.conf")
+
+
+def try_decompress(body):
+    # Attempt multiple levels of fallback in case we cannot
+    # figure out the compression type using `magic`
+    try:
+        return gzip.decompress(body)
+    except OSError:
+        pass
+
+    try:
+        return zlib.decompress(body)
+    except zlib.error:
+        raise ValueError("Unknown compression format")
 
 
 def to_timestamp(dt):
