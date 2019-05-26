@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.4.4 - 19 May 2019
+-------------------
+* Fix README.rst bug which prevented package upload
+
 0.4.3 - 19 May 2019
 -------------------
 * Add fallback mechanism for decompressing data with no known header
