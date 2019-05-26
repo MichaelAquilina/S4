@@ -2,12 +2,13 @@
 
 from distutils.core import setup
 
+from s4 import VERSION
+
 try:
     from setuptools import setup, find_packages  # noqa
 except ImportError:
     from distutils.core import setup
 
-from s4 import VERSION
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()

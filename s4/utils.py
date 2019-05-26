@@ -2,9 +2,9 @@
 
 import datetime
 import getpass
+import gzip
 import json
 import os
-import gzip
 import zlib
 
 CONFIG_FOLDER_PATH = os.path.expanduser("~/.config/s4")

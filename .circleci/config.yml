@@ -27,22 +27,19 @@ jobs:
     steps:
       - checkout
       - run:
+          name: install requirements
+          command: pip install -r lint-requirements.txt
+      - run:
           name: run linter
-          command: |
-            pip install flake8
-            flake8 s4 tests
+          command: flake8 s4 tests
 
       - run:
           name: check isort ordering
-          command: |
-            pip install isort
-            isort s4 tests --diff
+          command: isort s4 tests --diff
 
       - run:
           name: check black formatting
-          command: |
-            pip install black==18.9b0
-            black s4 tests --check
+          command: black s4 tests --check
 
       - run:
           name: version lint

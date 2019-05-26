@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import json
 import gzip
+import json
 import zlib
 
 import mock
