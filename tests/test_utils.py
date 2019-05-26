@@ -1,10 +1,28 @@
 # -*- coding: utf-8 -*-
 
+import gzip
 import json
+import zlib
 
 import mock
+import pytest
 
 from s4 import utils
+
+
+class TestTryDecompress:
+    def test_bad_value(self):
+        with pytest.raises(ValueError) as exc:
+            utils.try_decompress(b"Not compressed data")
+        assert str(exc.value) == "Unknown compression format"
+
+    def test_gzip(self):
+        body = gzip.compress(b"some data")
+        assert utils.try_decompress(body) == b"some data"
+
+    def test_zlib(self):
+        body = zlib.compress(b"some data")
+        assert utils.try_decompress(body) == b"some data"
 
 
 @mock.patch("getpass.getpass")
