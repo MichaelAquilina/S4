@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.4.3 - 19 May 2019
+-------------------
+* Add fallback mechanism for decompressing data with no known header
+
 0.4.2 - 06 May 2019
 -------------------
 * Upgrade boto3 minimum requirement to fix a vulnerability in a urllib3 dependency
