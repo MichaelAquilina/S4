@@ -5,8 +5,8 @@ import fnmatch
 import gzip
 import json
 import logging
-import os
 import zlib
+import posixpath
 
 import boto3
 import magic
@@ -58,6 +58,13 @@ def is_ignored_key(key, ignore_files):
         return False
 
 
+# Use this instead of os.path.join for generating s3 paths
+# This is because on Windows the path separator used (\\) does
+# not generate correct paths on s3
+def s3_path(*args):
+    return posixpath.normpath("/".join(args))
+
+
 class S3SyncClient(SyncClient):
     DEFAULT_IGNORE_FILES = [".index", ".s4lock"]
 
@@ -82,10 +89,10 @@ class S3SyncClient(SyncClient):
         return "S3SyncClient<{}, {}>".format(self.bucket, self.prefix)
 
     def get_uri(self, key=""):
-        return "s3://{}/{}".format(self.bucket, os.path.join(self.prefix, key))
+        return "s3://{}/{}".format(self.bucket, s3_path(self.prefix, key))
 
     def index_path(self):
-        return os.path.join(self.prefix, ".index")
+        return s3_path(self.prefix, ".index")
 
     @property
     def index(self):
@@ -100,7 +107,7 @@ class S3SyncClient(SyncClient):
     def put(self, key, sync_object, callback=None):
         self.boto.upload_fileobj(
             Bucket=self.bucket,
-            Key=os.path.join(self.prefix, key),
+            Key=s3_path(self.prefix, key),
             Fileobj=sync_object.fp,
             Callback=callback,
         )
@@ -109,7 +116,7 @@ class S3SyncClient(SyncClient):
     def get(self, key):
         try:
             resp = self.boto.get_object(
-                Bucket=self.bucket, Key=os.path.join(self.prefix, key)
+                Bucket=self.bucket, Key=s3_path(self.prefix, key)
             )
             return SyncObject(
                 resp["Body"],
@@ -121,8 +128,7 @@ class S3SyncClient(SyncClient):
 
     def delete(self, key):
         resp = self.boto.delete_objects(
-            Bucket=self.bucket,
-            Delete={"Objects": [{"Key": os.path.join(self.prefix, key)}]},
+            Bucket=self.bucket, Delete={"Objects": [{"Key": s3_path(self.prefix, key)}]}
         )
         return "Deleted" in resp
 
@@ -184,7 +190,7 @@ class S3SyncClient(SyncClient):
                 return results
 
             for obj in page["Contents"]:
-                key = os.path.relpath(obj["Key"], self.prefix)
+                key = posixpath.relpath(obj["Key"], self.prefix)
                 if not is_ignored_key(key, self.ignore_files):
                     results.append(key)
                 else:
@@ -195,7 +201,7 @@ class S3SyncClient(SyncClient):
     def get_real_local_timestamp(self, key):
         try:
             response = self.boto.head_object(
-                Bucket=self.bucket, Key=os.path.join(self.prefix, key)
+                Bucket=self.bucket, Key=s3_path(self.prefix, key)
             )
             return utils.to_timestamp(response["LastModified"])
         except ClientError:
@@ -226,7 +232,7 @@ class S3SyncClient(SyncClient):
         page_iterator = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
         for page in page_iterator:
             for obj in page.get("Contents", []):
-                key = os.path.relpath(obj["Key"], self.prefix)
+                key = posixpath.relpath(obj["Key"], self.prefix)
                 if not is_ignored_key(key, self.ignore_files):
                     result[key] = utils.to_timestamp(obj["LastModified"])
 
@@ -248,7 +254,7 @@ class S3SyncClient(SyncClient):
         self._ignore_files = copy.copy(self.DEFAULT_IGNORE_FILES)
         try:
             response = self.boto.get_object(
-                Bucket=self.bucket, Key=os.path.join(self.prefix, ".syncignore")
+                Bucket=self.bucket, Key=s3_path(self.prefix, ".syncignore")
             )
             data = response["Body"].read()
             data = data.decode("utf8")

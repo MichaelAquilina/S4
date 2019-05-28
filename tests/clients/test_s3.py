@@ -63,7 +63,7 @@ class TestS3SyncClient(object):
         )
 
         client = s3.S3SyncClient(s3_client, "testbucket", "foo/bar")
-        assert client.get_uri() == "s3://testbucket/foo/bar/"
+        assert client.get_uri() == "s3://testbucket/foo/bar"
         assert client.get_uri("apples.txt") == "s3://testbucket/foo/bar/apples.txt"
 
     @mock_s3

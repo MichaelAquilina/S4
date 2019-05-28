@@ -25,8 +25,6 @@ class Command(object):
         region_name = entry["region_name"]
 
         # append trailing slashes to prevent incorrect prefix matching on s3
-        if not target_1.endswith("/"):
-            target_1 += "/"
         if not target_2.endswith("/"):
             target_2 += "/"
 

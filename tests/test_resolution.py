@@ -33,7 +33,7 @@ class TestResolution(object):
         )
         expected_repr = (
             "Resolution<action=CREATE, "
-            "to=s3://mortybucket/dimensional/portals/, "
+            "to=s3://mortybucket/dimensional/portals, "
             "from=/home/picklerick/, "
             "key=foo, timestamp=20023>"
         )
