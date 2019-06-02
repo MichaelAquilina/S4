@@ -105,10 +105,10 @@ class LocalSyncClient(SyncClient):
         fd, temp_path = tempfile.mkstemp()
 
         try:
-            with open(temp_path, "wb") as fp1:
+            with open(temp_path, "wb") as fp_1:
                 while True:
                     data = sync_object.fp.read(BUFFER_SIZE)
-                    fp1.write(data)
+                    fp_1.write(data)
                     if callback is not None:
                         callback(len(data))
                     if len(data) < BUFFER_SIZE:

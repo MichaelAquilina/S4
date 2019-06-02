@@ -124,7 +124,7 @@ class TestS3SyncClient(object):
         assert output_object.total_size == len(data)
         assert output_object.timestamp == to_timestamp(frozen_time)
 
-    def test_get_non_existant(self, s3_client):
+    def test_get_non_existent(self, s3_client):
         assert s3_client.get("idontexist.md") is None
 
     def test_put_get(self, s3_client):
@@ -163,7 +163,7 @@ class TestS3SyncClient(object):
             )
         assert exc.value.response["Error"]["Code"] == "404"
 
-    def test_delete_non_existant(self, s3_client):
+    def test_delete_non_existent(self, s3_client):
         assert s3_client.delete("idontexist.png") is False
 
     def test_get_local_keys(self, s3_client):
