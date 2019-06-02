@@ -17,45 +17,45 @@ def show_diff(client_1, client_2, key):
         print("Install this using your distribution's package manager")
         return
 
-    so1 = client_1.get(key)
-    data1 = so1.fp.read()
-    so1.fp.close()
+    so_1 = client_1.get(key)
+    data_1 = so_1.fp.read()
+    so_1.fp.close()
 
-    so2 = client_2.get(key)
-    data2 = so2.fp.read()
-    so2.fp.close()
+    so_2 = client_2.get(key)
+    data_2 = so_2.fp.read()
+    so_2.fp.close()
 
-    fd1, path1 = tempfile.mkstemp()
-    fd2, path2 = tempfile.mkstemp()
-    fd3, path3 = tempfile.mkstemp()
+    fd_1, path_1 = tempfile.mkstemp()
+    fd_2, path_2 = tempfile.mkstemp()
+    fd_3, path_3 = tempfile.mkstemp()
 
-    with open(path1, "wb") as fp:
-        fp.write(data1)
-    with open(path2, "wb") as fp:
-        fp.write(data2)
+    with open(path_1, "wb") as fp:
+        fp.write(data_1)
+    with open(path_2, "wb") as fp:
+        fp.write(data_2)
 
     # This is a lot faster than the difflib found in python
-    with open(path3, "wb") as fp:
+    with open(path_3, "wb") as fp:
         subprocess.call(
             [
                 "diff",
                 "-u",
                 "--label",
                 client_1.get_uri(key),
-                path1,
+                path_1,
                 "--label",
                 client_2.get_uri(key),
-                path2,
+                path_2,
             ],
             stdout=fp,
         )
 
-    subprocess.call(["less", path3])
+    subprocess.call(["less", path_3])
 
-    os.close(fd1)
-    os.close(fd2)
-    os.close(fd3)
+    os.close(fd_1)
+    os.close(fd_2)
+    os.close(fd_3)
 
-    os.remove(path1)
-    os.remove(path2)
-    os.remove(path3)
+    os.remove(path_1)
+    os.remove(path_2)
+    os.remove(path_3)

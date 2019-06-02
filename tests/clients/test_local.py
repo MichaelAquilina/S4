@@ -88,14 +88,14 @@ class TestLocalSyncClient(object):
         assert repr(client) == "LocalSyncClient</my/test/path>"
 
     def test_lock(self, local_client):
-        local_client2 = local.LocalSyncClient(local_client.path)
+        local_client_2 = local.LocalSyncClient(local_client.path)
         local_client.lock(timeout=0.01)
         with pytest.raises(filelock.Timeout):
-            local_client2.lock(timeout=0.01)
+            local_client_2.lock(timeout=0.01)
         local_client.unlock()
 
         local_client.lock(timeout=0.01)
-        local_client2.unlock()
+        local_client_2.unlock()
 
     def test_get_size_not_exists(self, local_client):
         assert local_client.get_size("idontexist") == 0
@@ -152,7 +152,7 @@ class TestLocalSyncClient(object):
         assert sync_object.fp.read() == data
         assert sync_object.total_size == len(data)
 
-    def test_get_non_existant(self, local_client):
+    def test_get_non_existent(self, local_client):
         assert local_client.get("idontexist.md") is None
 
     def test_delete_existing(self, local_client):
@@ -163,7 +163,7 @@ class TestLocalSyncClient(object):
         assert local_client.delete("foo") is True
         assert os.path.exists(target_file) is False
 
-    def test_delete_non_existant(self, local_client):
+    def test_delete_non_existent(self, local_client):
         assert local_client.delete("idontexist.txt") is False
 
     def test_index_path(self):

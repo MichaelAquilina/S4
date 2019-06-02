@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from s4.commands import Command
 
-# Dont crash on import if the underlying operating system does not support INotify
+# Don't crash on import if the underlying operating system does not support INotify
 try:
     from inotify_simple import flags
     from s4.inotify_recursive import INotifyRecursive
@@ -62,7 +62,7 @@ class DaemonCommand(Command):
             for event in notifier.read(read_delay=self.args.read_delay):
                 target = watch_map[event.wd]
 
-                # Dont bother running for .index
+                # Don't bother running for .index
                 if event.name not in (".index", ".s4lock"):
                     to_run[target].add(event.name)
 
