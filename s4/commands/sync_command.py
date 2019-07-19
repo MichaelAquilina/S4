@@ -11,7 +11,7 @@ from s4.progressbar import ProgressBar
 from s4.resolution import Resolution
 
 
-def handle_conflict(key, action_1, client_1, action_2, client_2):
+def handle_conflict(key: str, action_1, client_1, action_2, client_2):
     print(
         "\n"
         'Conflict for "{}". Which version would you like to keep?\n'
@@ -66,7 +66,7 @@ def hide_progress_bar(sync_object):
 
 
 class SyncCommand(Command):
-    def run(self):
+    def run(self) -> None:
         all_targets = list(self.config["targets"].keys())
         if not self.args.targets:
             targets = all_targets

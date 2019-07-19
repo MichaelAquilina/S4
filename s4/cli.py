@@ -3,8 +3,10 @@
 import argparse
 import logging
 import sys
+from typing import List, Optional
 
 from s4 import VERSION, utils
+from s4.commands import Command
 from s4.commands.add_command import AddCommand
 from s4.commands.daemon_command import DaemonCommand
 from s4.commands.edit_command import EditCommand
@@ -14,7 +16,7 @@ from s4.commands.sync_command import SyncCommand
 from s4.commands.targets_command import TargetsCommand
 
 
-def main(arguments):
+def main(arguments: List[str]) -> None:
     parser = argparse.ArgumentParser(
         prog="s4",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -111,7 +113,7 @@ def main(arguments):
     config = utils.get_config()
 
     try:
-        command = None
+        command: Optional[Command] = None
         if args.command in ("version", "v"):
             print(VERSION)
             return
@@ -130,7 +132,7 @@ def main(arguments):
         elif args.command in ("daemon", "d"):
             command = DaemonCommand(args, config, logger)
 
-        if command:
+        if command is not None:
             try:
                 command.run()
             except Exception as e:
@@ -144,7 +146,7 @@ def main(arguments):
         pass
 
 
-def entry_point():
+def entry_point() -> None:
     main(sys.argv[1:])
 
 
