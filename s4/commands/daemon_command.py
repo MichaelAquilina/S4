@@ -52,7 +52,7 @@ class DaemonCommand(Command):
 
             # Check for any pending changes
             worker = self.get_sync_worker(target)
-            worker.sync(conflict_choice=self.args.conflicts)
+            worker.sync(conflict_choice=self.args.conflicts if self.args.conflicts else entry.get("conflicts", "ignore"))
 
         index = 0
         while not terminator(index):

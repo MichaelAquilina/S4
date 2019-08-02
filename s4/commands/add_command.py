@@ -37,6 +37,12 @@ class AddCommand(Command):
         region_name = utils.get_input(
             "region name [leave blank if unknown]: ", blank=True
         )
+        state_folder = utils.get_input(
+            "state folder [leave blank for target folder]: ", blank=True
+        )
+        conflicts = utils.get_input(
+            "conflicts [1 for local, 2 for s3, ignore or leave blank for default handling]: ", blank=True, regex='1|2|ignore'
+        )
 
         if aws_access_key_id is None:
             aws_access_key_id = utils.get_input(
@@ -61,9 +67,11 @@ class AddCommand(Command):
 
         self.config["targets"][name] = {
             "local_folder": local_folder,
+            "state_folder": state_folder,
             "endpoint_url": endpoint_url,
             "s3_uri": "s3://{}/{}".format(bucket, path),
             "region_name": region_name,
+            "conflicts": conflicts,
             "aws_access_key_id": aws_access_key_id,
             "aws_secret_access_key": aws_secret_access_key,
         }

@@ -26,6 +26,8 @@ class EditCommand(Command):
         aws_access_key_id = entry.get("aws_access_key_id")
         aws_secret_access_key = entry.get("aws_secret_access_key")
         region_name = entry.get("region_name")
+        state_folder = entry.get("state_folder")
+        conflicts = entry.get("conflicts", None)
 
         new_local_folder = utils.get_input("local folder [{}]: ".format(local_folder))
         new_endpoint_url = utils.get_input("endpoint url [{}]: ".format(endpoint_url))
@@ -38,6 +40,8 @@ class EditCommand(Command):
         new_aws_secret_access_key = utils.get_input(secret_key_prompt, secret=True)
 
         new_region_name = utils.get_input("region name [{}]: ".format(region_name))
+        new_state_folder = utils.get_input("state folder [{}]: ".format(state_folder))
+        new_conflicts = utils.get_input("conflicts [{}]: ".format(conflicts), regex='1|2|ignore')
 
         if new_local_folder:
             entry["local_folder"] = os.path.expanduser(new_local_folder)
@@ -51,6 +55,10 @@ class EditCommand(Command):
             entry["endpoint_url"] = new_endpoint_url
         if new_region_name:
             entry["region_name"] = new_region_name
+        if new_state_folder:
+            entry["state_folder"] = new_state_folder
+        if new_conflicts:
+            entry["conflicts"] = new_conflicts
 
         self.config["targets"][self.args.target] = entry
 

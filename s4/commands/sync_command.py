@@ -102,7 +102,7 @@ class SyncCommand(Command):
                         client_2.get_uri(),
                     )
                     worker.sync(
-                        conflict_choice=self.args.conflicts, dry_run=self.args.dry_run
+                        conflict_choice=self.args.conflicts if self.args.conflicts else entry.get("conflicts", "ignore"), dry_run=self.args.dry_run
                     )
                 except Exception as e:
                     if self.args.log_level == "DEBUG":

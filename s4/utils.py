@@ -5,6 +5,7 @@ import getpass
 import gzip
 import json
 import os
+import re
 import zlib
 
 CONFIG_FOLDER_PATH = os.path.expanduser("~/.config/s4")
@@ -30,7 +31,7 @@ def to_timestamp(dt):
     return (dt - epoch) / datetime.timedelta(seconds=1)
 
 
-def get_input(*args, secret=False, required=False, blank=False, **kwargs):
+def get_input(*args, secret=False, required=False, blank=False, regex=None, **kwargs):
     """
     secret: Don't show user input when they are typing.
     required: Keep prompting if the user enters an empty value.
@@ -45,6 +46,9 @@ def get_input(*args, secret=False, required=False, blank=False, **kwargs):
 
         if blank:
             value = value if value else None
+
+        if value and not regex == None and not re.fullmatch(regex, value):
+            continue
 
         if not required or value:
             break

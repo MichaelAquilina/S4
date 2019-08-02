@@ -18,11 +18,13 @@ class Command(object):
 
     def get_clients(self, entry):
         target_1 = entry["local_folder"]
+        target_1_state = entry.get("state_folder", target_1)
         target_2 = entry["s3_uri"]
         aws_access_key_id = entry["aws_access_key_id"]
         aws_secret_access_key = entry["aws_secret_access_key"]
         endpoint_url = entry.get("endpoint_url", None)
         region_name = entry["region_name"]
+        conflicts = entry.get("conflicts", None)
 
         # append trailing slashes to prevent incorrect prefix matching on s3
         if not target_1.endswith("/"):
@@ -30,7 +32,7 @@ class Command(object):
         if not target_2.endswith("/"):
             target_2 += "/"
 
-        client_1 = get_local_client(target_1)
+        client_1 = get_local_client(target_1, target_1_state)
         client_2 = get_s3_client(
             target_2,
             aws_access_key_id,
