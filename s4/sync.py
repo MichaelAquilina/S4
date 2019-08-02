@@ -55,7 +55,7 @@ class SyncWorker(object):
                     resolutions[key] = Resolution.get_resolution(
                         key, action_2, self.client_1, self.client_2
                     )
-                if self.conflict_handler is not None:
+                elif self.conflict_handler is not None:
                     resolution = self.conflict_handler(
                         key, action_1, self.client_1, action_2, self.client_2
                     )
